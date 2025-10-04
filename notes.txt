@@ -1,0 +1,3 @@
+npm i next-themes get theme provider on shadcn then add clerk
+about clerk webhook install ngrok run ngrok http por at root app after run the app then
+and endpoint in the clerk's dasboard then apply npm i --save-dev @types/ngrok

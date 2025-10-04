@@ -1,0 +1,31 @@
+{
+  "Home": {
+    "SignIn": "Se connecter",
+    "SignUp": "Commencer",
+    "HeroText": "Transformez Vos Réunions Avec",
+    "HeroText2": "La Magie De L’IA",
+    "HeroSubTitle": "Résumés automatiques, actions à suivre et analyses intelligentes pour chaque réunion. Ne manquez plus jamais un détail important.",
+"HeroBtn1": "Essai Gratuit",
+"HeroBtn2": "Regarder La Démo",
+"Check1": "Aucune carte bancaire requise",
+"Check2": "Installation en 2 minutes",
+"Check3": "Offre gratuite à vie",
+ "FeatureTitle": "Tout ce dont vous avez besoin pour",
+"FeatureTitle2": "Des Réunions Plus Intelligentes",
+"FeatureDescription": "Des résumés générés par l’IA aux intégrations fluides, nous avons pensé à chaque détail." ,
+"integrationTitle": "Intégrations",
+"integrationTitle2": "Fluides",
+"integrationDescription": "Connectez-vous aux outils que vous utilisez et aimez déjà",
+"HowTitle": "Comment",
+"HowTitle2": "Ça Marche",
+"HowDescription": "Commencez en quelques minutes grâce à notre processus simple en 3 étapes",
+"MoreTitle": "Plus De",
+"MoreTitle2": "Fonctionnalités",
+"MoreDescription": "Tout ce dont vous avez besoin pour une gestion complète des réunions",
+"CTATitle": "Prêt à",
+"CTATitle2": "révolutionner vos réunions ?",
+"CTADescription": "Rejoignez des milliers d'équipes utilisant déjà MeetingBot pour gagner du temps."
+
+
+ }
+}

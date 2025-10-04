@@ -1,0 +1,30 @@
+{
+   "Home":{
+     "SignIn":"Sign In",
+    "SignUp":"Get Started",
+    "HeroText":"Transform Your Meetings with",
+    "HeroText2":"AI Magic",
+    "HeroSubTitle":"Automatic summaries, action items, and intelligent insights for every meeting. Never miss important details again.",
+    "HeroBtn1":"Start Free Trial",
+    "HeroBtn2":"Watch Demo",
+    "Check1":"No credit card required",
+    "Check2":"Setup in 2 minutes",
+    "Check3":"Free forever plan",
+    "FeatureTitle":"Everything you need for",
+    "FeatureTitle2":"Smarter Meetings",
+    "FeatureDescription":"From AI summaries to seamless integrations, we've got every aspect covered.",
+    "integrationTitle":"Seamless",
+    "integrationTitle2":"Integrations",
+    "integrationDescription":"Connect with the tools you aldready use and love",
+    "HowTitle":"How It",
+    "HowTitle2":"Works",
+    "HowDescription":" Get Started in minutes with our simple 3-step-process",
+    "MoreTitle":"Plus",
+    "MoreTitle2":"More Features",
+    "MoreDescription":"Everything you need for complete meeting management",
+    "CTATitle":"Ready to",
+    "CTATitle2":"revolutionize your meetings?",
+    "CTADescription":"Join thousands of teams aldready using MeetingBot to save time."
+
+   }
+}
