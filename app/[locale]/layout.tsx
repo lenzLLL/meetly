@@ -6,6 +6,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import {NextIntlClientProvider, hasLocale} from 'next-intl';
 import {notFound} from 'next/navigation';
 import {routing} from '@/i18n/routing';
+import { UsageProvider } from "@/context/UsageContext";
+import { ConditionalLayout } from "@/components/conditional-layout";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -39,7 +41,7 @@ export default async function RootLayout({
   
   return (
     <ClerkProvider>
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
@@ -51,7 +53,12 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
              <NextIntlClientProvider>
+              <UsageProvider>
+                    <ConditionalLayout>
             {children}
+
+                    </ConditionalLayout>
+            </UsageProvider>
             </NextIntlClientProvider>
           </ThemeProvider>
       </body>

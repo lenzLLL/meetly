@@ -1,3 +1,5 @@
+"use client"
+import { useEffect,useState } from "react";
 import CTASection from "@/components/landing/CTASection";
 import FeaturesSection from "@/components/landing/featuresSection";
 import Footer from "@/components/landing/Footer";
@@ -7,8 +9,22 @@ import IntegrationSection from "@/components/landing/integrationSection";
 import MoreFeaturesSection from "@/components/landing/MoreFeaturesSection";
 import StatsSection from "@/components/landing/StatsSection";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
+import { useUser } from "@/hooks/use-user";
 
 export default function Home() {
+  const {isSignedIn,isLoaded} = useAuth()
+  const {saveUser} = useUser()
+  const SaveUser = async () =>{
+        await SaveUser()
+  }
+  useEffect(
+    ()=>{
+        if(isSignedIn){
+              saveUser()
+        }    
+    },[isSignedIn,isLoaded]
+  )
   return (
       <div className="bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen ">
           <Herosection/>
