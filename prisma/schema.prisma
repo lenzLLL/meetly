@@ -101,8 +101,8 @@ model UserIntegration {
   expiresAt    DateTime?
 
   boardId     String?
-  boardName   String?
-  projectId   String?
+  boardctId   String?
+  projeName   String?
   projectName String?
   workspaceId String?
   domain      String?
