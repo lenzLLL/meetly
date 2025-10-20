@@ -44,7 +44,7 @@ export default function Home() {
     }
     if (!userId) {
         return (
-            <div className='flex items-center justify-center h-screen'>
+            <div className='bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] flex items-center justify-center h-screen'>
                 Loading...
             </div>
         )

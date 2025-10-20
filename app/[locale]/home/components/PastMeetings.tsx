@@ -25,24 +25,24 @@ function PastMeetings({
         return (
             <div className='space-y-4'>
                 {[1, 2, 3].map((i) => (
-                    <div key={i} className='bg-card rounded-lg p-4 border border-border animate-pulse'>
+                    <div key={i} className='bg-[#1a0b2e]/70 rounded-lg p-4 border border-border animate-pulse'>
                         <div className='flex justify-between items-start mb-3'>
                             <div className='flex items-center gap-3 flex-1'>
-                                <div className='h-6 bg-muted rounded w-48'></div>
+                                <div className='h-6 bg-[#2a1b4a]/70 rounded w-48'></div>
                                 <div className='flex -space-x-2'>
 
                                     {[1, 2, 3].map((j) => (
-                                        <div key={j} className='w-6 h-6 rounded-full bg-muted'></div>
+                                        <div key={j} className='w-6 h-6 rounded-full bg-[#2a1b4a]/70'></div>
                                     ))}
                                 </div>
 
                             </div>
-                            <div className='h-5 bg-muted rounded w-20'></div>
+                            <div className='h-5 bg-[#2a1b4a]/70 rounded w-20'></div>
                         </div>
 
-                        <div className='h-4 bg-muted rounded w-3/4 mb-3'></div>
-                        <div className='h-4 bg-muted rounded w-1/2 mb-3'></div>
-                        <div className='h-6 bg-muted rounded w-24'></div>
+                        <div className='h-4 bg-[#2a1b4a]/70 rounded w-3/4 mb-3'></div>
+                        <div className='h-4 bg-[#2a1b4a]/70 rounded w-1/2 mb-3'></div>
+                        <div className='h-6 bg-[#2a1b4a]/70 rounded w-24'></div>
 
                     </div>
                 ))}

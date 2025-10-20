@@ -1,3 +1,16 @@
 npm i next-themes get theme provider on shadcn then add clerk
 about clerk webhook install ngrok run ngrok http por at root app after run the app then
 and endpoint in the clerk's dasboard then apply npm i --save-dev @types/ngrok
+auth permisssion ngrok for slack
+event subscription slack bot scope already add
+add jus endpoint ending by api/slack/event
+Lenzlenz1*
+
+price_1SJWv5JHqPwkzCA7QXmV0r9o
+price_1SJWuVJHqPwkzCA7V6Y4OcQt
+price_1SJWsIJHqPwkzCA7402qxeJ9
+prod_TG2y2PXa5yXo7y
+
+npm i @react-email/components @react-email/render resend nodemailer
+
+deploiement stripe configurer le webhook apres la mise en ligne

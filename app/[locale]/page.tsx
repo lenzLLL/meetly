@@ -22,7 +22,8 @@ export default function Home() {
     ()=>{
         if(isSignedIn){
               saveUser()
-        }    
+        }
+          
     },[isSignedIn,isLoaded]
   )
   return (
@@ -40,3 +41,4 @@ export default function Home() {
 }
 // https://trello.com/power-ups/68ec54cf4d728c8db60b1236/edit/api-key
 // atlassian
+// https://developer.atlassian.com/console/myapps/4b5813b9-af13-40c2-bade-d51cb2229fa9/permissions

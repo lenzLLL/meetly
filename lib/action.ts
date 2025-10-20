@@ -4,22 +4,34 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 export const SaveUserInTheDb = async () =>{
-    const u = await prisma.user.findUnique({
+try{
+    const user = await currentUser();
+    if(!user){
+        return {success:false}
+    }
+    const isUserExist = await prisma.user.findUnique({
         where:{
-            id:"dsf"
+            id:user?.id||""
         }
     })
-    if(u){
-        return
+    if(isUserExist){
+        return {success:true}
     }
-    const user = await currentUser();
+     const email = user?.emailAddresses.find(
+    (email) => email.id === user.primaryEmailAddressId
+  )?.emailAddress
     const newUser = await prisma.user.create({
                 data: {
                     id: user?.id||"",
                     clerkId: user?.id||"",
-                    email: user?.firstName|| null,
+                    email: email,
                     name: `${user?.firstName} ${user?.lastName}`
                 }
     })
+    return {success:true}
+}
+catch(error:any){
+    return {success:false}
+}
  
 }
