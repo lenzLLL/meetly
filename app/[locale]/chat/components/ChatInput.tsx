@@ -20,7 +20,7 @@ function ChatInput({
 
     const { canChat, usage, limits } = useUsage()
     return (
-        <div className='p-6'>
+        <div className='p-6 bg-transparent'>
             {!canChat && usage && (
                 <div className='max-w-4xl mx-auto mb-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg'>
                     <p className='text-sm text-orange-600 dark:text-orange-400 text-center'>

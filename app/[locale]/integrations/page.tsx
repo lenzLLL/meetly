@@ -25,7 +25,7 @@ function Integrations() {
 
     if (loading) {
         return (
-            <div className='min-h-screen bg-background flex items-center justify-center p-6'>
+            <div className=' bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen flex items-center justify-center p-6'>
                 <div className='flex flex-col items-center justify-center'>
                     <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-foreground mb-4'></div>
                     <div className='text-foreground'>Loading Integrations...</div>
@@ -34,7 +34,7 @@ function Integrations() {
         )
     }
     return (
-        <div className='min-h-screen bg-background p-6'>
+        <div className='mt-5 sm:mt-0 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen bg-background p-6'>
             <div className='max-w-4xl mx-auto'>
                 <div className='mb-8'>
                     <h1 className='text-2xl font-bold text-foreground mb-2'>Integrations</h1>
@@ -47,7 +47,7 @@ function Integrations() {
 
                 {setupMode && (
                     <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50'>
-                        <div className='bg-card rounded-lg p-6 border border-border max-w-md w-full mx-4'>
+                        <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border max-w-md w-full mx-4'>
                             <h2 className='text-lg font-semibold text-foreground mb-4'>
                                 Setup {setupMode.charAt(0).toUpperCase() + setupMode.slice(1)}
                             </h2>
@@ -84,7 +84,7 @@ function Integrations() {
                     ))}
                 </div>
 
-                <div className='mt-8 bg-card rounded-lg p-6 border border-border'>
+                <div className='mt-8 bg-[#1a0b2e]/70 rounded-lg p-6 border border-border'>
                     <h3 className='font-semibold text-foreground mb-2'>How it wokrs </h3>
 
                     <ol className='text-sm text-muted-foreground space-y-2'>

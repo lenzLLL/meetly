@@ -12,5 +12,15 @@ price_1SJWsIJHqPwkzCA7402qxeJ9
 prod_TG2y2PXa5yXo7y
 
 npm i @react-email/components @react-email/render resend nodemailer
-
 deploiement stripe configurer le webhook apres la mise en ligne
+
+integrations 
+
+- Asana Auth 
+link https://app.asana.com/0/my-apps/
+https://d565aae76a4e.ngrok-free.app/api/integrations/asana/callback
+
+- Slack
+link https://api.slack.com/apps
+
+avec meeting baas developer hub je vais pouvoir gere zoom google calender et microsoft 

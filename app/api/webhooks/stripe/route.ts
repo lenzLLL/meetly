@@ -7,16 +7,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-06-30.basil'
 })
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET! 
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.text()
         const headersList = await headers()
-        // const sig = headersList.get('stripe-signature')!
-        const sig = headersList.get("stripe-signature") as string;
+        const sig = headersList.get('stripe-signature')!
 
- 
         let event: Stripe.Event
 
         try {
@@ -28,6 +26,7 @@ export async function POST(request: NextRequest) {
 
         switch (event.type) {
             case 'customer.subscription.created':
+                console.log("ffd")
                 await handleSubscriptionCreated(event.data.object)
                 break
             case 'customer.subscription.updated':

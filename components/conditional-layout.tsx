@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { useAuth } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "./app-sidebar";
+import { ResponsiveSidebar } from "./responsive_sidebar";
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
@@ -20,7 +21,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
     return (
         <SidebarProvider defaultOpen={true}>
             <div className="flex h-screen w-full">
-                 <AppSidebar /> 
+                 <ResponsiveSidebar /> 
                 <main className="flex-1 overflow-auto">
                     {children}
                 </main>

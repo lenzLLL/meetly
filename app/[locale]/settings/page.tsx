@@ -123,7 +123,7 @@ function Settings() {
 
     if (isLoading) {
         return (
-            <div className='min-h-screen bg-background flex items-center justify-center p-6'>
+            <div className='bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen  flex items-center justify-center p-6'>
                 <div className='flex flex-col items-center justify-center'>
                     <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-foreground mb-4'></div>
                     <div className='text-foreground'>Loading Settings...</div>
@@ -134,10 +134,10 @@ function Settings() {
 
 
     return (
-        <div className='min-h-screen bg-background p-6'>
+        <div className='mt-5 sm:mt-0 min-h-screen bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] p-6'>
             <div className='max-w-2xl mx-auto'>
                 <h1 className='text-2xl font-bold text-foreground mb-8 text-center'>Settings</h1>
-                <div className='relative bg-card/80 backdrop-blur-sm rounded-lg p-6 border border-border/50 mb-8 shadow-xl shadow-black/10'>
+                <div className='relative bg-[#1a0b2e]/70  backdrop-blur-sm rounded-lg p-6 border border-border/50 mb-8 shadow-xl shadow-black/10'>
                     <div className='absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-lg pointer-events-none'></div>
                     <div className='relative'>
                         <div className='flex items-center gap-4 mb-4'>
@@ -161,7 +161,7 @@ function Settings() {
                         </div>
                         <div className='flex justify-between items-start '>
                             <div>
-                                <span className='text-sm bg-muted/80 text-muted-foreground px-2 py-1 rounded-full'>
+                                <span className='text-sm bg-gradient-to-r from-[#6a0dad] to-[#5f24e7] text-muted-foreground px-2 py-1 rounded-full'>
                                     EMAIL
                                 </span>
                                 <p className='text-sm text-foreground mt-1'>
@@ -179,7 +179,7 @@ function Settings() {
 
                 </div>
 
-                <div className='bg-card rounded-lg p-6 border border-border'>
+                <div className='bg-[#1a0b2e]/70  rounded-lg p-6 border border-border'>
                     <h3 className='text-lg font-semibold text-foreground mb-4'>Bot Customization</h3>
 
                     <div className='mb-6'>
@@ -226,7 +226,7 @@ function Settings() {
 
                                 <Label
                                     htmlFor='bot-image-upload'
-                                    className={`inline-flex items-center gap-2 px-3 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={`inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#6a0dad] to-[#5f24e7] text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     <Upload className='h-4 w-4' />
                                     {isUploading ? 'Uploading...' : 'Upload Image'}

@@ -19,7 +19,7 @@ function IntegrationCard({
     onSetup
 }: IntegrationCardProps) {
     return (
-        <div className='bg-card rounded-lg p-6 border border-border'>
+        <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border'>
             <div className='flex items-start justify-between mb-4'>
                 <div className='flex items-center gap-3'>
                     <div className='w-8 h-8 relative flex-shrink-0'>
@@ -51,7 +51,7 @@ function IntegrationCard({
             </p>
 
             {integration.connected && integration.platform !== 'google-calendar' && (integration.boardName || integration.projectName || integration.channelName) && (
-                <div className='mb-4 p-3 bg-muted/50 rounded-lg'>
+                <div className='mb-4 p-3 bg-green-500/10 rounded-lg'>
                     <div className='text-xs text-muted-foreground mb-1'>Destination:</div>
                     <div className='text-sm font-medium text-foreground' >
                         {integration.platform === 'slack' && integration.channelName && `#${integration.channelName}`}
@@ -63,7 +63,7 @@ function IntegrationCard({
             )}
 
             {integration.connected && integration.platform === 'google-calendar' && (
-                <div className='mb-4 p-3 bg-muted/50 rounded-lg'>
+                <div className='mb-4 p-3 bg-green-500/10 rounded-lg'>
                     <div className='text-xs text-muted-foreground mb-1'>Status:</div>
                     <div className='text-sm font-medium text-foreground'>
                         Lambda auto-sync anabled

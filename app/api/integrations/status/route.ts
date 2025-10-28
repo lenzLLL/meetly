@@ -18,7 +18,7 @@ export async function GET() {
 
         const allPlatforms = [
             { platform: 'trello', name: 'Trello', logo: '🔷', connected: false },
-            // { platform: 'jira', name: 'Jira', logo: '🔵', connected: false },
+            { platform: 'jira', name: 'Jira', logo: '🔵', connected: false },
             { platform: 'asana', name: 'Asana', logo: '🟠', connected: false }
         ]
 

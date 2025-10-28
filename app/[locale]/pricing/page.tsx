@@ -8,174 +8,160 @@ import { Check, Loader2 } from 'lucide-react'
 import React, { useState } from 'react'
 
 const plans = [
-    {
-        id: 'starter',
-        name: 'Starter',
-        price: 9,
-        priceId: 'price_1SJWsIJHqPwkzCA7402qxeJ9',
-        description: 'Perfect for people getting started',
-        features: [
-            '10 meetings per month',
-            '30 AI chat messages per day',
-            'Meeting transcripts and summaries',
-            'Action items extraction',
-            'Email Notifications'
-        ],
-        popular: false
-    },
-    {
-        id: 'pro',
-        name: 'Pro',
-        price: 29,
-        priceId: 'price_1SJWuVJHqPwkzCA7V6Y4OcQt',
-        description: 'Perfect for people growing who need more power',
-        features: [
-            '30 meetings per month',
-            '100 AI chat messages per day',
-            'Meeting transcripts and summaries',
-            'Action items extraction',
-            'Email Notifications',
-            'Priority Support'
-        ],
-        popular: true
-    },
-    {
-        id: 'premium',
-        name: 'Premium',
-        price: 99,
-        priceId: 'price_1SJWv5JHqPwkzCA7QXmV0r9o',
-        description: 'Perfect for people who need unlimited limits',
-        features: [
-            'Unlimited meetings per month',
-            'Unlimited AI chat messages per day',
-            'Meeting transcripts and summaries',
-            'Action items extraction',
-            'Email Notifications',
-            'Priority Support'
-        ],
-        popular: false
-    },
-
+  {
+    id: 'starter',
+    name: 'Starter',
+    price: 9,
+    priceId: 'price_1SJWsIJHqPwkzCA7402qxeJ9',
+    description: 'Perfect for people getting started',
+    features: [
+      '10 meetings per month',
+      '30 AI chat messages per day',
+      'Meeting transcripts and summaries',
+      'Action items extraction',
+      'Email Notifications'
+    ],
+    popular: false
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 29,
+    priceId: 'price_1SJWuVJHqPwkzCA7V6Y4OcQt',
+    description: 'Perfect for people growing who need more power',
+    features: [
+      '30 meetings per month',
+      '100 AI chat messages per day',
+      'Meeting transcripts and summaries',
+      'Action items extraction',
+      'Email Notifications',
+      'Priority Support'
+    ],
+    popular: true
+  },
+  {
+    id: 'premium',
+    name: 'Premium',
+    price: 99,
+    priceId: 'price_1SJWv5JHqPwkzCA7QXmV0r9o',
+    description: 'Perfect for people who need unlimited limits',
+    features: [
+      'Unlimited meetings per month',
+      'Unlimited AI chat messages per day',
+      'Meeting transcripts and summaries',
+      'Action items extraction',
+      'Email Notifications',
+      'Priority Support'
+    ],
+    popular: false
+  },
 ]
 
 function Pricing() {
-    const { user } = useUser()
-    const [loading, setLoading] = useState<string | null>(null)
+  const { user } = useUser()
+  const [loading, setLoading] = useState<string | null>(null)
 
-    const handleSubscribe = async (priceId: string, planName: string) => {
-        if (!user) {
-            return
-        }
+  const handleSubscribe = async (priceId: string, planName: string) => {
+    if (!user) return
+    setLoading(priceId)
 
-        setLoading(priceId)
+    try {
+      const response = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, planName }),
+      })
 
-        try {
-            const response = await fetch('/api/stripe/create-checkout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    priceId,
-                    planName
-                })
-            })
+      const data = await response.json()
 
-            const data = await response.json()
-
-            if (data.url) {
-                window.location.href = data.url
-            } else {
-                throw new Error(data.error || 'Failed to create checkout session')
-            }
-        } catch (error) {
-            console.error('subscription creation error:', error)
-        } finally {
-            setLoading(null)
-        }
+      if (data.url) window.location.href = data.url
+      else throw new Error(data.error || 'Failed to create checkout session')
+    } catch (error) {
+      console.error('subscription creation error:', error)
+    } finally {
+      setLoading(null)
     }
+  }
 
-    return (
-        <div className='container mx-auto px-6 2xl:max-w-[1400px] py-16 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
-            <div className='max-w-2xl mx-auto text-center mb-14'>
-                <h2 className='text-3xl font-semibold tracking-tight transition-colors first:mt-0 mb-6'>
-                    Choose Your <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600  bg-clip-text text-transparent">Plan</span>
-                </h2>
-                <p className="text-lg max-w-2xl mx-auto mb-8 bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(156,163,175,0.3)]">
-                    Automatic summaries, action items, and intelligent insights for every meeting.
-                    Never miss important details again.
-                </p>
+  return (
+    <div className="mt-5 sm:mt-0 container mx-auto px-4 sm:px-6 2xl:max-w-[1400px] py-16 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] text-white">
+      <div className="max-w-2xl mx-auto text-center mb-14">
+        <h2 className="text-3xl font-semibold tracking-tight mb-6">
+          Choose Your{' '}
+          <span className="bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text text-transparent">
+            Plan
+          </span>
+        </h2>
+        <p className="text-lg max-w-2xl mx-auto mb-8 bg-gradient-to-r from-gray-300 to-gray-500 bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(156,163,175,0.3)]">
+          Automatic summaries, action items, and intelligent insights for every meeting.
+          Never miss important details again.
+        </p>
+      </div>
 
-            </div>
+      {/* ✅ Responsive Grid */}
+      <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+        {plans.map((plan) => {
+          const isLoading = loading === plan.priceId
+          return (
+            <Card
+              key={plan.id}
+              className={`relative bg-[#1a0b2e]/70 overflow-visible flex flex-col justify-between ${
+                plan.popular ? 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.3)]' : ''
+              }`}
+            >
+              {plan.popular && (
+                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 text-white">
+                  Most Popular
+                </Badge>
+              )}
 
-            <div className='mt-12 grid grid-cols-3 gap-6 items-center'>
-                {plans.map((plan) => {
-                    const isLoading = loading === plan.priceId
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="mb-7">{plan.name}</CardTitle>
+                <span className="font-bold text-5xl">${plan.price}</span>
+              </CardHeader>
 
-                    return (
-                        <Card
-                            key={plan.id}
-                            className={`relative bg-[#1a0b2e]/70 overflow-visible flex flex-col ${plan.popular ? 'border-purple-500' : ''}`}
-                        >
-                            {plan.popular && (
-                                <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 text-white'>
-                                    Most Popular
-                                </Badge>
-                            )}
+              <CardDescription className="text-center w-11/12 mx-auto">
+                {plan.description}
+              </CardDescription>
 
-                            <CardHeader className='text-center pb-2'>
-                                <CardTitle className='mb-7'>{plan.name}</CardTitle>
-                                <span className='font-bold text-5xl'>${plan.price}</span>
-                            </CardHeader>
+              <CardContent className="flex-1">
+                <ul className="mt-7 space-y-2.5 text-sm">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex space-x-2">
+                      <Check className="flex-shrink-0 mt-0.5 h-4 w-4 text-purple-400" />
+                      <span className="text-gray-300">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
 
-                            <CardDescription className='text-center w-11/12 mx-auto'>
-                                {plan.description}
-                            </CardDescription>
-
-                            <CardContent className='flex-1'>
-                                <ul className='mt-7 space-y-2.5 text-sm'>
-                                    {plan.features.map((feature, index) => (
-                                        <li key={index} className='flex space-x-2'>
-                                            <Check className='flex-shrink-0 mt-0.5 h-4 w-4' />
-                                            <span className='text-muted-foreground'>{feature}</span>
-
-                                        </li>
-                                    ))}
-
-                                </ul>
-
-                            </CardContent>
-
-                            <CardFooter>
-                                <Button
-                                    className={`w-full cursor-pointer ${plan.popular
-                                        ? 'bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 hover:scale-[0.98] transition-all duration-150'
-                                        : ''
-                                        }`}
-                                    variant={plan.popular ? 'default' : 'outline'}
-                                    onClick={() => handleSubscribe(plan.priceId, plan.name)}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? (
-                                        <>
-                                            <Loader2 className='w-5 h-5 mr-2 animate-spin' />
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        `Subscribe to ${plan.name}`
-                                    )}
-
-                                </Button>
-
-                            </CardFooter>
-
-                        </Card>
-                    )
-                })}
-
-            </div>
-        </div>
-    )
+              <CardFooter>
+                <Button
+                  className={`w-full cursor-pointer ${
+                    plan.popular
+                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 hover:scale-[0.98] transition-all duration-150'
+                      : 'hover:bg-purple-700/50'
+                  }`}
+                  variant={plan.popular ? 'default' : 'outline'}
+                  onClick={() => handleSubscribe(plan.priceId, plan.name)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    `Subscribe to ${plan.name}`
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 export default Pricing

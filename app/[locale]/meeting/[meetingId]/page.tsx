@@ -34,7 +34,7 @@ function MeetingDetail() {
     } = useMeetingDetail()
 
     return (
-        <div className='min-h-screen bg-background'>
+        <div className='mt-5 sm:mt-0 min-h-screen bg-background'>
 
             <MeetingHeader
                 title={meetingData?.title || 'Meeting'}
