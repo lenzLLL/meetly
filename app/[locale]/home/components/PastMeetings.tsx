@@ -66,7 +66,7 @@ function PastMeetings({
             {pastMeetings.map((meeting) => (
                 <div
                     key={meeting.id}
-                    className='bg-card rounded-lg p-4 border border-border hover:shadow-md transition-shadow cursor-pointer'
+                    className='bg-[#1a0b2e]/70 rounded-lg p-4 border border-border hover:shadow-md transition-shadow cursor-pointer'
                     onClick={() => onMeetingClick(meeting.id)}
                 >
                     <div className='flex justify-between items-start mb-3'>

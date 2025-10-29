@@ -38,7 +38,7 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
 
     if (!transcript || transcript.length === 0) {
         return (
-            <div className='bg-card rounded-lg p-6 border border-border text-center'>
+            <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border text-center'>
                 <p className='text-muted-foreground'>
                     No transcript available
                 </p>
@@ -47,7 +47,7 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
     }
 
     return (
-        <div className="bg-card rounded-lg p-6 border border-border">
+        <div className="border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border">
             <h3 className="text-lg font-semibold text-foreground mb-4">
                 Meeting transcript
             </h3>
@@ -59,7 +59,7 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
                             <span className="font-medium text-foreground">
                                 {segment.speaker}
                             </span>
-                            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                            <span className="text-xs text-muted-foreground bg-[#1a0b2e]/70 px-2 py-1 rounded">
                                 {getSpeakerSegmentTime(segment)}
                             </span>
                         </div>

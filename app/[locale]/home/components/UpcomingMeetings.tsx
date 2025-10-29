@@ -74,20 +74,20 @@ function UpcomingMeetings({
                         No upcoming meetings
                     </h3>
                     <p className='text-muted-foreground text-xs '>
-                        Your caledar is clear!
+                        Your calendar is clear!
                     </p>
                 </div>
             ) : (
                 <div className='space-y-3'>
                     <Button
-                        className='w-full px-3 py-2 bg-muted rounded-lg hover:bg-muted/80 disabled:opacity-50 transition-colors text-foreground text-sm mb-4 cursor-pointer'
+                        className='w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 hover:scale-[0.98]  duration-150 px-3 py-2 rounded-lg  disabled:opacity-50 transition-colors text-foreground text-sm mb-4 cursor-pointer'
                         onClick={onRefresh}
                         disabled={loading}
                     >
                         {loading ? 'Loading...' : 'Refresh'}
                     </Button>
                     {upcomingEvents.map((event) => (
-                        <div key={event.id} className='bg-card rounded-lg p-3 border border-border hover:shadow-md transition-shadow relative'>
+                        <div key={event.id} className='bg-[#1a0b2e]/70 rounded-lg p-3 border border-border hover:shadow-md transition-shadow relative'>
                             <div className='absolute top-3 right-3'>
                                 <Switch
                                     checked={!!botToggles[event.id]}

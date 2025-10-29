@@ -36,7 +36,7 @@ function ChatSidebar({
         "Summarize the key action items from this meeting"
     ]
     return (
-        <div className='w-96 border-l border-border bg-card flex flex-col'>
+        <div className='w-96 border-l border-gray-800 bg-black/30 backdrop-blur-xl flex flex-col'>
 
             <div className='p-4 border-b border-border'>
                 <h3 className='font-semibold text-foreground'>
@@ -55,7 +55,7 @@ function ChatSidebar({
                     >
                         <div
                             className={`max-w-[80%] rounded-lg p-3 ${message.isBot
-                                ? 'bg-muted text-foreground'
+                                ? 'bg-gradient-to-r from-indigo-600/60 to-purple-600/60 border border-indigo-800 backdrop-blur-md text-foreground'
                                 : 'bg-primary text-primary-foreground'
                                 }`}
                         >

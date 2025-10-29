@@ -96,7 +96,7 @@ function CustomAudioPlayer({
 
     return (
         <div
-            className={`fixed bottom-0 bg-card border-t border-border p-5 ${!isOwner
+            className={`fixed bottom-0 bg-[#1a0b2e]/70 border-t border-border p-5 ${!isOwner
                 ? 'left-0 right-0'
                 : ''
                 }`}

@@ -34,7 +34,7 @@ function MeetingDetail() {
     } = useMeetingDetail()
 
     return (
-        <div className='mt-5 sm:mt-0 min-h-screen bg-background'>
+        <div className='mt-5 sm:mt-0 min-h-screen bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
 
             <MeetingHeader
                 title={meetingData?.title || 'Meeting'}
@@ -87,14 +87,14 @@ function MeetingDetail() {
                             {activeTab === 'summary' && (
                                 <div>
                                     {loading ? (
-                                        <div className='bg-card border border-border rounded-lg p-6 text-center'>
+                                        <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6 text-center'>
                                             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
                                             <p className='text-muted-foreground'>Loading meeting data..</p>
                                         </div>
                                     ) : meetingData?.processed ? (
                                         <div className='space-y-6'>
                                             {meetingData.summary && (
-                                                <div className='bg-card border border-border rounded-lg p-6'>
+                                                <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6'>
                                                     <h3 className='text-lg font-semibold text-foreground mb-3'>Meeting Summary</h3>
                                                     <p className='text-muted-foreground leading-relaxed'>
                                                         {meetingData.summary}
@@ -103,7 +103,7 @@ function MeetingDetail() {
                                             )}
 
                                             {!userChecked ? (
-                                                <div className='bg-card border border-border rounded-lg p-6'>
+                                                <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6'>
                                                     <div className='animate-pulse'>
                                                         <div className='h-4 bg-muted rounded w-1/4 mb-4'></div>
                                                         <div className='space-y-2'>
@@ -124,7 +124,7 @@ function MeetingDetail() {
                                                     )}
 
                                                     {!isOwner && displayActionItems.length > 0 && (
-                                                        <div className='bg-card rounded-lg p-6 border border-border'>
+                                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border '>
                                                             <h3 className='text-lg font-semibold text-foreground mb-4'>
                                                                 Action Items
                                                             </h3>
@@ -145,7 +145,7 @@ function MeetingDetail() {
                                             )}
                                         </div>
                                     ) : (
-                                        <div className='bg-card border border-border rounded-lg p-6 text-center'>
+                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl border  rounded-lg p-6 text-center'>
                                             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
                                             <p className='text-muted-foreground'>Processing meeting with AI..</p>
                                             <p className='text-sm text-muted-foreground mt-2'>You'll receive an email when ready</p>
@@ -158,14 +158,14 @@ function MeetingDetail() {
                             {activeTab === 'transcript' && (
                                 <div>
                                     {loading ? (
-                                        <div className='bg-card border border-border rounded-lg p-6 text-center'>
+                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl border  rounded-lg p-6 text-center'>
                                             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
                                             <p className='text-muted-foreground'>Loading meeting data..</p>
                                         </div>
                                     ) : meetingData?.transcript ? (
                                         <TranscriptDisplay transcript={meetingData.transcript} />
                                     ) : (
-                                        <div className='bg-card rounded-lg p-6 border border-border text-center'>
+                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border text-center'>
                                             <p className='text-muted-foreground'>No transcript avaialable</p>
                                         </div>
                                     )}
@@ -179,13 +179,13 @@ function MeetingDetail() {
                 </div>
 
                 {!userChecked ? (
-                    <div className='w-90 border-l border-border p-4 bg-card'>
+                    <div className='w-90 border-l border-border p-4 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
                         <div className='animate-pulse'>
-                            <div className='h-4 bg-muted rounded w-1/2 mb-4'></div>
+                            <div className='h-4 bg-[#1a0b2e]/70 rounded w-1/2 mb-4'></div>
                             <div className='space-y-3'>
-                                <div className='h-8 bg-muted rounded'></div>
-                                <div className='h-8 bg-muted rounded'></div>
-                                <div className='h-8 bg-muted rounded'></div>
+                                <div className='h-8 bg-[#1a0b2e]/70 rounded'></div>
+                                <div className='h-8 bg-[#1a0b2e]/70 rounded'></div>
+                                <div className='h-8 bg-[#1a0b2e]/70 rounded'></div>
                             </div>
                         </div>
                     </div>

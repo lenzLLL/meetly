@@ -24,3 +24,10 @@ https://d565aae76a4e.ngrok-free.app/api/integrations/asana/callback
 link https://api.slack.com/apps
 
 avec meeting baas developer hub je vais pouvoir gere zoom google calender et microsoft 
+
+tasks
+
+update schema to add zoomMeeting, microsoftMeeting
+add metrics like transcripts this months meetings this month attendes this month
+add meetng like a attende
+add 

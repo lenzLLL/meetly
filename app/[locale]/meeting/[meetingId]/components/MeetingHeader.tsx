@@ -126,7 +126,7 @@ function MeetingHeader({
         }
     }
     return (
-        <div className='bg-card border-b border-border px-6 py-3.5 flex justify-between items-center'>
+        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl  px-6 py-3.5 flex justify-between items-center'>
             <h1 className='text-xl font-semibold text-foreground'>
                 {title}
             </h1>
