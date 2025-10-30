@@ -11,7 +11,7 @@ try{
             'svix-timestamp': request.headers.get('svix-timestamp') || '',
             'svix-signature': request.headers.get('svix-signature') || '',
         }
-           const webhookSecret = process.env.CLERK_WEBHOOK_SECRET
+           const webhookSecret = process.env.CLERK_SECRET_WEBHOOK 
         if (webhookSecret) {
             const wh = new Webhook(webhookSecret)
             try {
