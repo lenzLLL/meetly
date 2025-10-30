@@ -4,6 +4,7 @@ import React from 'react'
 import { useIntegrations } from './hooks/useIntegrations'
 import SetupForm from './components/SetupForm'
 import IntegrationCard from './components/IntegrationCard'
+import AppHeader from '@/components/Header'
 
 function Integrations() {
 
@@ -34,7 +35,11 @@ function Integrations() {
         )
     }
     return (
+        <>
+            <AppHeader/>     {/* === Metrics Section === */}
+
         <div className='mt-5 sm:mt-0 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen bg-background p-6'>
+            
             <div className='max-w-4xl mx-auto'>
                 <div className='mb-8'>
                     <h1 className='text-2xl font-bold text-foreground mb-2'>Integrations</h1>
@@ -99,6 +104,7 @@ function Integrations() {
 
             </div>
         </div>
+        </>
     )
 }
 

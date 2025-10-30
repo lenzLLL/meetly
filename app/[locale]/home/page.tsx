@@ -7,7 +7,8 @@ import PastMeetings from './components/PastMeetings'
 import UpcomingMeetings from './components/UpcomingMeetings'
 import { useAuth } from '@clerk/nextjs'
 import { useUser } from '@/hooks/use-user'
-
+import { Users, Clock, Video, CalendarDays } from 'lucide-react'
+import AppHeader from '@/components/Header'
 export default function Home() {
   const {
     userId,
@@ -36,7 +37,28 @@ export default function Home() {
       saveUser()
     }
   }, [isSignedIn, isLoaded])
-
+  const metrics = [
+    {
+      title: "Total Meetings",
+      value: pastMeetings?.length + upcomingEvents?.length || 0,
+      icon: <Video className="h-6 w-6 text-white/90" />,
+    },
+    {
+      title: "Upcoming Meetings",
+      value: upcomingEvents?.length || 0,
+      icon: <CalendarDays className="h-6 w-6 text-white/90" />,
+    },
+    {
+      title: "Past Meetings",
+      value: pastMeetings?.length || 0,
+      icon: <Clock className="h-6 w-6 text-white/90" />,
+    },
+    // {
+    //   title: "Active Participants",
+    //   value: Math.floor(Math.random() * 20) + 5, 
+    //   icon: <Users className="h-6 w-6 text-white/90" />,
+    // },
+  ]
   const handleMeetingClick = (meetingId: string) => {
     router.push(`/meeting/${meetingId}`)
   }
@@ -51,6 +73,25 @@ export default function Home() {
 
   return (
     <div className="min-h-screen mt-5 sm:mt-0 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] text-white">
+      <AppHeader/>     {/* === Metrics Section === */}
+      <div className="w-full p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 sm:gap-4 gap-4">
+        {metrics.map((metric, index) => (
+          <div
+            key={index}
+            className="flex-1 bg-[#1a0b2e]/70 border border-white/10 backdrop-blur-md rounded-xl p-6 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-white/10 rounded-lg">
+                {metric.icon}
+              </div>
+              <div>
+                <p className="text-sm text-white/70">{metric.title}</p>
+                <p className="text-2xl font-bold">{metric.value}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
       <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6">
         {/* ---- Past Meetings ---- */}
         <div className="flex-1">

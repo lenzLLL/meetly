@@ -1,5 +1,6 @@
 'use client'
 
+import AppHeader from '@/components/Header'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -84,7 +85,9 @@ function Pricing() {
   }
 
   return (
-    <div className="mt-5 sm:mt-0 container mx-auto px-4 sm:px-6 2xl:max-w-[1400px] py-16 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] text-white">
+    <>
+    <AppHeader/>
+    <div className="sm:mt-0 container mx-auto px-4 sm:px-6 2xl:max-w-[1400px] py-16 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] text-white">
       <div className="max-w-2xl mx-auto text-center mb-14">
         <h2 className="text-3xl font-semibold tracking-tight mb-6">
           Choose Your{' '}
@@ -99,14 +102,14 @@ function Pricing() {
       </div>
 
       {/* ✅ Responsive Grid */}
-      <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="mt-12 lg:mt-22 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         {plans.map((plan) => {
           const isLoading = loading === plan.priceId
           return (
             <Card
               key={plan.id}
               className={`relative bg-[#1a0b2e]/70 overflow-visible flex flex-col justify-between ${
-                plan.popular ? 'border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.3)]' : ''
+                plan.popular ? 'border-purple-500 mt-0 lg:-mt-10 shadow-[0_0_20px_rgba(168,85,247,0.3)]' : ''
               }`}
             >
               {plan.popular && (
@@ -161,6 +164,7 @@ function Pricing() {
         })}
       </div>
     </div>
+     </>
   )
 }
 

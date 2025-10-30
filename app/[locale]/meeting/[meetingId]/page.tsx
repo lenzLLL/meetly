@@ -44,7 +44,7 @@ function MeetingDetail() {
                 isOwner={isOwner}
                 isLoading={!userChecked}
             />
-            <div className='flex h-[calc(100vh-73px)]'>
+            <div className='flex lg:flex-row h-[calc(100vh-73px)]'>
                 <div className={`flex-1 p-6 overflow-auto pb-24 ${!userChecked
                     ? ''
                     : !isOwner

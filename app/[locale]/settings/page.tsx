@@ -1,5 +1,6 @@
 'use client'
 
+import AppHeader from '@/components/Header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -134,6 +135,8 @@ function Settings() {
 
 
     return (
+        <>
+        <AppHeader/>
         <div className='mt-5 sm:mt-0 min-h-screen bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] p-6'>
             <div className='max-w-2xl mx-auto'>
                 <h1 className='text-2xl font-bold text-foreground mb-8 text-center'>Settings</h1>
@@ -274,6 +277,7 @@ function Settings() {
             </div>
 
         </div>
+        </>
     )
 }
 

@@ -13,10 +13,10 @@ export function ResponsiveSidebar() {
     <>
       {/* Bouton menu mobile */}
       <div className="sm:hidden fixed top-3 left-3 z-50">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
+        <Sheet  open={open} onOpenChange={setOpen}>
+          <SheetTrigger className="z-[1000] mt-5" asChild>
             <Button variant="ghost" size="icon" className="text-white">
-              <Menu className="h-6 w-6" />
+              <Menu className="h-6 w-6 " />
             </Button>
           </SheetTrigger>
           <SheetContent
