@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useUsage } from '@/context/UsageContext'
 import { Send } from 'lucide-react'
+import Link from 'next/link'
 import React from 'react'
 
 interface Message {
@@ -96,9 +97,9 @@ function ChatSidebar({
                 {!canChat && (
                     <div className='text-center p-4'>
                         <p className='text-xs text-muted-foreground mb-2'> Daily chat limit reached</p>
-                        <a href="/pricing" className='text-xs text-primary underline'>
+                        <Link href="/pricing" className='text-xs text-primary underline'>
                             Upgrade to continute chatting
-                        </a>
+                        </Link>
                     </div>
                 )}
             </div>

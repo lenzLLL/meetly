@@ -148,7 +148,7 @@ function MeetingDetail() {
                                         <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl border  rounded-lg p-6 text-center'>
                                             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
                                             <p className='text-muted-foreground'>Processing meeting with AI..</p>
-                                            <p className='text-sm text-muted-foreground mt-2'>You'll receive an email when ready</p>
+                                            <p className='text-sm text-muted-foreground mt-2'>You will receive an email when ready</p>
 
                                         </div>
                                     )}

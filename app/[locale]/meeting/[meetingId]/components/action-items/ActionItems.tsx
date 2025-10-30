@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import ActionItemsList from './ActionItemsList'
 import AddActionItemInput from './AddActionItemInput'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 export interface ActionItemsProps {
     actionItems: ActionItem[]
@@ -174,9 +175,9 @@ function ActionItems({
             {!hasConnectedIntegrations && actionItems.length > 0 && (
                 <div className='mt-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30'>
                     <p className='text-xs text-muted-foreground text-center'>
-                        <a href="/integrations" className='text-primary hover:underline'>
+                        <Link href="/integrations" className='text-primary hover:underline'>
                             Connect Integrations
-                        </a> to add action items to your tools
+                        </Link> to add action items to your tools
                     </p>
                 </div>
             )}
