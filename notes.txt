@@ -31,3 +31,17 @@ update schema to add zoomMeeting, microsoftMeeting
 add metrics like transcripts this months meetings this month attendes this month
 add meetng like a attende
 add 
+
+gestion des liens et webhooks
+
+clerk config - webhook
+google cloud - google auth platform - client
+meeting baas go to api key to change link
+go to aws amazon cloud update all env
+trello console developper - authorization
+asana url 
+stripe and change secret webhook
+slack console developer join app Oauth permission redirect url then go to event.. active it add
+/api/slack/events is not already finished
+then env in vercel google_redirec next_public_app
+slack_redirect_url

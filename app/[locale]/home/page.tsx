@@ -32,11 +32,11 @@ export default function Home() {
   const { isSignedIn, isLoaded } = useAuth()
   const { saveUser } = useUser()
 
-  useEffect(() => {
-    if (isSignedIn && isLoaded) {
-      saveUser()
-    }
-  }, [isSignedIn, isLoaded])
+  // useEffect(() => {
+  //   if (isSignedIn && isLoaded) {
+  //     saveUser()
+  //   }
+  // }, [isSignedIn, isLoaded])
   const metrics = [
     {
       title: "Total Meetings",

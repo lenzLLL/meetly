@@ -18,14 +18,14 @@ export default function Home() {
   const SaveUser = async () =>{
         await SaveUser()
   }
-  useEffect(
-    ()=>{
-        if(isSignedIn){
-              saveUser()
-        }
+  // useEffect(
+  //   ()=>{
+  //       if(isSignedIn){
+  //             saveUser()
+  //       }
           
-    },[isSignedIn,isLoaded]
-  )
+  //   },[isSignedIn,isLoaded]
+  // )
   return (
       <div className="bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen ">
           <Herosection/>
