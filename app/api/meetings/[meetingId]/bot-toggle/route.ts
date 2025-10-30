@@ -2,13 +2,10 @@ import { prisma } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
-interface RouteContext {
-  params: {
-    meetingId: string;
-  };
-}
-
-export async function POST(request: NextRequest, context: RouteContext) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Record<string, string> }
+) {
   try {
     const { userId } = await auth();
 
@@ -16,7 +13,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { meetingId } = context.params; // ✅ pas de await ici
+    // ✅ Typage correct du paramètre dynamique
+    const meetingId = context.params.meetingId;
     const { botScheduled } = await request.json();
 
     const user = await prisma.user.findUnique({
