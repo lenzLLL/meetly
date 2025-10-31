@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
                 grant_type: 'authorization_code',
                 client_id: process.env.ASANA_CLIENT_ID!,
                 client_secret: process.env.ASANA_CLIENT_SECRET!,
-                redirect_uri: `https://d565aae76a4e.ngrok-free.app/api/integrations/asana/callback`,
+                redirect_uri: `https://meetly-tgib.vercel.app/api/integrations/asana/callback`,
                 code: code
             })
         })

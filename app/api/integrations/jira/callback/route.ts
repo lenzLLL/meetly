@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
                 grant_type: 'authorization_code',
                 client_id: process.env.JIRA_CLIENT_ID!,
                 client_secret: process.env.JIRA_CLIENT_SECRET!,
-                redirect_uri: `https://d565aae76a4e.ngrok-free.app/api/integrations/jira/callback`,
+                redirect_uri: `https://meetly-tgib.vercel.app/api/integrations/jira/callback`,
                 code: code
             })
         })

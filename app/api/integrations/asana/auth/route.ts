@@ -10,7 +10,7 @@ export async function GET() {
 
     const clientId = process.env.ASANA_CLIENT_ID
 
-    const redirectUri = `https://d565aae76a4e.ngrok-free.app/api/integrations/asana/callback`
+    const redirectUri = `https://meetly-tgib.vercel.app/api/integrations/asana/callback`
 
     const scope = 'projects:read projects:write tasks:read tasks:write users:read workspaces:read'
 
