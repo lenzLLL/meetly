@@ -68,7 +68,7 @@ function ChatSidebar({
 
                 {messages.length > 0 && !messages[messages.length - 1].isBot && (
                     <div className='flex justify-start'>
-                        <div className='bg-muted text-foreground rounded-lg p-3'>
+                        <div className='bg-gradient-to-r from-indigo-600/60 to-purple-600/60 border border-indigo-800 backdrop-blur-md  text-foreground rounded-lg p-3'>
                             <p className='text-sm'>
                                 Thinking...
                             </p>
