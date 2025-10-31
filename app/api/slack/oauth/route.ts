@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'no authorization code' }, { status: 400 })
         }
 
-        const redirectUri = `https://d565aae76a4e.ngrok-free.app/api/slack/oauth`
+        const redirectUri = `https://meetly-tgib.vercel.app/api/slack/oauth`
 
         const tokenResponse = await fetch('https://slack.com/api/oauth.v2.access', {
             method: 'POST',
