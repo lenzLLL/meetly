@@ -47,7 +47,7 @@ export default function Herosection() {
 
       ) : (
         <>
-          <SignInButton forceRedirectUrl={"/home"} mode="modal">
+          <SignInButton signUpFallbackRedirectUrl={"/home"}  forceRedirectUrl={"/home"} mode="modal">
             <Button variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white cursor-pointer">
               {t('SignIn')}
             </Button>
