@@ -41,7 +41,17 @@ export async function POST(request: NextRequest) {
         (email: any) => email.id === event.data.primary_email_address_id
       )?.email_address;
 
-      // 🔹 On garde TA logique de création d'utilisateur
+      // 🧠 Vérifie si un utilisateur avec cet email existe déjà
+      const existingUser = await prisma.user.findFirst({
+        where: { email: primaryEmail || undefined },
+      });
+
+      if (existingUser) {
+        console.log("⚠️ Utilisateur déjà existant:", existingUser.email);
+        return NextResponse.json({ message: "user already exists" });
+      }
+
+      // 🔹 Création d’un nouvel utilisateur sinon
       const newUser = await prisma.user.create({
         data: {
           id: id,
