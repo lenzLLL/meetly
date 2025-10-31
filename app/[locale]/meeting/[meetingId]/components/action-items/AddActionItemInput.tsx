@@ -22,7 +22,7 @@ function AddActionItemInput({
     if (showAddInput) {
 
         return (
-            <div className='flex items-center gap-2 p-3 bg-muted/30 rounded-lg'>
+            <div className='flex items-center gap-2 p-3 bg-[#1a0b2e]/70 rounded-lg'>
                 <Input
                     type='text'
                     value={newItemText}

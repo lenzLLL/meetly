@@ -111,7 +111,7 @@ function ActionItems({
 
     if (!integrationsLoaded) {
         return (
-            <div className='bg-card rounded-lg p-6 border border-border mb-8'>
+            <div className='bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] rounded-lg p-6 border border-border mb-8'>
                 <h3 className='text-lg font-semibold text-foreground mb-4'>
                     Action Items
                 </h3>
