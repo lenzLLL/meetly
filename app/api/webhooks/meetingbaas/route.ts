@@ -1,6 +1,6 @@
 import { processMeetingTranscript } from "@/lib/ai-processor";
 import { prisma } from "@/lib/db";
-import { sendMeetingSummaryEmail } from "@/lib/email-service-free";
+import { sendMeetingSummaryEmail } from "@/lib/email-service";
 import { processTranscript } from "@/lib/rag";
 import { incrementMeetingUsage } from "@/lib/usage";
 import { NextRequest, NextResponse } from "next/server";
