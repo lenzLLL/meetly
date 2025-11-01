@@ -19,18 +19,20 @@ function CustomAudioPlayer({
     const [duration, setDuration] = useState(0);
     const [volume, setVolume] = useState(0.75);
 
-    if (!recordingUrl) {
-        return null;
-    }
-
-    // ✅ recharge le player quand l’URL change
-    useEffect(() => {
+        useEffect(() => {
         const audio = playerRef.current?.audio?.current;
         if (audio && recordingUrl) {
             audio.src = recordingUrl;
             audio.load();
         }
     }, [recordingUrl]);
+
+    if (!recordingUrl) {
+        return null;
+    }
+
+    // ✅ recharge le player quand l’URL change
+
 
     const handlePlayPause = () => {
         const audio = playerRef.current?.audio?.current;
