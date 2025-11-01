@@ -130,7 +130,7 @@ function ActionItems({
                                 <Button
                                     variant='ghost'
                                     size='icon'
-                                    className='opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/20 text-destructive rounded transition-all'
+                                    className='opacity-0 group-hover:opacity-100 p-1 hover:border-b hover:border-gray-800 hover:bg-black/30 hover:backdrop-blur-xl text-destructive rounded transition-all'
                                     disabled
                                 >
 
