@@ -3,7 +3,13 @@ import React from 'react'
 import { Bot, Calendar, Mail, MessageSquare, Share2, Slack } from 'lucide-react'
 import { useTranslations } from 'next-intl';
 import { useParams } from "next/navigation";
-const features = [
+
+
+export default function FeaturesSection() {
+  const t = useTranslations("Home");
+  const params = useParams();
+  const locale = params?.locale;
+  const features = [
   {
     icon: Bot,
     title: "AI Meeting Summaries",
@@ -59,11 +65,6 @@ const features = [
     bgColor: "bg-pink-500/10",
   },
 ];
-
-export default function FeaturesSection() {
-  const t = useTranslations("Home");
-  const params = useParams();
-  const locale = params?.locale;
   return (
         <section className='py-20 '>
             <div className='max-w-6xl mx-auto px-4'>
