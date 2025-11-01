@@ -1,201 +1,122 @@
-import { Button } from '@/components/ui/button';
-import { Pause, Play, SkipBack, SkipForward, Volume2 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
-import AudioPlayer from 'react-h5-audio-player';
-import 'react-h5-audio-player/lib/styles.css';
+'use client'
 
-interface CustomAudioPlayerProps {
-    recordingUrl?: string;
-    isOwner?: boolean;
+import React, { useEffect, useRef, useState } from 'react'
+import { Play, Pause, Volume2 } from 'lucide-react'
+import { Slider } from '@/components/ui/slider'
+
+interface SmartAudioPlayerProps {
+  recordingUrl?: string
+  isOwner?: boolean
 }
 
-function CustomAudioPlayer({
-    recordingUrl,
-    isOwner = true
-}: CustomAudioPlayerProps) {
-    const playerRef = useRef<any>(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(0);
-    const [volume, setVolume] = useState(0.75);
+export default function SmartAudioPlayer({ recordingUrl, isOwner = true }: SmartAudioPlayerProps) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [volume, setVolume] = useState(0.7)
 
-        useEffect(() => {
-        const audio = playerRef.current?.audio?.current;
-        if (audio && recordingUrl) {
-            audio.src = recordingUrl;
-            audio.load();
-        }
-    }, [recordingUrl]);
+  // ✅ Recharge l’audio à chaque changement d’URL
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio || !recordingUrl) return
+    audio.pause()
+    audio.src = recordingUrl
+    audio.load()
+    setIsPlaying(false)
+    setCurrentTime(0)
+  }, [recordingUrl])
 
-    if (!recordingUrl) {
-        return null;
+  const togglePlay = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    if (isPlaying) {
+      audio.pause()
+    } else {
+      audio.play()
     }
+    setIsPlaying(!isPlaying)
+  }
 
-    // ✅ recharge le player quand l’URL change
+  const handleTimeUpdate = () => {
+    const audio = audioRef.current
+    if (audio) {
+      setCurrentTime(audio.currentTime)
+    }
+  }
 
+  const handleLoadedMetadata = () => {
+    const audio = audioRef.current
+    if (audio) {
+      setDuration(audio.duration)
+    }
+  }
 
-    const handlePlayPause = () => {
-        const audio = playerRef.current?.audio?.current;
-        if (!audio) return;
+  const handleVolumeChange = (val: number[]) => {
+    const newVolume = val[0]
+    setVolume(newVolume)
+    if (audioRef.current) audioRef.current.volume = newVolume
+  }
 
-        if (isPlaying) {
-            audio.pause();
-        } else {
-            audio.play().catch(() => {
-                console.warn('Lecture bloquée par le navigateur');
-            });
-        }
-    };
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return '00:00'
+    const m = Math.floor(seconds / 60)
+    const s = Math.floor(seconds % 60)
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  }
 
-    const handleSkipBack = () => {
-        const audio = playerRef.current?.audio?.current;
-        if (!audio) return;
-        audio.currentTime = Math.max(0, audio.currentTime - 10);
-    };
+  if (!recordingUrl) return null
 
-    const handleSkipForward = () => {
-        const audio = playerRef.current?.audio?.current;
-        if (!audio) return;
-        audio.currentTime = Math.min(duration, audio.currentTime + 10);
-    };
-
-    const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const audio = playerRef.current?.audio?.current;
-        if (!audio || !duration) return;
-
-        const rect = e.currentTarget.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const width = rect.width;
-        const newTime = (clickX / width) * duration;
-
-        audio.currentTime = newTime;
-    };
-
-    const handleVolumeChange = (e: React.MouseEvent<HTMLDivElement>) => {
-        const audio = playerRef.current?.audio?.current;
-        if (!audio) return;
-
-        const rect = e.currentTarget.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const width = rect.width;
-        const newVolume = Math.max(0, Math.min(1, clickX / width));
-
-        audio.volume = newVolume;
-        setVolume(newVolume);
-    };
-
-    const formatTime = (seconds: number) => {
-        if (isNaN(seconds)) return '0:00';
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    return (
-        <div
-            className={`fixed bottom-0 bg-[#1a0b2e]/70 border-t border-border p-5 ${!isOwner ? 'left-0 right-0' : ''}`}
-            style={isOwner ? { left: 'var(--sidebar-width, 16rem)', right: '24rem' } : {}}
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-[#1a0b2e]/90 border-t border-border backdrop-blur-lg px-6 py-3 flex items-center justify-between z-50">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={togglePlay}
+          className="p-2 rounded-full bg-primary/20 hover:bg-primary/30 transition"
         >
-            {/* ✅ ne pas utiliser display:none */}
-            <div className="hidden">
-                <AudioPlayer
-                    ref={playerRef}
-                    src={recordingUrl}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    onEnded={() => setIsPlaying(false)}
-                    onListen={(e) => {
-                        const audio = e.target as HTMLAudioElement;
-                        if (audio?.currentTime) setCurrentTime(audio.currentTime);
-                    }}
-                onLoadedMetaData={(e) => {
-         const audio = e.target as HTMLAudioElement;
-    if (audio?.duration) setDuration(audio.duration);
-                  }}
-                    volume={volume}
-                    hasDefaultKeyBindings={true}
-                    autoPlayAfterSrcChange={false}
-                    showSkipControls={false}
-                    showJumpControls={false}
-                    showDownloadProgress={false}
-                    showFilledProgress={false}
-                />
-            </div>
-
-            <div className={!isOwner ? 'max-w-4xl mx-auto' : ''}>
-                <div className="flex items-center gap-4">
-                    {/* Boutons de contrôle */}
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleSkipBack}
-                            className="hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                        >
-                            <SkipBack className="h-4 w-4 text-foreground" />
-                        </Button>
-
-                        <Button
-                            variant="default"
-                            size="icon"
-                            onClick={handlePlayPause}
-                            className="bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors cursor-pointer"
-                        >
-                            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                        </Button>
-
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleSkipForward}
-                            className="hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                        >
-                            <SkipForward className="h-4 w-4" />
-                        </Button>
-                    </div>
-
-                    {/* Barre de progression */}
-                    <div className="flex-1 flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground min-w-[40px]">
-                            {formatTime(currentTime)}
-                        </span>
-
-                        <div
-                            className="flex-1 bg-muted rounded-full h-2 cursor-pointer"
-                            onClick={handleProgressClick}
-                        >
-                            <div
-                                className="bg-primary h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                            />
-                        </div>
-
-                        <span className="text-sm text-muted-foreground min-w-[40px]">
-                            {formatTime(duration)}
-                        </span>
-                    </div>
-
-                    {/* Volume */}
-                    <div className="flex items-center gap-2">
-                        <Volume2 className="h-4 w-4 text-muted-foreground" />
-                        <div
-                            className="w-20 bg-muted rounded-full h-2 cursor-pointer"
-                            onClick={handleVolumeChange}
-                        >
-                            <div
-                                className="bg-primary h-2 rounded-full"
-                                style={{ width: `${volume * 100}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="text-sm text-muted-foreground">
-                        Meeting Recording
-                    </div>
-                </div>
-            </div>
+          {isPlaying ? <Pause className="text-primary w-5 h-5" /> : <Play className="text-primary w-5 h-5" />}
+        </button>
+        <div className="flex flex-col">
+          <span className="text-sm text-foreground font-medium">{isOwner ? 'Your Recording' : 'Meeting Audio'}</span>
+          <div className="text-xs text-muted-foreground">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
         </div>
-    );
-}
+      </div>
 
-export default CustomAudioPlayer;
+      <div className="flex-1 mx-6">
+        <Slider
+          value={[duration ? (currentTime / duration) * 100 : 0]}
+          onValueChange={(val) => {
+            const audio = audioRef.current
+            if (audio && duration) {
+              audio.currentTime = (val[0] / 100) * duration
+            }
+          }}
+          max={100}
+          step={0.1}
+          className="cursor-pointer"
+        />
+      </div>
+
+      <div className="flex items-center gap-2 w-32">
+        <Volume2 className="w-4 h-4 text-muted-foreground" />
+        <Slider
+          value={[volume]}
+          onValueChange={handleVolumeChange}
+          min={0}
+          max={1}
+          step={0.01}
+          className="cursor-pointer"
+        />
+      </div>
+
+      <audio
+        ref={audioRef}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={() => setIsPlaying(false)}
+      />
+    </div>
+  )
+}

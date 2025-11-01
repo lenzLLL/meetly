@@ -1,122 +1,213 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import { Play, Pause, Volume2 } from 'lucide-react'
-import { Slider } from '@/components/ui/slider'
+import React from 'react'
+import { useMeetingDetail } from './hooks/useMeetingDetail'
+import MeetingHeader from './components/MeetingHeader'
+import MeetingInfo from './components/MeetingInfo'
+import { Button } from '@/components/ui/button'
+import ActionItems from './components/action-items/ActionItems'
+import TranscriptDisplay from './components/TranscriptDisplay'
+import ChatSidebar from './components/ChatSidebar'
+import CustomAudioPlayer from './components/AudioPlayer'
 
-interface SmartAudioPlayerProps {
-  recordingUrl?: string
-  isOwner?: boolean
-}
+function MeetingDetail() {
 
-export default function SmartAudioPlayer({ recordingUrl, isOwner = true }: SmartAudioPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(0.7)
+    const {
+        meetingId,
+        isOwner,
+        userChecked,
+        chatInput,
+        setChatInput,
+        messages,
+        showSuggestions,
+        activeTab,
+        setActiveTab,
+        meetingData,
+        loading,
+        handleSendMessage,
+        handleSuggestionClick,
+        handleInputChange,
+        deleteActionItem,
+        addActionItem,
+        displayActionItems,
+        meetingInfoData
+    } = useMeetingDetail()
 
-  // ✅ Recharge l’audio à chaque changement d’URL
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !recordingUrl) return
-    audio.pause()
-    audio.src = recordingUrl
-    audio.load()
-    setIsPlaying(false)
-    setCurrentTime(0)
-  }, [recordingUrl])
+    return (
+        <div className='mt-5 sm:mt-0 min-h-screen bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
 
-  const togglePlay = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    if (isPlaying) {
-      audio.pause()
-    } else {
-      audio.play()
-    }
-    setIsPlaying(!isPlaying)
-  }
+            <MeetingHeader
+                title={meetingData?.title || 'Meeting'}
+                meetingId={meetingId}
+                summary={meetingData?.summary}
+                actionItems={meetingData?.actionItems?.map(item => `• ${item.text}`).join('\n') || ''}
+                isOwner={isOwner}
+                isLoading={!userChecked}
+            />
+            <div className='flex lg:flex-row h-[calc(100vh-73px)]'>
+                <div className={`flex-1 p-6 overflow-auto pb-24 ${!userChecked
+                    ? ''
+                    : !isOwner
+                        ? 'max-w-4xl mx-auto'
+                        : ''
+                    }`}>
+                    <MeetingInfo meetingData={meetingInfoData} />
 
-  const handleTimeUpdate = () => {
-    const audio = audioRef.current
-    if (audio) {
-      setCurrentTime(audio.currentTime)
-    }
-  }
+                    <div className='mb-8'>
+                        <div className='flex border-b border-border'>
+                            <Button
+                                variant='ghost'
+                                onClick={() => setActiveTab('summary')}
+                                className={`px-4 py-2 text-sm font-medium border-b-2 rounded-none shadow-none transition-colors
+                                ${activeTab === 'summary'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                                    }`}
+                                style={{ boxShadow: 'none' }}
+                                type='button'
+                            >
+                                Summary
+                            </Button>
+                            <Button
+                                variant='ghost'
+                                onClick={() => setActiveTab('transcript')}
+                                className={`px-4 py-2 text-sm font-medium border-b-2 rounded-none shadow-none transition-colors
+                                ${activeTab === 'transcript'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                                    }`}
+                                style={{ boxShadow: 'none' }}
+                                type='button'
+                            >
+                                Transcript
+                            </Button>
+                        </div>
 
-  const handleLoadedMetadata = () => {
-    const audio = audioRef.current
-    if (audio) {
-      setDuration(audio.duration)
-    }
-  }
+                        <div className='mt-6'>
+                            {activeTab === 'summary' && (
+                                <div>
+                                    {loading ? (
+                                        <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6 text-center'>
+                                            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
+                                            <p className='text-muted-foreground'>Loading meeting data..</p>
+                                        </div>
+                                    ) : meetingData?.processed ? (
+                                        <div className='space-y-6'>
+                                            {meetingData.summary && (
+                                                <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6'>
+                                                    <h3 className='text-lg font-semibold text-foreground mb-3'>Meeting Summary</h3>
+                                                    <p className='text-muted-foreground leading-relaxed'>
+                                                        {meetingData.summary}
+                                                    </p>
+                                                </div>
+                                            )}
 
-  const handleVolumeChange = (val: number[]) => {
-    const newVolume = val[0]
-    setVolume(newVolume)
-    if (audioRef.current) audioRef.current.volume = newVolume
-  }
+                                            {!userChecked ? (
+                                                <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6'>
+                                                    <div className='animate-pulse'>
+                                                        <div className='h-4 bg-muted rounded w-1/4 mb-4'></div>
+                                                        <div className='space-y-2'>
+                                                            <div className='h-3 bg-muted rounded w-3/4'></div>
+                                                            <div className='h-3 bg-muted rounded w-1/2'></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    {isOwner && displayActionItems.length > 0 && (
+                                                        <ActionItems
+                                                            actionItems={displayActionItems}
+                                                            onDeleteItem={deleteActionItem}
+                                                            onAddItem={addActionItem}
+                                                            meetingId={meetingId}
+                                                        />
+                                                    )}
 
-  const formatTime = (seconds: number) => {
-    if (!seconds || isNaN(seconds)) return '00:00'
-    const m = Math.floor(seconds / 60)
-    const s = Math.floor(seconds % 60)
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-  }
+                                                    {!isOwner && displayActionItems.length > 0 && (
+                                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border '>
+                                                            <h3 className='text-lg font-semibold text-foreground mb-4'>
+                                                                Action Items
+                                                            </h3>
+                                                            <div className='space-y-3'>
+                                                                {displayActionItems.map((item) => (
+                                                                    <div key={item.id} className='flex items-start gap-3'>
+                                                                        <div className='w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0'></div>
+                                                                        <p className='text-sm text-foreground'>{item.text}</p>
 
-  if (!recordingUrl) return null
+                                                                    </div>
+                                                                ))}
 
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-[#1a0b2e]/90 border-t border-border backdrop-blur-lg px-6 py-3 flex items-center justify-between z-50">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={togglePlay}
-          className="p-2 rounded-full bg-primary/20 hover:bg-primary/30 transition"
-        >
-          {isPlaying ? <Pause className="text-primary w-5 h-5" /> : <Play className="text-primary w-5 h-5" />}
-        </button>
-        <div className="flex flex-col">
-          <span className="text-sm text-foreground font-medium">{isOwner ? 'Your Recording' : 'Meeting Audio'}</span>
-          <div className="text-xs text-muted-foreground">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </div>
+                                                            </div>
+
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl border  rounded-lg p-6 text-center'>
+                                            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
+                                            <p className='text-muted-foreground'>Processing meeting with AI..</p>
+                                            <p className='text-sm text-muted-foreground mt-2'>You will receive an email when ready</p>
+
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'transcript' && (
+                                <div>
+                                    {loading ? (
+                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl border  rounded-lg p-6 text-center'>
+                                            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
+                                            <p className='text-muted-foreground'>Loading meeting data..</p>
+                                        </div>
+                                    ) : meetingData?.transcript ? (
+                                        <TranscriptDisplay transcript={meetingData.transcript} />
+                                    ) : (
+                                        <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border text-center'>
+                                            <p className='text-muted-foreground'>No transcript avaialable</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {!userChecked ? (
+                    <div className='w-90 border-l border-border p-4 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
+                        <div className='animate-pulse'>
+                            <div className='h-4 bg-[#1a0b2e]/70 rounded w-1/2 mb-4'></div>
+                            <div className='space-y-3'>
+                                <div className='h-8 bg-[#1a0b2e]/70 rounded'></div>
+                                <div className='h-8 bg-[#1a0b2e]/70 rounded'></div>
+                                <div className='h-8 bg-[#1a0b2e]/70 rounded'></div>
+                            </div>
+                        </div>
+                    </div>
+                ) : isOwner && (
+                    <ChatSidebar
+                        messages={messages}
+                        chatInput={chatInput}
+                        showSuggestions={showSuggestions}
+                        onInputChange={handleInputChange}
+                        onSendMessage={handleSendMessage}
+                        onSuggestionClick={handleSuggestionClick}
+                    />
+                )}
+
+            </div>
+
+            <CustomAudioPlayer
+                recordingUrl={meetingData?.recordingUrl}
+                isOwner={isOwner}
+            />
         </div>
-      </div>
-
-      <div className="flex-1 mx-6">
-        <Slider
-          value={[duration ? (currentTime / duration) * 100 : 0]}
-          onValueChange={(val) => {
-            const audio = audioRef.current
-            if (audio && duration) {
-              audio.currentTime = (val[0] / 100) * duration
-            }
-          }}
-          max={100}
-          step={0.1}
-          className="cursor-pointer"
-        />
-      </div>
-
-      <div className="flex items-center gap-2 w-32">
-        <Volume2 className="w-4 h-4 text-muted-foreground" />
-        <Slider
-          value={[volume]}
-          onValueChange={handleVolumeChange}
-          min={0}
-          max={1}
-          step={0.01}
-          className="cursor-pointer"
-        />
-      </div>
-
-      <audio
-        ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
-      />
-    </div>
-  )
+    )
 }
+
+export default MeetingDetail
