@@ -151,7 +151,7 @@ function ActionItems({
     }
 
     return (
-        <div className='bg-card rounded-lg p-6 border border-border mb-8'>
+        <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border mb-8'>
             <h3 className='text-lg font-semibold text-foreground mb-4'>
                 Action Items
             </h3>
@@ -173,7 +173,7 @@ function ActionItems({
             />
 
             {!hasConnectedIntegrations && actionItems.length > 0 && (
-                <div className='mt-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30'>
+                <div className='mt-4 p-3 bg-[#1a0b2e]/70 rounded-lg border border-dashed border-muted-foreground/30'>
                     <p className='text-xs text-muted-foreground text-center'>
                         <Link href="/integrations" className='text-primary hover:underline'>
                             Connect Integrations

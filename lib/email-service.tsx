@@ -31,9 +31,9 @@ export async function sendMeetingSummaryEmail(data: EmailData) {
         )
 
         const result = await resend.emails.send({
-            from: 'Meeting Bot <onboarding@resend.dev>',
+            from: 'Meetly <onboarding@resend.dev>',
             to: [data.userEmail],
-            replyTo: 'gowreesh100@gmail.com',
+            replyTo: 'lenzyounda@gmail.com',
             subject: `Meeting Summary Ready - ${data.meetingTitle}`,
             html: emailHtml,
             tags: [
