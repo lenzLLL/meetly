@@ -65,7 +65,7 @@ function AddActionItemInput({
     return (
         <Button
             variant='ghost'
-            className='flex items-center gap-3 w-full py-2 px-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors group'
+            className='flex cursor-pointer border-b border-gray-800 bg-black/30 backdrop-blur-xl items-center gap-3 w-full py-2 px-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors group'
             onClick={() => setShowAddInput(true)}
         >
             <Plus className='h-4 w-4' />
