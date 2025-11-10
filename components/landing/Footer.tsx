@@ -1,15 +1,11 @@
 "use client";
 
 import { Bot } from "lucide-react";
-import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import React from "react";
 
-function Footer() {
-  const params = useParams();
-  const locale = params?.locale || "en";
+export default function Footer() {
   const t = useTranslations("Home");
-  const isEnglish = locale === "en";
 
   return (
     <footer className="border-t border-gray-800 py-5">
@@ -22,14 +18,10 @@ function Footer() {
             <span className="text-xl font-bold text-white">Meetly</span>
           </div>
           <div className="text-gray-500 text-sm text-center md:text-right">
-            {isEnglish
-              ? `© ${new Date().getFullYear()} Meetly. Made with ❤️ for better meetings.`
-              : `© ${new Date().getFullYear()} Meetly. Fait avec ❤️ pour de meilleures réunions.`}
+            {t("FooterText", { year: new Date().getFullYear() })}
           </div>
         </div>
       </div>
     </footer>
   );
 }
-
-export default Footer;

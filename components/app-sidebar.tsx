@@ -90,7 +90,7 @@ export function AppSidebar() {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-purple-600 text-sidebar-primary-foreground">
             <Bot className="w-4 h-4" />
           </div>
-          <span className="text-lg font-semibold text-sidebar-foreground">Meetly</span>
+          <span className="text-lg font-semibold text-sidebar-foreground">Synopsia</span>
         </div>
       </SidebarHeader>
 

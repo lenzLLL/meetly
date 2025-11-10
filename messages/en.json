@@ -1,15 +1,36 @@
 {
    "Home":{
+    "MoreFeature1Title": "Complete Meeting Exports",
+    "MoreFeature1Description": "Download audio MP3, transcripts, summaries, and action items.",
+    "MoreFeature2Title": "Full Customization",
+    "MoreFeature2Description": "Customize bot name, image and toggle bot participation.",
+    "MoreFeature3Title": "Meeting Analytics",
+    "MoreFeature3Description": "Track meeting patterns, participation rates, and productivity.",
+    "StatUsers": "Happy Users",
+    "StatUptime": "Uptime",
+    "StatSetupTime": "Setup Time",
+    "StatSavedPerMonth": "Saved Per Month",
+    "Step1Title": "Connect Calendar",
+    "Step1Description": "Link your Google Calendar and we'll automatically detect your meetings.",
+    "Step2Title": "Bot Joins Meeting",
+    "Step2Description": "Our AI bot automatically joins and records your meetings with full transcription.",
+    "Step3Title": "Get Insights",
+    "Step3Description": "Receive summaries, action items, and push them to your favourite tools instantly."
+     ,
+      "FooterText": "© {year} Meetly. Made with ❤️ for better meetings.",
+    "CTAButtonDashboard": "Dashboard",
+    "CTAButtonSignUp": "Start Now",
+    "CTAReviews": "4.9/5 from 2+ reviews",
      "SignIn":"Sign In",
     "SignUp":"Get Started",
     "HeroText":"Transform Your Meetings with",
     "HeroText2":"AI Magic",
     "HeroSubTitle":"Automatic summaries, action items, and intelligent insights for every meeting. Never miss important details again.",
-    "HeroBtn1":"Start Free Trial",
+    "HeroBtn1":"Start Now",
     "HeroBtn2":"Watch Demo",
-    "Check1":"No credit card required",
-    "Check2":"Setup in 2 minutes",
-    "Check3":"Free forever plan",
+    "Check1": "Ultra-fast synchronization",
+    "Check2":  "Real-time meeting analysis",
+    "Check3": "Zero latency thanks to our optimized infrastructure",
     "FeatureTitle":"Everything you need for",
     "FeatureTitle2":"Smarter Meetings",
     "FeatureDescription":"From AI summaries to seamless integrations, we've got every aspect covered.",
@@ -24,7 +45,163 @@
     "MoreDescription":"Everything you need for complete meeting management",
     "CTATitle":"Ready to",
     "CTATitle2":"revolutionize your meetings?",
-    "CTADescription":"Join thousands of teams aldready using MeetingBot to save time."
+    "CTADescription":"Join thousands of teams aldready using Meetly to save time.",
+    "Features": {
+      "title": "Powerful",
+      "titleHighlight": "Features",
+      "description": "Everything you need to automate and summarize your meetings with AI.",
+      "aiMeetingSummaries": {
+        "title": "AI Meeting Summaries",
+        "description": "Automatic meeting summaries and action items after each meeting."
+      },
+      "smartCalendarIntegration": {
+        "title": "Smart Calendar Integration",
+        "description": "Connect Google Calendar and bots automatically join meetings."
+      },
+      "automatedEmailReports": {
+        "title": "Automated Email Reports",
+        "description": "Receive beautiful email summaries with action items."
+      },
+      "chatWithMeetings": {
+        "title": "Chat with Meetings",
+        "description": "Ask questions about meetings using our RAG pipeline."
+      },
+      "oneClickIntegrations": {
+        "title": "One-Click Integrations",
+        "description": "Push action items to Slack, Asana, Jira and Trello."
+      },
+      "slackBotIntegration": {
+        "title": "Slack Bot Integration",
+        "description": "Install our Slack Bot to ask questions and share insights."
+      }
+    }
+   },
+    "Pricing": {
+    "Title": {
+      "part1": "Choose Your",
+      "part2": "Plan"
+    },
+    "Subtitle": "Automatic summaries, action items, and intelligent insights for every meeting. Never miss important details again.",
+    "MostPopular": "Most Popular",
+    "Processing": "Processing...",
+    "SubscribeButton": "Subscribe to {plan}",
 
-   }
+    "Starter": {
+      "name": "Starter",
+      "description": "Perfect for people getting started",
+      "features": [
+        "10 meetings per month",
+        "30 AI chat messages per day",
+        "Meeting transcripts and summaries",
+        "Action items extraction",
+        "Email notifications"
+      ]
+    },
+    "Pro": {
+      "name": "Pro",
+      "description": "Perfect for people growing who need more power",
+      "features": [
+        "30 meetings per month",
+        "100 AI chat messages per day",
+        "Meeting transcripts and summaries",
+        "Action items extraction",
+        "Email notifications",
+        "Priority Support"
+      ]
+    },
+    "Premium": {
+      "name": "Premium",
+      "description": "Perfect for people who need unlimited limits",
+      "features": [
+        "Unlimited meetings per month",
+        "Unlimited AI chat messages per day",
+        "Meeting transcripts and summaries",
+        "Action items extraction",
+        "Email notifications",
+        "Priority Support"
+      ]
+    }
+  },
+   "Chat": {
+    "limitReached": "Daily limit reached ({used}/{total} messages used).",
+    "upgrade": "Upgrade your plan",
+    "toContinue": "to continue chatting.",
+    "placeholderActive": "Ask about any meeting - deadlines, decisions, action items, participants...",
+    "placeholderLimitReached": "Daily chat limit reached - upgrade to continue",
+     "loadingBotMessage": "🤖 Searching through all your meetings...",
+    "description": "I can search across all your meetings to find information, summarize discussions, and answer questions",
+    "title": "Ask AI chatbot any question about all your meetings",
+    "suggestion1": "What were the key decisions made in yesterday's product meeting?",
+    "suggestion2": "Summarize the action items from last week's standup",
+    "suggestion3": "Who attended the client presentation on Monday?",
+    "suggestion4": "What deadlines were discussed in recent meetings?",
+    "suggestion5": "Generate a follow-up email for the marketing meeting",
+    "suggestion6": "What feedback was given about the new feature?"
+  },
+    "Settings": {
+    "title": "Settings",
+    "loading": "Loading Settings...",
+    "defaultBotName": "Meeting Bot",
+    "defaultUser": "User",
+    "noEmail": "No email",
+    "botCustomization": "Bot Customization",
+    "botName": "Bot Name",
+    "botNamePlaceholder": "Enter Bot Name...",
+    "botAvatar": "Bot Avatar",
+    "uploadImage": "Upload Image",
+    "uploading": "Uploading...",
+    "imageFormat": "JPG or PNG",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "signOut": "Sign Out",
+    "plans": {
+      "free": "Free Plan",
+      "starter": "Starter Plan",
+      "pro": "Pro Plan",
+      "premium": "Premium Plan",
+      "invalid": "Invalid Plan"
+    }
+  },
+   "Integrations": {
+    "IntegrationsTitle": "Integrations",
+    "IntegrationsDescription": "Connect your favourite tools to automatically add action items from meetings",
+    "LoadingIntegrations": "Loading Integrations...",
+    "SetupTitle": "Setup {platform}",
+    "HowItWorksTitle": "How It Works",
+    "Step": "Step",
+    "Description": "Description",
+    "HowItWorks1": "Connect your preferred tools above",
+    "HowItWorks2": "Choose where to send action items during setup",
+    "HowItWorks3": "In meetings, hover over action items and click Add to",
+    "HowItWorks4": "Select which tool(s) to add the task to from the dropdown",
+     "Connected": "Connected",
+    "Destination": "Destination",
+    "Status": "Status",
+    "AutoSyncEnabled": "Lambda auto-sync enabled",
+    "Connect": "Connect",
+    "Disconnect": "Disconnect",
+    "Board": "Board",
+    "Channel": "Channel",
+    "Project": "Project",
+    "SelectForActionItems": "Select {item} for action items:",
+    "ChooseExisting": "Choose existing {item}...",
+    "EnterNewName": "Enter new {item} name...",
+    "CreateNew": "Create new {item}",
+    "Cancel": "Cancel",
+    "Save": "Save",
+    "Saving": "Saving..."
+  },
+    "Dashboard": {
+    "Metrics": {
+      "TotalMeetings": "Total Meetings",
+      "UpcomingMeetings": "Upcoming Meetings",
+      "PastMeetings": "Past Meetings",
+      "ActiveParticipants": "Active Participants"
+    },
+    "Sections": {
+      "PastMeetings": "Past Meetings",
+      "UpcomingMeetings": "Upcoming Meetings"
+    },
+    "Loading": "Loading..."
+  }
 }

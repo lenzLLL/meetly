@@ -2,7 +2,7 @@ import { useAuth } from "@clerk/nextjs"
 import { useEffect, useState } from "react"
 
 export interface Integration {
-    platform: 'google-calendar' | 'trello' | 'jira' | 'asana' | 'slack'
+    platform: 'google-calendar' | 'trello' | 'jira' | 'asana' | 'slack'|'zoom'
     name: string
     description: string
     connected: boolean
@@ -50,6 +50,13 @@ export function useIntegrations() {
             description: 'Auto-Sync meetings',
             connected: false,
             logo: '/gcal.png'
+        },
+        {
+            platform: 'zoom',
+            name: 'Zoom',
+            description: 'Auto-Sync meetings',
+            connected: false,
+            logo: '/zoom.png'
         }
     ])
 
@@ -87,8 +94,17 @@ export function useIntegrations() {
                         connected: calendarData.connected || false
                     }
                 }
+                // else if(integration.platform === 'zoom'){
+                //                         return {
+                //         ...integration,
+                //         connected: calendarData.connected || false
+                //     }
+                // }
+                let status = []
+                if(data.length > 0){
+                  status = data.find((d: any) => d.platform === integration.platform)
 
-                const status = data.find((d: any) => d.platform === integration.platform)
+                }
                 return {
                     ...integration,
                     connected: status?.connected || false,

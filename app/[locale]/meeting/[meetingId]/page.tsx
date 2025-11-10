@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React,{useState,useEffect} from 'react'
 import { useMeetingDetail } from './hooks/useMeetingDetail'
 import MeetingHeader from './components/MeetingHeader'
 import MeetingInfo from './components/MeetingInfo'
@@ -32,7 +32,14 @@ function MeetingDetail() {
         displayActionItems,
         meetingInfoData
     } = useMeetingDetail()
-
+    const [recording,setRecording] = useState('')
+    useEffect(
+        ()=>{
+            if(meetingData?.recordingUrl){
+                setRecording(meetingData.recordingUrl)
+            }
+        },[meetingData]
+    )
     return (
         <div className='mt-5 sm:mt-0 min-h-screen bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
 
@@ -81,6 +88,20 @@ function MeetingDetail() {
                             >
                                 Transcript
                             </Button>
+                                <Button
+                                variant='ghost'
+                                onClick={() => setActiveTab('recording')}
+                                className={`px-4 py-2 text-sm font-medium border-b-2 rounded-none shadow-none transition-colors
+                                ${activeTab === 'recording'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                                    }`}
+                                style={{ boxShadow: 'none' }}
+                                type='button'
+                            >
+                                Recording
+                            </Button>
+                         
                         </div>
 
                         <div className='mt-6'>
@@ -166,12 +187,31 @@ function MeetingDetail() {
                                         <TranscriptDisplay transcript={meetingData.transcript} />
                                     ) : (
                                         <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border text-center'>
-                                            <p className='text-muted-foreground'>No transcript avaialable</p>
+                                            <p className='text-muted-foreground'>No transcript available</p>
                                         </div>
                                     )}
                                 </div>
                             )}
-
+                             
+                              {activeTab === 'recording' && (
+                                <div>
+                                    {!recording ? (
+                                        <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6 text-center'>
+                                            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4'></div>
+                                            <p className='text-muted-foreground'>Loading Recording..</p>
+                                        </div>
+                                    ) : 
+                                    <div className="w-full max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-xl border bg-black">
+                                          <video
+                                               src={recording}
+                                               controls
+                                               className="w-full h-auto"
+                                               preload="metadata"
+                                           />
+                                    </div>
+                                    }
+                                </div>
+                            )}
                         </div>
 
                     </div>

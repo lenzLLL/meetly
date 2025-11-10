@@ -20,7 +20,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <SidebarProvider defaultOpen={true}>
-            <div className="flex h-screen w-full">
+            <div className="flex bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] h-screen w-full">
                  <ResponsiveSidebar /> 
                 <main className="flex-1 overflow-auto">
                     {children}

@@ -31,7 +31,7 @@ export default function Herosection() {
       <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
         <Bot className="w-5 h-5 text-white" />
       </div>
-      <span className="text-xl font-bold text-white">Meetly</span>
+      <span className="text-xl font-bold text-white">Synopsia</span>
     </div>
 
     {/* Menu Desktop */}
@@ -161,7 +161,7 @@ export default function Herosection() {
                         </div>
                         <div className="flex items-center space-x-2">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span>{t('Check3')}n</span>
+                            <span>{t('Check3')}</span>
                         </div>
                     </div>
                 </div>

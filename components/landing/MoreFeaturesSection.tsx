@@ -1,14 +1,28 @@
 "use client";
 import { Download, Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
 import React from "react";
 
-function MoreFeaturesSection() {
+export default function MoreFeaturesSection() {
   const t = useTranslations("Home");
-  const params = useParams();
-  const locale = params?.locale || "en";
-  const isEnglish = locale === "en";
+
+  const features = [
+    {
+      icon: Download,
+      title: t("MoreFeature1Title"),
+      description: t("MoreFeature1Description"),
+    },
+    {
+      icon: Settings,
+      title: t("MoreFeature2Title"),
+      description: t("MoreFeature2Description"),
+    },
+    {
+      icon: Download,
+      title: t("MoreFeature3Title"),
+      description: t("MoreFeature3Description"),
+    },
+  ];
 
   return (
     <section className="pb-10">
@@ -26,54 +40,22 @@ function MoreFeaturesSection() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Feature 1 */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:bg-gray-900/70 hover:border-gray-700 transition-all">
-            <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4">
-              <Download className="w-6 h-6 text-purple-400" />
+          {features.map((feature, index) => (
+            <div
+              key={index}
+              className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:bg-gray-900/70 hover:border-gray-700 transition-all"
+            >
+              <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4">
+                <feature.icon className="w-6 h-6 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-gray-400">{feature.description}</p>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              {isEnglish ? "Complete Meeting Exports" : "Export Complet des Réunions"}
-            </h3>
-            <p className="text-gray-400">
-              {isEnglish
-                ? "Download audio MP3, transcripts, summaries, and action items."
-                : "Téléchargez l'audio MP3, les transcriptions, résumés et actions à suivre."}
-            </p>
-          </div>
-
-          {/* Feature 2 */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:bg-gray-900/70 hover:border-gray-700 transition-all">
-            <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4">
-              <Settings className="w-6 h-6 text-purple-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              {isEnglish ? "Full Customization" : "Personnalisation Complète"}
-            </h3>
-            <p className="text-gray-400">
-              {isEnglish
-                ? "Customize bot name, image and toggle bot participation."
-                : "Personnalisez le nom du bot, son image et activez/désactivez sa participation."}
-            </p>
-          </div>
-
-          {/* Feature 3 */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 hover:bg-gray-900/70 hover:border-gray-700 transition-all">
-            <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4">
-              <Download className="w-6 h-6 text-purple-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              {isEnglish ? "Meeting Analytics" : "Analyses des Réunions"}
-            </h3>
-            <p className="text-gray-400">
-              {isEnglish
-                ? "Track meeting patterns, participation rates, and productivity."
-                : "Suivez les modèles de réunion, les taux de participation et la productivité."}
-            </p>
-          </div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
-
-export default MoreFeaturesSection;

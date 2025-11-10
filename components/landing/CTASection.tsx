@@ -5,15 +5,11 @@ import { SignUpButton, useUser } from "@clerk/nextjs";
 import { ArrowRight, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import React from "react";
 
-function CTASection() {
+export default function CTASection() {
   const { isSignedIn } = useUser();
-  const params = useParams();
-  const locale = params?.locale || "en";
   const t = useTranslations("Home");
-  const isEnglish = locale === "en";
 
   return (
     <section className="py-20">
@@ -32,32 +28,26 @@ function CTASection() {
         {isSignedIn ? (
           <Button asChild size="lg" className="bg-purple-600 hover:bg-purple-700 px-8 py-4 cursor-pointer">
             <Link href="/home" className="group">
-              <span>Dashboard</span>
+              <span>{t("CTAButtonDashboard")}</span>
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
         ) : (
           <SignUpButton>
             <Button size="lg" className="bg-purple-600 hover:bg-purple-700 px-8 py-4 group">
-              <span>{isEnglish ? "Start Your Free Trial" : "Essai Gratuit"}</span>
+              <span>{t("CTAButtonSignUp")}</span>
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </SignUpButton>
         )}
 
         <div className="flex items-center justify-center space-x-1 mt-6">
-          <Star className="w-5 h-5 text-yellow-400 fill-current" />
-          <Star className="w-5 h-5 text-yellow-400 fill-current" />
-          <Star className="w-5 h-5 text-yellow-400 fill-current" />
-          <Star className="w-5 h-5 text-yellow-400 fill-current" />
-          <Star className="w-5 h-5 text-yellow-400 fill-current" />
-          <span className="ml-2 text-gray-500">
-            {isEnglish ? "4.9/5 from 2+ reviews" : "4,9/5 d'après plus de 2 avis"}
-          </span>
+          {[...Array(5)].map((_, i) => (
+            <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+          ))}
+          <span className="ml-2 text-gray-500">{t("CTAReviews")}</span>
         </div>
       </div>
     </section>
   );
 }
-
-export default CTASection;

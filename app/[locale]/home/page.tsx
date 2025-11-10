@@ -18,6 +18,9 @@ export default function Home() {
     pastLoading,
     connected,
     error,
+    g,
+    z,
+    o,
     botToggles,
     initialLoading,
     fetchUpcomingEvents,
@@ -25,7 +28,8 @@ export default function Home() {
     toggleBot,
     directOAuth,
     getAttendeeList,
-    getInitials
+    getInitials,
+    subaccounts
   } = useMeetings()
 
   const router = useRouter()
@@ -53,6 +57,11 @@ export default function Home() {
       value: pastMeetings?.length || 0,
       icon: <Clock className="h-6 w-6 text-white/90" />,
     },
+    {
+      title: "Subaccounts",
+      value: subaccounts?.length || 0,
+      icon: <Users className="h-6 w-6 text-white/90" />,
+    },
     // {
     //   title: "Active Participants",
     //   value: Math.floor(Math.random() * 20) + 5, 
@@ -72,9 +81,10 @@ export default function Home() {
   }
 
   return (
+    <>
+    <AppHeader/>     {/* === Metrics Section === */}
     <div className="min-h-screen mt-5 sm:mt-0 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] text-white">
-      <AppHeader/>     {/* === Metrics Section === */}
-      <div className="w-full p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 sm:gap-4 gap-4">
+      <div className="w-full p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 sm:gap-4 gap-4">
         {metrics.map((metric, index) => (
           <div
             key={index}
@@ -117,6 +127,10 @@ export default function Home() {
               upcomingEvents={upcomingEvents}
               connected={connected}
               error={error}
+              subaccounts = {subaccounts}
+              z={z}
+              g={g}
+              o={o}
               loading={loading}
               initialLoading={initialLoading}
               botToggles={botToggles}
@@ -128,5 +142,6 @@ export default function Home() {
         </div>
       </div>
     </div>
+    </>
   )
 }

@@ -1,5 +1,27 @@
 {
   "Home": {
+    "MoreFeature1Title": "Export Complet des Réunions",
+    "MoreFeature1Description": "Téléchargez l'audio MP3, les transcriptions, résumés et actions à suivre.",
+    "MoreFeature2Title": "Personnalisation Complète",
+    "MoreFeature2Description": "Personnalisez le nom du bot, son image et activez/désactivez sa participation.",
+    "MoreFeature3Title": "Analyses des Réunions",
+    "MoreFeature3Description": "Suivez les modèles de réunion, les taux de participation et la productivité."
+,
+    "StatUsers": "Utilisateurs Satisfaits",
+    "StatUptime": "Disponibilité",
+    "StatSetupTime": "Temps d'Installation",
+    "StatSavedPerMonth": "Heures Économisées Par Mois",
+    "Step1Title": "Connectez Votre Calendrier",
+    "Step1Description": "Connectez votre Google Calendar et nous détecterons automatiquement vos réunions.",
+    "Step2Title": "Le Bot Rejoint La Réunion",
+    "Step2Description": "Notre bot IA rejoint automatiquement vos réunions et les enregistre avec une transcription complète.",
+    "Step3Title": "Obtenez Des Informations",
+    "Step3Description": "Recevez des résumés, des points d’action et envoyez-les instantanément vers vos outils préférés."
+     ,
+    "FooterText": "© {year} Meetly. Fait avec ❤️ pour de meilleures réunions.",
+    "CTAButtonDashboard": "Tableau de bord",
+    "CTAButtonSignUp": "Essayez maintenant",
+    "CTAReviews": "4,9/5 d'après plus de 2 avis",
     "SignIn": "Se connecter",
     "SignUp": "Commencer",
     "HeroText": "Transformez Vos Réunions Avec",
@@ -7,9 +29,11 @@
     "HeroSubTitle": "Résumés automatiques, actions à suivre et analyses intelligentes pour chaque réunion. Ne manquez plus jamais un détail important.",
 "HeroBtn1": "Essai Gratuit",
 "HeroBtn2": "Regarder La Démo",
-"Check1": "Aucune carte bancaire requise",
-"Check2": "Installation en 2 minutes",
-"Check3": "Offre gratuite à vie",
+"Check1": "Synchronisation ultra-rapide",
+
+"Check2": "Analyse des réunions en temps réel",
+
+"Check3": "Zéro latence grâce à notre infrastructure optimisée",
  "FeatureTitle": "Tout ce dont vous avez besoin pour",
 "FeatureTitle2": "Des Réunions Plus Intelligentes",
 "FeatureDescription": "Des résumés générés par l’IA aux intégrations fluides, nous avons pensé à chaque détail." ,
@@ -24,8 +48,166 @@
 "MoreDescription": "Tout ce dont vous avez besoin pour une gestion complète des réunions",
 "CTATitle": "Prêt à",
 "CTATitle2": "révolutionner vos réunions ?",
-"CTADescription": "Rejoignez des milliers d'équipes utilisant déjà MeetingBot pour gagner du temps."
+"CTADescription": "Rejoignez des milliers d'équipes utilisant déjà Meetly pour gagner du temps.",
+"Features": {
+      "title": "Fonctionnalités",
+      "titleHighlight": "Puissantes",
+      "description": "Tout ce dont vous avez besoin pour automatiser et résumer vos réunions grâce à l'IA.",
+      "aiMeetingSummaries": {
+        "title": "Résumés de Réunions par IA",
+        "description": "Générez automatiquement des résumés et actions après chaque réunion."
+      },
+      "smartCalendarIntegration": {
+        "title": "Intégration Intelligente du Calendrier",
+        "description": "Connectez Google Calendar et laissez les bots rejoindre automatiquement vos réunions."
+      },
+      "automatedEmailReports": {
+        "title": "Rapports E-mail Automatisés",
+        "description": "Recevez de superbes résumés par e-mail accompagnés des actions à entreprendre."
+      },
+      "chatWithMeetings": {
+        "title": "Discutez avec vos Réunions",
+        "description": "Posez des questions sur vos réunions grâce à notre pipeline RAG intelligent."
+      },
+      "oneClickIntegrations": {
+        "title": "Intégrations en un Clic",
+        "description": "Envoyez vos actions vers Slack, Asana, Jira ou Trello en un seul clic."
+      },
+      "slackBotIntegration": {
+        "title": "Intégration du Bot Slack",
+        "description": "Installez notre bot Slack pour poser des questions et partager des insights."
+      }
+    }
+
+ },
+   "Pricing": {
+    "Title": {
+      "part1": "Choisissez votre",
+      "part2": "formule"
+    },
+    "Subtitle": "Des résumés automatiques, des actions et des insights intelligents pour chaque réunion. Ne manquez plus jamais les détails importants.",
+    "MostPopular": "Le plus populaire",
+    "Processing": "Traitement...",
+    "SubscribeButton": "Souscrire à {plan}",
+
+    "Starter": {
+      "name": "Débutant",
+      "description": "Parfait pour ceux qui commencent",
+      "features": [
+        "10 réunions par mois",
+        "30 messages IA par jour",
+        "Transcriptions et résumés des réunions",
+        "Extraction des éléments d'action",
+        "Notifications par e-mail"
+      ]
+    },
+    "Pro": {
+      "name": "Pro",
+      "description": "Idéal pour ceux qui se développent et ont besoin de plus de puissance",
+      "features": [
+        "30 réunions par mois",
+        "100 messages IA par jour",
+        "Transcriptions et résumés des réunions",
+        "Extraction des éléments d'action",
+        "Notifications par e-mail",
+        "Support prioritaire"
+      ]
+    },
+    "Premium": {
+      "name": "Premium",
+      "description": "Parfait pour ceux qui veulent des limites illimitées",
+      "features": [
+        "Réunions illimitées par mois",
+        "Messages IA illimités par jour",
+        "Transcriptions et résumés des réunions",
+        "Extraction des éléments d'action",
+        "Notifications par e-mail",
+        "Support prioritaire"
+      ]
+    }
+  },
+    "Chat": {
+    "limitReached": "Limite quotidienne atteinte ({used}/{total} messages utilisés).",
+    "upgrade": "Améliorez votre plan",
+    "toContinue": "pour continuer à discuter.",
+    "placeholderActive": "Posez des questions sur n'importe quelle réunion - délais, décisions, tâches, participants...",
+    "placeholderLimitReached": "Limite de chat quotidienne atteinte - améliorez votre plan pour continuer",
+    "description": "Je peux rechercher dans toutes vos réunions pour trouver des informations, résumer les discussions et répondre aux questions",
+     "loadingBotMessage": "🤖 Recherche dans toutes vos réunions...",
+    "title": "Posez des questions au chatbot IA sur toutes vos réunions",
+    "suggestion1": "Quelles ont été les décisions clés lors de la réunion produit d'hier ?",
+    "suggestion2": "Résumez les actions à entreprendre de la réunion quotidienne de la semaine dernière",
+    "suggestion3": "Qui a assisté à la présentation client lundi ?",
+    "suggestion4": "Quels délais ont été discutés lors des réunions récentes ?",
+    "suggestion5": "Générer un e-mail de suivi pour la réunion marketing",
+    "suggestion6": "Quels retours ont été donnés sur la nouvelle fonctionnalité ?"
 
 
- }
+  },
+  "Settings": {
+    "title": "Paramètres",
+    "loading": "Chargement des paramètres...",
+    "defaultBotName": "Bot de Réunion",
+    "defaultUser": "Utilisateur",
+    "noEmail": "Pas d'email",
+    "botCustomization": "Personnalisation du Bot",
+    "botName": "Nom du Bot",
+    "botNamePlaceholder": "Entrez le nom du Bot...",
+    "botAvatar": "Avatar du Bot",
+    "uploadImage": "Importer l'image",
+    "uploading": "Téléversement...",
+    "imageFormat": "JPG ou PNG",
+    "saving": "Enregistrement...",
+    "saveChanges": "Enregistrer les modifications",
+    "signOut": "Se Déconnecter",
+    "plans": {
+      "free": "Plan Gratuit",
+      "starter": "Plan Starter",
+      "pro": "Plan Pro",
+      "premium": "Plan Premium",
+      "invalid": "Plan invalide"
+    }
+  },
+  "Integrations": {
+    "IntegrationsTitle": "Intégrations",
+    "IntegrationsDescription": "Connectez vos outils préférés pour ajouter automatiquement des actions depuis les réunions",
+    "LoadingIntegrations": "Chargement des intégrations...",
+    "SetupTitle": "Configurer {platform}",
+    "HowItWorksTitle": "Comment ça fonctionne",
+    "Step": "Étape",
+    "Description": "Description",
+    "HowItWorks1": "Connectez vos outils préférés ci-dessus",
+    "HowItWorks2": "Choisissez où envoyer les actions lors de la configuration",
+    "HowItWorks3": "Dans les réunions, survolez les actions et cliquez sur Ajouter à",
+    "HowItWorks4": "Sélectionnez les outils auxquels ajouter la tâche dans le menu déroulant",
+     "Connected": "Connecté",
+    "Destination": "Destination",
+    "Status": "Statut",
+    "AutoSyncEnabled": "Synchronisation automatique activée",
+    "Connect": "Connecter",
+    "Disconnect": "Déconnecter",
+    "Board": "Tableau",
+    "Channel": "Canal",
+    "Project": "Projet",
+    "SelectForActionItems": "Sélectionnez {item} pour les actions :",
+    "ChooseExisting": "Choisissez un {item} existant...",
+    "EnterNewName": "Entrez le nom du nouveau {item}...",
+    "CreateNew": "Créer un nouveau {item}",
+    "Cancel": "Annuler",
+    "Save": "Enregistrer",
+    "Saving": "Enregistrement..."
+  },
+   "Dashboard": {
+    "Metrics": {
+      "TotalMeetings": "Réunions totales",
+      "UpcomingMeetings": "Réunions à venir",
+      "PastMeetings": "Réunions passées",
+      "ActiveParticipants": "Participants actifs"
+    },
+    "Sections": {
+      "PastMeetings": "Réunions passées",
+      "UpcomingMeetings": "Réunions à venir"
+    },
+    "Loading": "Chargement..."
+  }
 }

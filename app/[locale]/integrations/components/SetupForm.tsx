@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import React, { useState } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface SetupFormProps {
     platform: string
@@ -13,13 +14,9 @@ interface SetupFormProps {
     loading: boolean
 }
 
-function SetupForm({
-    platform,
-    data,
-    onSubmit,
-    onCancel,
-    loading
-}: SetupFormProps) {
+function SetupForm({ platform, data, onSubmit, onCancel, loading }: SetupFormProps) {
+    const t = useTranslations('Integrations')
+
     const [selectedId, setSelectedId] = useState('')
     const [selectedName, setSelectedName] = useState('')
     const [createNew, setCreateNew] = useState(false)
@@ -29,11 +26,9 @@ function SetupForm({
         platform === 'slack' ? data?.channels :
             data?.projects
 
-
-    const itemLabel = platform === 'trello' ? 'board' :
-        platform === 'slack' ? 'channel' :
-            'project'
-
+    const itemLabel = platform === 'trello' ? t('Board') :
+        platform === 'slack' ? t('Channel') :
+            t('Project')
 
     const handleSubmit = () => {
         if (createNew) {
@@ -50,15 +45,13 @@ function SetupForm({
                 workspaceId: data?.workspaceId
             })
         }
-
-
     }
+
     return (
         <div>
             <div className='mb-4'>
-
                 <Label className='block text-sm font-medium text-foreground mb-2'>
-                    Select {itemLabel} for action items:
+                    {t('SelectForActionItems', { item: itemLabel })}
                 </Label>
 
                 {!createNew ? (
@@ -73,13 +66,11 @@ function SetupForm({
                         }}
                     >
                         <SelectTrigger className='w-full'>
-                            <SelectValue placeholder={`choose exsisting ${itemLabel}...`} />
+                            <SelectValue placeholder={t('ChooseExisting', { item: itemLabel })} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                <SelectLabel>
-                                    {itemLabel.charAt(0).toUpperCase() + itemLabel.slice(1)}s
-                                </SelectLabel>
+                                <SelectLabel>{itemLabel}</SelectLabel>
                                 {items?.map((item: any) => (
                                     <SelectItem
                                         key={item.id || item.key || item.gid}
@@ -96,11 +87,11 @@ function SetupForm({
                         type='text'
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
-                        placeholder={`Enter new ${itemLabel} name...`}
+                        placeholder={t('EnterNewName', { item: itemLabel })}
                     />
                 )}
-
             </div>
+
             <div className='mb-6'>
                 <div className='flex items-center gap-2 text-sm'>
                     <Checkbox
@@ -108,32 +99,22 @@ function SetupForm({
                         checked={createNew}
                         onCheckedChange={(checked) => setCreateNew(!!checked)}
                     />
-
-                    <Label htmlFor='create-new'>Create new {itemLabel}</Label>
-
+                    <Label htmlFor='create-new'>{t('CreateNew', { item: itemLabel })}</Label>
                 </div>
-
             </div>
 
             <div className='flex gap-3'>
-                <Button
-                    variant="outline"
-                    onClick={onCancel}
-                    className='flex-1 cursor-pointer'
-                    type='button'
-                >
-                    Cancel
+                <Button variant="outline" onClick={onCancel} className='flex-1 cursor-pointer'>
+                    {t('Cancel')}
                 </Button>
 
                 <Button
                     onClick={handleSubmit}
                     disabled={loading || (!createNew && !selectedId) || (createNew && !newName)}
                     className='flex-1 cursor-pointer'
-                    type='button'
                 >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? t('Saving') : t('Save')}
                 </Button>
-
             </div>
         </div>
     )

@@ -3,6 +3,7 @@ import { Integration } from '../hooks/useIntegrations'
 import Image from 'next/image'
 import { Check, ExternalLink, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTranslations } from 'next-intl'
 
 interface IntegrationCardProps {
     integration: Integration
@@ -11,13 +12,9 @@ interface IntegrationCardProps {
     onSetup: (platform: string) => void
 }
 
+function IntegrationCard({ integration, onConnect, onDisconnect, onSetup }: IntegrationCardProps) {
+    const t = useTranslations('Integrations')
 
-function IntegrationCard({
-    integration,
-    onConnect,
-    onDisconnect,
-    onSetup
-}: IntegrationCardProps) {
     return (
         <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border'>
             <div className='flex items-start justify-between mb-4'>
@@ -29,31 +26,28 @@ function IntegrationCard({
                             fill
                             className='object-contain rounded'
                         />
-
                     </div>
                     <div>
                         <h3 className='font-semibold text-foreground'>{integration.name}</h3>
-
                         {integration.connected && (
                             <span className='text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full'>
-                                Connected
+                                {t('Connected')}
                             </span>
                         )}
                     </div>
-
                 </div>
-                {integration.connected && (
-                    <Check className='h-5 w-5 text-green-500' />
-                )}
+                {integration.connected && <Check className='h-5 w-5 text-green-500' />}
             </div>
+
             <p className='text-sm text-muted-foreground mb-4'>
                 {integration.description}
             </p>
 
+            {/* Destination / Status */}
             {integration.connected && integration.platform !== 'google-calendar' && (integration.boardName || integration.projectName || integration.channelName) && (
                 <div className='mb-4 p-3 bg-green-500/10 rounded-lg'>
-                    <div className='text-xs text-muted-foreground mb-1'>Destination:</div>
-                    <div className='text-sm font-medium text-foreground' >
+                    <div className='text-xs text-muted-foreground mb-1'>{t('Destination')}</div>
+                    <div className='text-sm font-medium text-foreground'>
                         {integration.platform === 'slack' && integration.channelName && `#${integration.channelName}`}
                         {integration.platform === 'trello' && integration.boardName}
                         {integration.platform === 'jira' && integration.projectName}
@@ -62,25 +56,26 @@ function IntegrationCard({
                 </div>
             )}
 
-            {integration.connected && integration.platform === 'google-calendar' && (
+            {(integration.connected && integration.platform === 'google-calendar' ||integration.connected && integration.platform === 'zoom') && (
                 <div className='mb-4 p-3 bg-green-500/10 rounded-lg'>
-                    <div className='text-xs text-muted-foreground mb-1'>Status:</div>
+                    <div className='text-xs text-muted-foreground mb-1'>{t('Status')}</div>
                     <div className='text-sm font-medium text-foreground'>
-                        Lambda auto-sync anabled
+                        {t('AutoSyncEnabled')}
                     </div>
                 </div>
             )}
 
+            {/* Buttons */}
             <div className='flex gap-2'>
                 {integration.connected ? (
-                    integration.platform === 'google-calendar' ? (
+                    (integration.platform === 'google-calendar'||integration.platform === 'zoom') ? (
                         <Button
                             variant="outline"
                             onClick={() => onDisconnect(integration.platform)}
                             className='flex-1 cursor-pointer'
                             type='button'
                         >
-                            Disconnect
+                            {t('Disconnect')}
                         </Button>
                     ) : (
                         <>
@@ -90,7 +85,7 @@ function IntegrationCard({
                                 className='flex-1 cursor-pointer'
                                 type='button'
                             >
-                                Disconnect
+                                {t('Disconnect')}
                             </Button>
                             <Button
                                 variant="outline"
@@ -108,13 +103,11 @@ function IntegrationCard({
                         className='flex-1 flex items-center justify-center gap-2 cursor-pointer'
                         type='button'
                     >
-                        Connect
+                        {t('Connect')}
                         <ExternalLink className='h-4 w-4' />
                     </Button>
                 )}
-
             </div>
-
         </div>
     )
 }

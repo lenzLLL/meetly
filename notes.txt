@@ -45,3 +45,5 @@ slack console developer join app Oauth permission redirect url then go to event.
 /api/slack/events is not already finished
 then env in vercel google_redirec next_public_app
 slack_redirect_url
+marketplace zoom https://marketplace.zoom.us/
+generer aussi les env de zoom dans aws et 

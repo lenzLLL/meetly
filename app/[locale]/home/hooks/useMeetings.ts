@@ -1,6 +1,8 @@
 "use client"
 import { useAuth } from "@clerk/nextjs"
 import { useEffect, useState } from "react"
+import Loading from "../../subaccounts/components/loading"
+import { Subaccount } from "@prisma/client"
 
 export interface CalendarEvent {
     id: string
@@ -15,6 +17,8 @@ export interface CalendarEvent {
     conferenceData?: any
     botScheduled?: boolean
     meetingId?: string
+    type:String
+    
 }
 
 export interface PastMeeting {
@@ -28,6 +32,7 @@ export interface PastMeeting {
     transcriptReady: boolean
     recordingUrl?: string | null
     speakers?: any
+    type?:string
 }
 
 export function useMeetings() {
@@ -35,8 +40,12 @@ export function useMeetings() {
     const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([])
     const [pastMeetings, setPastMeetings] = useState<PastMeeting[]>([])
     const [loading, setLoading] = useState(false)
+    const [subaccounts,setSubaccounts] = useState([])
     const [pastLoading, setPastLoading] = useState(false)
     const [connected, setConnected] = useState(false)
+    const [g,setG] = useState(false)
+    const [z,setZ] = useState(false)
+    const [o,setO] = useState(false)
     const [error, setError] = useState<string>('')
     const [botToggles, setBotToggles] = useState<{ [key: string]: boolean }>({})
     const [initialLoading, setInitialLoading] = useState(true)
@@ -56,8 +65,7 @@ export function useMeetings() {
         try {
             const statusResponse = await fetch('/api/user/calendar-status')
             const statusData = await statusResponse.json()
-
-            if (!statusData.connected) {
+            if (!statusData.g && !statusData.z && !statusData.o) {
                 setConnected(false)
                 setUpcomingEvents([])
                 setError('Calendar not connected for auto-sync. Connect to enable auto syncing.')
@@ -65,6 +73,10 @@ export function useMeetings() {
                 setInitialLoading(false)
                 return
             }
+            setConnected(statusData.connected)
+            setZ(statusData.z)
+            setG(statusData.g)
+            setO(statusData.o)
 
             const response = await fetch('/api/meetings/upcoming')
             const result = await response.json()
@@ -77,7 +89,6 @@ export function useMeetings() {
             }
 
             setUpcomingEvents(result.events as CalendarEvent[])
-            setConnected(result.connected)
 
             const toggles: { [key: string]: boolean } = {}
             result.events.forEach((event: CalendarEvent) => {
@@ -152,10 +163,19 @@ export function useMeetings() {
         }
     }
 
-    const directOAuth = async () => {
+    const directOAuth = async (plateform?:string) => {
         setLoading(true)
         try {
-            window.location.href = '/api/auth/google/direct-connect'
+            if(plateform === 'zoom'){
+                window.location.href = `/api/integrations/zoom/auth`   
+            }
+            else if(plateform === "outlook"){
+                window.location.href = `/api/integrations/outlook/auth`   
+
+            }
+            else{
+                window.location.href = '/api/auth/google/direct-connect'
+            }
         } catch {
             setError('Failed to start direct OAuth')
             setLoading(false)
@@ -203,7 +223,11 @@ export function useMeetings() {
         toggleBot,
         directOAuth,
         getAttendeeList,
-        getInitials
+        getInitials,
+        subaccounts,
+        z,
+        g,
+        o
     }
 
 }

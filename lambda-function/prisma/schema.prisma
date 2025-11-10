@@ -22,7 +22,8 @@ model User {
   googleRefreshToken String?
   googleTokenExpiry  DateTime?
   calendarConnected  Boolean   @default(false)
-
+  subaccounts Subaccount[]
+  
   slackUserId          String?
   slackTeamId          String?
   slackConnected       Boolean @default(false)
@@ -40,7 +41,17 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
+model Subaccount {
+  id       String    @id
+  clerkId  String    @unique
+  email    String?
+  name     String?
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatMessagesToday    Int       @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 model SlackInstallation {
   id            String   @id @default(cuid())
   teamId        String   @unique
@@ -62,7 +73,7 @@ model Meeting {
   startTime   DateTime
   endTime     DateTime
   attendees   Json?
-
+  type String?
   calendarEventId String? @unique
   isFromCalendar  Boolean @default(false)
 
@@ -76,7 +87,8 @@ model Meeting {
   transcript      Json?
   recordingUrl    String?
   speakers        Json?
-
+  expireAt  DateTime?
+  
   summary        String?
   actionItems    Json?
   processed      Boolean   @default(false)
@@ -100,7 +112,6 @@ model UserIntegration {
   accessToken  String    @db.Text
   refreshToken String?   @db.Text
   expiresAt    DateTime?
-
   boardId     String?
   boardName   String?
   projectId   String?

@@ -35,11 +35,21 @@ model User {
   billingPeriodStart   DateTime?
   meetingsThisMonth    Int       @default(0)
   chatMessagesToday    Int       @default(0)
-
+  subaccounts Subaccount[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
+model Subaccount {
+  id       String    @id
+  clerkId  String?    @unique
+  email    String
+  name     String
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  meetings Meeting[]
+  updatedAt DateTime @updatedAt
+}
 model SlackInstallation {
   id            String   @id @default(cuid())
   teamId        String   @unique
@@ -61,21 +71,21 @@ model Meeting {
   startTime   DateTime
   endTime     DateTime
   attendees   Json?
-
+  type String?
   calendarEventId String? @unique
   isFromCalendar  Boolean @default(false)
-
+  expireAt  DateTime?
+  recordingId String?
   botScheduled Boolean   @default(true)
   botSent      Boolean   @default(false)
   botId        String?
   botJoinedAt  DateTime?
-
+  permissions Subaccount[]
   meetingEnded    Boolean @default(false)
   transcriptReady Boolean @default(false)
   transcript      Json?
   recordingUrl    String?
   speakers        Json?
-
   summary        String?
   actionItems    Json?
   processed      Boolean   @default(false)
@@ -84,7 +94,7 @@ model Meeting {
   emailSentAt    DateTime?
   ragProcessed   Boolean   @default(false)
   ragProcessedAt DateTime?
-
+ 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt       DateTime          @default(now())

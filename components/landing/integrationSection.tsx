@@ -7,7 +7,9 @@ const integrations = [
     { name: "Asana", image: "asana.png" },
     { name: "Jira", image: "jira.png" },
     { name: "Trello", image: "trello.png" },
-    { name: "Google Calendar", image: "gcal.png" }
+    { name: "Google Calendar", image: "gcal.png" },
+    { name: "Zoom", image: "zoom.png" },
+    { name: "Outlook", image: "outlook.png" }
 ]
 export default function IntegrationSection() {
   const t = useTranslations("Home");

@@ -22,7 +22,7 @@ export async function GET() {
             where: {
                 userId: user.id,
                 startTime: { gte: now },
-                isFromCalendar: true
+                isFromCalendar: true,
             },
             orderBy: { startTime: 'asc' },
             take: 10
@@ -37,12 +37,12 @@ export async function GET() {
             hangoutLink: meeting.meetingUrl,
             conferenceData: meeting.meetingUrl ? { entryPoints: [{ uri: meeting.meetingUrl }] } : null,
             botScheduled: meeting.botScheduled,
-            meetingId: meeting.id
+            meetingId: meeting.id,
+            type:meeting.type
         }))
 
         return NextResponse.json({
             events,
-            connected: user.calendarConnected,
             source: 'database'
         })
 
@@ -51,7 +51,6 @@ export async function GET() {
         return NextResponse.json({
             error: "Failed to fetch meetings",
             events: [],
-            connected: false
         }, { status: 500 })
     }
 }

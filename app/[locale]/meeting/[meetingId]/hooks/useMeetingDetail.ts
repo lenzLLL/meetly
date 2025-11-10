@@ -25,7 +25,8 @@ export interface MeetingData {
         name?: string
         email?: string
     }
-    ragProcessed?: boolean
+    ragProcessed?: boolean,
+    urls?:string[]
 }
 
 export function useMeetingDetail() {
@@ -36,7 +37,7 @@ export function useMeetingDetail() {
     const [isOwner, setIsOwner] = useState(false)
     const [userChecked, setUserChecked] = useState(false)
 
-    const [activeTab, setActiveTab] = useState<'summary' | 'transcript'>('summary')
+    const [activeTab, setActiveTab] = useState<'summary' | 'transcript'|'recording'|'screens'>('summary')
     const [localActionItems, setLocalActionItems] = useState<any[]>([])
 
     const [meetingData, setMeetingData] = useState<MeetingData | null>(null)
@@ -81,7 +82,6 @@ export function useMeetingDetail() {
                 if (response.ok) {
                     const data = await response.json()
                     setMeetingData(data)
-
                     if (isLoaded) {
                         const ownerStatus = userId === data.userId
                         setIsOwner(ownerStatus)

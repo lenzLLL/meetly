@@ -21,8 +21,11 @@ export async function GET(
                         id: true,
                         name: true,
                         email: true,
-                        clerkId: true
-                    }
+                        clerkId: true,
+                        
+                    
+                    },
+                    
                 }
             }
         })
@@ -30,7 +33,7 @@ export async function GET(
         if (!meeting) {
             return NextResponse.json({ error: 'meeting not found' }, { status: 404 })
         }
-
+        
         const responseData = {
             ...meeting,
             isOwner: clerkUserId === meeting.user?.clerkId
