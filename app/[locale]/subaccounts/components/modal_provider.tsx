@@ -7,6 +7,7 @@ interface ModalProviderProps{
 }
 export type ModalData = {
     user?:User,
+    meeting?:any
 }
 type ModalContextType = {
     data:ModalData

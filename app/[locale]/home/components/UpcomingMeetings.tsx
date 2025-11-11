@@ -9,6 +9,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Video, UserPlus } from "lucide-react"
 import { Subaccount } from '@prisma/client'
+import AddGuestButton from '../../subaccounts/components/add_guest'
 interface UpcomingMeetingsProps {
     upcomingEvents: CalendarEvent[]
     connected: boolean
@@ -28,6 +29,7 @@ interface UpcomingMeetingsProps {
 function UpcomingMeetings({
     upcomingEvents,
     connected,
+    subaccounts,
     error,
     loading,
     initialLoading,
@@ -190,19 +192,12 @@ function UpcomingMeetings({
                                     className='flex-1'
                                 >
                                     <Button className="mt-3 w-full text-xs h-7 cursor-pointer">
-                                       <Video/> Join Meeting
-                                    </Button>
+                                       <Video/> Join Meeting 
+                                    </Button> 
                                 </a>
-                                                                <a
-                                    href={event.hangoutLink || event.location}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className=''
-                                >
-                                    <Button className="mt-3 w-full flex-1 text-xs h-7 cursor-pointer">
-                                       <UserPlus/>  
-                                    </Button>
-                                </a>
+                                                         
+                                  <AddGuestButton subaccounts={subaccounts} meetingId={event.ID||""} initialAllowed={event.permissions} />
+                             
                                 </div>
                             )}
                         </div>

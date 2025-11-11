@@ -17,7 +17,11 @@ export async function POST(request: NextRequest) {
                     botId: webhookData.bot_id
                 },
                 include: {
-                    user: true
+                    user: {
+                        include:{
+                            subaccounts:true
+                        }
+                    }
                 }
             })
 
@@ -46,6 +50,7 @@ export async function POST(request: NextRequest) {
                 }
             })
 
+
             if (webhookData.transcript && !meeting.processed) {
                 try {
                     const processed = await processMeetingTranscript(webhookData.transcript)
@@ -70,7 +75,17 @@ export async function POST(request: NextRequest) {
                             meetingId: meeting.id,
                             meetingDate: meeting.startTime.toLocaleDateString()
                         })
-
+                        for(let i =0;i<meeting.user.subaccounts.length;i++){
+                            await sendMeetingSummaryEmail({
+                            userEmail: meeting.user.subaccounts[i].email,
+                            userName: meeting.user.name || 'User',
+                            meetingTitle: meeting.title,
+                            summary: processed.summary,
+                            actionItems: processed.actionItems,
+                            meetingId: meeting.id,
+                            meetingDate: meeting.startTime.toLocaleDateString()
+                        })
+                        }
                         await prisma.meeting.update({
                             where: {
                                 id: meeting.id

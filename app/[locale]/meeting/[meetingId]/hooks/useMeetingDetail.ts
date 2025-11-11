@@ -1,5 +1,6 @@
 import { useChatCore } from "@/app/[locale]/hooks/chat/useChatCore"
 import { useAuth } from "@clerk/nextjs"
+import { Subaccount } from "@prisma/client"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -27,17 +28,19 @@ export interface MeetingData {
     }
     ragProcessed?: boolean,
     urls?:string[]
+    permissions?:Subaccount[]
+    subaccounts:Subaccount[]
 }
 
 export function useMeetingDetail() {
     const params = useParams()
     const meetingId = params.meetingId as string
     const { userId, isLoaded } = useAuth()
-
+    const [subaccounts,setSubaccounts] = useState([])
     const [isOwner, setIsOwner] = useState(false)
     const [userChecked, setUserChecked] = useState(false)
 
-    const [activeTab, setActiveTab] = useState<'summary' | 'transcript'|'recording'|'screens'>('summary')
+    const [activeTab, setActiveTab] = useState<'summary' | 'transcript'|'recording'|'screens'|'permissions'>('summary')
     const [localActionItems, setLocalActionItems] = useState<any[]>([])
 
     const [meetingData, setMeetingData] = useState<MeetingData | null>(null)

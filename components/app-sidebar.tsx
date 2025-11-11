@@ -1,6 +1,6 @@
 "use client"
 
-import { Bot, DollarSign, Home, Layers3, Settings } from "lucide-react"
+import { Bot, DollarSign, Home, Layers3, Settings, Users, Video } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useUsage } from "../context/UsageContext"
 import {
@@ -18,11 +18,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 const items = [
-  { title: "Home", fr: "Accueil", url: "/home", icon: Home },
-  { title: "Integrations", fr: "Intégrations", url: "/integrations", icon: Layers3 },
-  { title: "Settings", fr: "Paramètres", url: "/settings", icon: Settings },
-  { title: "Chat with AI", fr: "Chatez avec l'IA", url: "/chat", icon: Bot },
-  { title: "Pricing", fr: "Abonnements", url: "/pricing", icon: DollarSign },
+  { title: "Home", url: "/home", icon: Home },
+  { title: "Integrations",  url: "/integrations", icon: Layers3 },
+  { title: "Settings",  url: "/settings", icon: Settings },
+  { title: "Chat with AI", url: "/chat", icon: Bot },
+  { title: "Subaccounts", url: "/subaccounts", icon: Users },
+  { title: "Meetings", url: "/meetings", icon: Video },
+  { title: "Pricing", url: "/pricing", icon: DollarSign },
 ]
 
 export function AppSidebar() {

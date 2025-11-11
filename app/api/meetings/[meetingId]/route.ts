@@ -8,9 +8,17 @@ export async function GET(
 ) {
     try {
         const { userId: clerkUserId } = await auth()
-
+        
         const { meetingId } = await params
-
+        const user = await prisma.user.findUnique({
+            where:{
+                id:clerkUserId||""
+            },
+            include:{
+                subaccounts:true
+            }
+        })
+        let subaccounts = user?.subaccounts||[]
         const meeting = await prisma.meeting.findUnique({
             where: {
                 id: meetingId
@@ -26,16 +34,17 @@ export async function GET(
                     
                     },
                     
-                }
+                },
+                permissions:true
             }
         })
 
         if (!meeting) {
             return NextResponse.json({ error: 'meeting not found' }, { status: 404 })
         }
-        
         const responseData = {
             ...meeting,
+            subaccounts,
             isOwner: clerkUserId === meeting.user?.clerkId
         }
 

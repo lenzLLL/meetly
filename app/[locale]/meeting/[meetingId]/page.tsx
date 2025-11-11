@@ -9,6 +9,8 @@ import ActionItems from './components/action-items/ActionItems'
 import TranscriptDisplay from './components/TranscriptDisplay'
 import ChatSidebar from './components/ChatSidebar'
 import CustomAudioPlayer from './components/AudioPlayer'
+import MeetingPermissionList from '../../subaccounts/components/guess_details'
+import CustomModal from '../../subaccounts/components/custom_modal'
 
 function MeetingDetail() {
 
@@ -101,6 +103,20 @@ function MeetingDetail() {
                             >
                                 Recording
                             </Button>
+                            <Button
+                                variant='ghost'
+                                onClick={() => setActiveTab('permissions')}
+                                className={`px-4 py-2 text-sm font-medium border-b-2 rounded-none shadow-none transition-colors
+                                ${activeTab === 'permissions'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/50'
+                                    }`}
+                                style={{ boxShadow: 'none' }}
+                                type='button'
+                            >
+                                Permissions
+                            </Button>
+                            
                          
                         </div>
 
@@ -211,6 +227,12 @@ function MeetingDetail() {
                                     </div>
                                     }
                                 </div>
+                            )}
+
+                             {activeTab === 'permissions' && (
+                                       
+                               <MeetingPermissionList subaccounts={meetingData?.subaccounts||[]} meetingId={meetingId} initialAllowed={meetingData?.permissions||[]}/>
+                              
                             )}
                         </div>
 

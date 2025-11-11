@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server"
 import { prisma } from "@/lib/db"
 import { NextResponse } from "next/server"
+import { permission } from "process"
 
 export async function GET() {
     try {
@@ -10,7 +11,7 @@ export async function GET() {
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkId: userId }
+            where: { clerkId: userId },include:{subaccounts:true}
         })
 
         if (!user) {
@@ -25,11 +26,15 @@ export async function GET() {
                 isFromCalendar: true,
             },
             orderBy: { startTime: 'asc' },
+            include:{
+               permissions:true
+            },
             take: 10
         })
 
         const events = upcomingMeetings.map(meeting => ({
             id: meeting.calendarEventId || meeting.id,
+            ID:meeting.id,
             summary: meeting.title,
             start: { dateTime: meeting.startTime.toISOString() },
             end: { dateTime: meeting.endTime.toISOString() },
@@ -38,11 +43,13 @@ export async function GET() {
             conferenceData: meeting.meetingUrl ? { entryPoints: [{ uri: meeting.meetingUrl }] } : null,
             botScheduled: meeting.botScheduled,
             meetingId: meeting.id,
-            type:meeting.type
+            type:meeting.type,
+            permissions:meeting.permissions,
         }))
-
+        
         return NextResponse.json({
             events,
+            subaccounts:user.subaccounts,
             source: 'database'
         })
 

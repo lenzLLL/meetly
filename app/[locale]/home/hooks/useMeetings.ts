@@ -6,6 +6,7 @@ import { Subaccount } from "@prisma/client"
 
 export interface CalendarEvent {
     id: string
+    ID?:string
     summary?: string
     start?: {
         dateTime?: string
@@ -18,6 +19,7 @@ export interface CalendarEvent {
     botScheduled?: boolean
     meetingId?: string
     type:String
+    permissions:Subaccount[]
     
 }
 
@@ -40,7 +42,7 @@ export function useMeetings() {
     const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([])
     const [pastMeetings, setPastMeetings] = useState<PastMeeting[]>([])
     const [loading, setLoading] = useState(false)
-    const [subaccounts,setSubaccounts] = useState([])
+    const [subaccounts,setSubaccounts] = useState<Subaccount[]>([])
     const [pastLoading, setPastLoading] = useState(false)
     const [connected, setConnected] = useState(false)
     const [g,setG] = useState(false)
@@ -89,7 +91,7 @@ export function useMeetings() {
             }
 
             setUpcomingEvents(result.events as CalendarEvent[])
-
+            setSubaccounts(result.subaccounts as Subaccount[])
             const toggles: { [key: string]: boolean } = {}
             result.events.forEach((event: CalendarEvent) => {
                 toggles[event.id] = event.botScheduled ?? true
