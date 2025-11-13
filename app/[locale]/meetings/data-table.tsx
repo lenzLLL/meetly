@@ -42,7 +42,7 @@ export default function MeetingDataTable<TData, TValue>({
     <>
       {/* Search */}
       <div className="flex w-1/2 items-center py-4 gap-2">
-       
+        
         <Input
           placeholder="Search Meeting..."
           value={(table.getColumn(filterValue)?.getFilterValue() as string) ?? ""}

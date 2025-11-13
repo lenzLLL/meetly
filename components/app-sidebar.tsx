@@ -16,21 +16,23 @@ import {
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-
-const items = [
-  { title: "Home", url: "/home", icon: Home },
-  { title: "Integrations",  url: "/integrations", icon: Layers3 },
-  { title: "Settings",  url: "/settings", icon: Settings },
-  { title: "Chat with AI", url: "/chat", icon: Bot },
-  { title: "Subaccounts", url: "/subaccounts", icon: Users },
-  { title: "Meetings", url: "/meetings", icon: Video },
-  { title: "Pricing", url: "/pricing", icon: DollarSign },
-]
+import { useTranslations } from "next-intl"
 
 export function AppSidebar() {
+  const t = useTranslations("Sidebar") // ✅ Hook de traduction
   const pathname = usePathname()
   const { usage, limits } = useUsage()
   const locale = pathname.split("/")[1]
+
+  const items = [
+    { title: t("Home"), url: "/home", icon: Home },
+    { title: t("Integrations"), url: "/integrations", icon: Layers3 },
+    { title: t("Settings"), url: "/settings", icon: Settings },
+    { title: t("ChatWithAI"), url: "/chat", icon: Bot },
+    { title: t("Subaccounts"), url: "/subaccounts", icon: Users },
+    { title: t("Meetings"), url: "/meetings", icon: Video },
+    { title: t("Pricing"), url: "/pricing", icon: DollarSign },
+  ]
 
   const meetingProgress =
     usage && limits.meetings !== -1
@@ -48,32 +50,32 @@ export function AppSidebar() {
     switch (usage.currentPlan) {
       case "free":
         return {
-          title: "Upgrade to Starter",
-          description: "Get 10 meetings per month and 30 daily chat messages",
+          title: t("UpgradeToStarter"),
+          description: t("StarterDescription"),
           showButton: true,
         }
       case "starter":
         return {
-          title: "Upgrade to Pro",
-          description: "Get 30 meetings per month and 100 daily chat messages",
+          title: t("UpgradeToPro"),
+          description: t("ProDescription"),
           showButton: true,
         }
       case "pro":
         return {
-          title: "Upgrade to Premium",
-          description: "Get unlimited meetings and chat messages",
+          title: t("UpgradeToPremium"),
+          description: t("PremiumDescription"),
           showButton: true,
         }
       case "premium":
         return {
-          title: "You're on Premium broski!",
-          description: "Enjoying unlimited access to all features",
+          title: t("OnPremium"),
+          description: t("PremiumEnjoy"),
           showButton: false,
         }
       default:
         return {
-          title: "Upgrade Your Plan",
-          description: "Get access to more features",
+          title: t("UpgradeYourPlan"),
+          description: t("GetMoreFeatures"),
           showButton: true,
         }
     }
@@ -131,15 +133,18 @@ export function AppSidebar() {
         {usage && (
           <div className="rounded-lg bg-[#1a0b2e]/70 backdrop-blur-md border border-[#3b186b]/40 p-3 mb-3">
             <p className="text-xs font-medium text-sidebar-accent-foreground mb-3">
-              Current Plan: {usage.currentPlan.toUpperCase()}
+              {t("CurrentPlan")}: {usage.currentPlan.toUpperCase()}
             </p>
 
             {/* Meetings */}
             <div className="space-y-2 mb-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-sidebar-accent-foreground/70">Meetings</span>
+                <span className="text-xs text-sidebar-accent-foreground/70">
+                  {t("Meetings")}
+                </span>
                 <span className="text-xs text-sidebar-accent-foreground/50">
-                  {usage.meetingsThisMonth}/{limits.meetings === -1 ? "∞" : limits.meetings}
+                  {usage.meetingsThisMonth}/
+                  {limits.meetings === -1 ? t("Unlimited") : limits.meetings}
                 </span>
               </div>
               {limits.meetings !== -1 ? (
@@ -150,16 +155,21 @@ export function AppSidebar() {
                   />
                 </div>
               ) : (
-                <div className="text-xs text-sidebar-accent-foreground/50 italic">Unlimited</div>
+                <div className="text-xs text-sidebar-accent-foreground/50 italic">
+                  {t("Unlimited")}
+                </div>
               )}
             </div>
 
             {/* Chat */}
             <div className="space-y-2 mb-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-sidebar-accent-foreground/70">Chat Messages</span>
                 <span className="text-xs text-sidebar-accent-foreground/70">
-                  {usage.chatMessagesToday}/{limits.chatMessages === -1 ? "∞" : limits.chatMessages}
+                  {t("ChatMessages")}
+                </span>
+                <span className="text-xs text-sidebar-accent-foreground/70">
+                  {usage.chatMessagesToday}/
+                  {limits.chatMessages === -1 ? t("Unlimited") : limits.chatMessages}
                 </span>
               </div>
               {limits.chatMessages !== -1 ? (
@@ -170,7 +180,9 @@ export function AppSidebar() {
                   />
                 </div>
               ) : (
-                <div className="text-xs text-sidebar-accent-foreground/50 italic">Unlimited</div>
+                <div className="text-xs text-sidebar-accent-foreground/50 italic">
+                  {t("Unlimited")}
+                </div>
               )}
             </div>
           </div>
@@ -197,7 +209,7 @@ export function AppSidebar() {
               ) : (
                 <div className="text-center py-2">
                   <span className="text-xs text-sidebar-accent-foreground/60">
-                    🎉 Thank you for your support!
+                    🎉 {t("ThankYou")}
                   </span>
                 </div>
               )}

@@ -10,14 +10,12 @@ import MoreFeaturesSection from "@/components/landing/MoreFeaturesSection";
 import StatsSection from "@/components/landing/StatsSection";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
-import { useUser } from "@/hooks/use-user";
+import InstallButton from "@/components/install_button";
 
 export default function Home() {
   const {isSignedIn,isLoaded} = useAuth()
-  const {saveUser} = useUser()
-  const SaveUser = async () =>{
-        await SaveUser()
-  }
+  
+
   // useEffect(
   //   ()=>{
   //       if(isSignedIn){
@@ -36,6 +34,8 @@ export default function Home() {
           <MoreFeaturesSection/>
           <CTASection/>
           <Footer/>
+          <InstallButton/>
+
       </div>
   );
 }

@@ -24,15 +24,20 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Meetly — Smart Meeting Assistant",
-  description: "AI-powered meeting management and summaries",
-};
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
-
+  export const metadata: Metadata = {
+  title: 'Synopsia — Smart Meeting Assistant',
+  description: 'AI-powered meeting management and summaries',
+  manifest: '/manifest.json',
+  // themeColor: '#1a0033',
+  icons: {
+    icon: '/icons/icon-192x192.png',
+    apple: '/icons/icon-512x512.png',
+  },
+}
 export default async function RootLayout({
   children,
   params,
@@ -52,7 +57,7 @@ export default async function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
           suppressHydrationWarning
-        >
+        >  <NextIntlClientProvider locale={locale}>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
@@ -60,13 +65,14 @@ export default async function RootLayout({
             disableTransitionOnChange
           >  <ModalProvider>
             <Toaster/>
-            <NextIntlClientProvider locale={locale}>
+          
               <UsageProvider>
                 <ConditionalLayout>{children}</ConditionalLayout>
               </UsageProvider>
-            </NextIntlClientProvider>
             </ModalProvider>
           </ThemeProvider>
+            </NextIntlClientProvider>
+
         </body>
       </html>
     </ClerkProvider>

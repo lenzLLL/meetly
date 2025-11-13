@@ -1,3 +1,5 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useUsage } from '@/context/UsageContext'
@@ -21,6 +23,8 @@ interface ChatSidebarProps {
     onSuggestionClick: (suggestion: string) => void
 }
 
+import { useTranslations } from 'next-intl'
+
 function ChatSidebar({
     messages,
     chatInput,
@@ -30,24 +34,25 @@ function ChatSidebar({
     onSuggestionClick
 }: ChatSidebarProps) {
     const { canChat } = useUsage()
+    const t = useTranslations('Meetings')
+
     const chatSuggestions = [
-        "What deadlines were discussed in this meeting?",
-        "Write a follow-up email for the team",
-        "What suggestions was I given during the discussion?",
-        "Summarize the key action items from this meeting"
+        t("suggestion1"),
+        t("suggestion2"),
+        t("suggestion3"),
+        t("suggestion4")
     ]
+
     return (
         <div className='w-96 border-l border-gray-800 bg-black/30 backdrop-blur-xl flex flex-col'>
 
+            {/* Header */}
             <div className='p-4 border-b border-border'>
-                <h3 className='font-semibold text-foreground'>
-                    Meeting Assistant
-                </h3>
-                <p className='text-sm text-muted-foreground'>
-                    Ask me anything about this meeting
-                </p>
+                <h3 className='font-semibold text-foreground'>{t("meetingAssistant")}</h3>
+                <p className='text-sm text-muted-foreground'>{t("askAnything")}</p>
             </div>
 
+            {/* Messages */}
             <div className='flex-1 p-4 overflow-auto space-y-4'>
                 {messages.map((message) => (
                     <div
@@ -62,19 +67,19 @@ function ChatSidebar({
                         >
                             <p className='text-sm'>{message.content}</p>
                         </div>
-
                     </div>
                 ))}
 
+                {/* Bot thinking */}
                 {messages.length > 0 && !messages[messages.length - 1].isBot && (
                     <div className='flex justify-start'>
                         <div className='bg-gradient-to-r from-indigo-600/60 to-purple-600/60 border border-indigo-800 backdrop-blur-md  text-foreground rounded-lg p-3'>
-                            <p className='text-sm'>
-                                Thinking...
-                            </p>
+                            <p className='text-sm'>{t("thinking")}</p>
                         </div>
                     </div>
                 )}
+
+                {/* Suggestions */}
                 {showSuggestions && messages.length === 0 && (
                     <div className='flex flex-col items-center space-y-3 mt-8'>
                         {chatSuggestions.map((suggestion, index) => (
@@ -90,20 +95,21 @@ function ChatSidebar({
                                 <p className='text-sm'>⚡️ {suggestion}</p>
                             </button>
                         ))}
-
                     </div>
                 )}
 
+                {/* Daily limit notice */}
                 {!canChat && (
                     <div className='text-center p-4'>
-                        <p className='text-xs text-muted-foreground mb-2'> Daily chat limit reached</p>
+                        <p className='text-xs text-muted-foreground mb-2'>{t("dailyLimit")}</p>
                         <Link href="/pricing" className='text-xs text-primary underline'>
-                            Upgrade to continute chatting
+                            {t("upgrade")}
                         </Link>
                     </div>
                 )}
             </div>
 
+            {/* Input */}
             <div className='p-4 border-t border-border'>
                 <div className='flex gap-2'>
                     <Input
@@ -116,7 +122,7 @@ function ChatSidebar({
                                 onSendMessage()
                             }
                         }}
-                        placeholder={canChat ? "Ask about this meeting..." : "Daily limit reached"}
+                        placeholder={canChat ? t("placeholder") : t("dailyLimit")}
                         className='flex-1'
                         disabled={!canChat}
                     />
@@ -128,9 +134,7 @@ function ChatSidebar({
                     >
                         <Send className='h-4 w-4' />
                     </Button>
-
                 </div>
-
             </div>
 
         </div>

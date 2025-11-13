@@ -1,0 +1,9 @@
+{
+  "name": "Synopsia",
+  "short_name": "SNS",
+  "description": "Une superbe application pour gérer vos réunions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e001a",
+  "orientation": "portrait-primary"
+}

@@ -8,23 +8,34 @@ import { SignOutButton, useAuth, useUser } from '@clerk/nextjs'
 import { Bot, LogOut, Save, Upload, User } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useUsers } from '@/hooks/use-user'
+import { useToast } from '@/components/ui/use_toast'
 
 function Settings() {
   const t = useTranslations('Settings')
+  const { toast } = useToast()
   const { user } = useUser()
   const { userId } = useAuth()
   const [botName, setBotName] = useState('Meeting Bot')
+  const [value,setValue] = useState("")
   const [botImageUrl, setBotImageUrl] = useState<string | null>(null)
   const [userPlan, setUserPlan] = useState('free')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
-
+  
   useEffect(() => {
     if (userId) fetchBotSettings()
   }, [userId])
-
+  const {lang,saveLang} = useUsers()
   const fetchBotSettings = async () => {
     try {
       const response = await fetch('/api/user/bot-settings')
@@ -115,7 +126,12 @@ function Settings() {
       </div>
     )
   }
+  const onChangeValue = async (v:string) => {
+      setValue(v)
+      await saveLang(v)  
+      toast({ title: t("updated") })
 
+  }
   return (
     <>
       <AppHeader />
@@ -157,8 +173,18 @@ function Settings() {
               <Label htmlFor='bot-name' className='block text-sm font-medium text-foreground mb-2'>{t('botName')}</Label>
               <Input id='bot-name' type='text' value={botName} onChange={handleBotNameChange} placeholder={t('botNamePlaceholder')} />
             </div>
-
-            <div className='mb-6'>
+              <Label htmlFor='bot-name' className='block text-sm font-medium text-foreground mb-2'>{t('botLang')}</Label>
+                <Select defaultValue={lang} onValueChange={(v) => onChangeValue(v)}>
+               <SelectTrigger className="w-full">
+               <SelectValue placeholder={t('botL')} />
+               </SelectTrigger>
+              <SelectContent>
+               <SelectItem value="fr">{t('botFr')}</SelectItem>
+               <SelectItem value="en">{t('botEn')}</SelectItem>
+              </SelectContent>
+             </Select>
+          
+            <div className='mb-6 mt-6'>
               <Label htmlFor='bot-image-upload' className='block text-sm font-medium text-foreground mb-2'>{t('botAvatar')}</Label>
               <div className='flex items-center gap-4'>
                 <div className='w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden'>

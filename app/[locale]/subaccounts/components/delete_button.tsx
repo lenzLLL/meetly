@@ -1,9 +1,9 @@
 'use client'
-import {
-  deleteSubAccount,
-} from '@/lib/action'
+
+import { deleteSubAccount } from '@/lib/action'
 import { useRouter } from 'next/navigation'
 import React from 'react'
+import { useTranslations } from 'next-intl'
 
 type Props = {
   subaccountId: string
@@ -11,16 +11,19 @@ type Props = {
 
 const DeleteButton = ({ subaccountId }: Props) => {
   const router = useRouter()
+  const t = useTranslations('Subaccounts') // Section pour toutes les actions liées aux sous-comptes
+
+  const handleDelete = async () => {
+    await deleteSubAccount({ id: subaccountId })
+    router.refresh()
+  }
 
   return (
     <div
-      className="text-white"
-      onClick={async () => {
-        await deleteSubAccount({id:subaccountId})
-        router.refresh()
-      }}
+      onClick={handleDelete}
+      className="text-red-500 hover:text-red-600 cursor-pointer text-sm font-medium"
     >
-      Delete Sub Account
+      {t('DeleteSubaccountButton')}
     </div>
   )
 }

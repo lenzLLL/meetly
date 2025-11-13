@@ -13,7 +13,7 @@ model User {
   email    String?
   name     String?
   meetings Meeting[]
-
+  lang String @default("en")
   botName     String? @default("Meeting Bot")
   botImageUrl String?
 

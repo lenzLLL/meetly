@@ -1,3 +1,5 @@
+"use client"
+
 import React from 'react'
 import { PastMeeting } from '../hooks/useMeetings'
 import { Clock, ExternalLink, Video } from 'lucide-react'
@@ -5,6 +7,7 @@ import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import AttendeeAvatars from './AttendeeAvatar'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface PastMeetingsProps {
     pastMeetings: PastMeeting[]
@@ -21,6 +24,7 @@ function PastMeetings({
     getAttendeeList,
     getInitials
 }: PastMeetingsProps) {
+    const t = useTranslations('Dashboard')
 
     if (pastLoading) {
         return (
@@ -44,9 +48,9 @@ function PastMeetings({
             <div className="bg-[#130a22]/70 border border-white/10 rounded-xl p-10 text-center backdrop-blur">
                 <Video className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-1">
-                    No past meetings
+                    {t('NoPastMeetings')}
                 </h3>
-                <p className="text-muted-foreground">Your completed meetings will appear here</p>
+                <p className="text-muted-foreground">{t('NoPastMeetingsDescription')}</p>
             </div>
         )
     }
@@ -71,7 +75,6 @@ function PastMeetings({
                         onClick={() => onMeetingClick(meeting.id)}
                     >
                         {/* Header */}
-
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3 flex-1">
                                 <span
@@ -80,7 +83,7 @@ function PastMeetings({
                                         typeStyles[type as "z" | "g" | "default"]
                                     )}
                                 >
-                                    {type === "z" ? "Zoom" : type === "g" ? "Google Meet" : "Meeting"}
+                                    {type === "z" ? t('Zoom') : type === "g" ? t('GoogleMeet') : t('Meeting')}
                                 </span>
 
                                 <h3 className="font-semibold text-xl text-foreground">
@@ -97,7 +100,7 @@ function PastMeetings({
                             </div>
 
                             <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full">
-                                Completed
+                                {t('Completed')}
                             </span>
                         </div>
 
@@ -124,7 +127,7 @@ function PastMeetings({
                                 onClick={() => onMeetingClick(meeting.id)}
                             >
                                 <ExternalLink className="h-3 w-3" />
-                                View details
+                                {t('ViewDetails')}
                             </Button>
                         </div>
                     </div>

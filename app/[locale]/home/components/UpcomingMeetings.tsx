@@ -1,15 +1,17 @@
-import React, { useState,useEffect } from 'react'
+"use client"
+import React, { useState } from 'react'
 import { CalendarEvent } from '../hooks/useMeetings'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { Clock } from 'lucide-react'
+import { Clock, Video } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Video, UserPlus } from "lucide-react"
 import { Subaccount } from '@prisma/client'
 import AddGuestButton from '../../subaccounts/components/add_guest'
+import { useTranslations } from 'next-intl'
+
 interface UpcomingMeetingsProps {
     upcomingEvents: CalendarEvent[]
     connected: boolean
@@ -18,12 +20,12 @@ interface UpcomingMeetingsProps {
     initialLoading: boolean
     botToggles: { [key: string]: boolean }
     onRefresh: () => void
-    subaccounts:Subaccount[],
+    subaccounts: Subaccount[]
     onToggleBot: (eventId: string) => void
     onConnectCalendar: () => void
-    g:boolean
-    z:boolean
-    o:boolean
+    g: boolean
+    z: boolean
+    o: boolean
 }
 
 function UpcomingMeetings({
@@ -41,9 +43,9 @@ function UpcomingMeetings({
     g,
     onConnectCalendar
 }: UpcomingMeetingsProps) {
+    const t = useTranslations('Dashboard')
 
-    // ✅ Filtre : "all", "zoom", "google"
-    const [filter, setFilter] = useState<'all' | 'z' | 'g'|'o'>('all')
+    const [filter, setFilter] = useState<'all' | 'z' | 'g' | 'o'>('all')
 
     const filteredEvents = upcomingEvents.filter(event => {
         if (filter === 'all') return true
@@ -56,17 +58,17 @@ function UpcomingMeetings({
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-foreground">Upcoming</h2>
+                <h2 className="text-xl font-bold text-foreground">{t('Sections.UpcomingMeetings')}</h2>
                 <span className="text-sm text-muted-foreground">({filteredEvents.length})</span>
             </div>
 
-            {/* ✅ Filtres */}
+            {/* Filtres */}
             <div className="flex gap-2 mb-5">
                 {[
-                    { key: 'all', label: 'All' },
+                    { key: 'all', label: t('Filters.All') },
                     { key: 'g', label: 'Google Meet' },
                     { key: 'z', label: 'Zoom' },
-                    {key:'o',label:'outlook'}
+                    { key: 'o', label: 'Outlook' }
                 ].map(f => (
                     <Button
                         key={f.key}
@@ -102,56 +104,30 @@ function UpcomingMeetings({
                     <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
                         📆
                     </div>
-                    <h3 className="font-semibold mb-2 text-foreground text-sm">Connect Calendar</h3>
-                    <p className="text-muted-foreground mb-4 text-xs">
-                        Connect Google Calendar, zoom or outlook to see upcoming meetings
-                    </p>
+                    <h3 className="font-semibold mb-2 text-foreground text-sm">{t('Upcoming.ConnectCalendar')}</h3>
+                    <p className="text-muted-foreground mb-4 text-xs">{t('Upcoming.ConnectCalendarDescription')}</p>
                     <Link href={"/integrations"}>
-                    <Button
-                        // onClick={onConnectCalendar}
-                        disabled={loading}
-                        className="w-full text-sm cursor-pointer"
-                    >
-                        {loading ? 'Connecting…' : 'Connect Calendar'}
-                    </Button>
+                        <Button
+                            disabled={loading}
+                            className="w-full text-sm cursor-pointer"
+                        >
+                            {loading ? t('Loading') : t('Upcoming.Connect')}
+                        </Button>
                     </Link>
                 </div>
-            ) : 
-            ((connected && filter === "all" && filteredEvents.length === 0)||(connected && filter === "all" && filteredEvents.length === 0)||(connected && filter === "all" && filteredEvents.length === 0)||(connected && filter === "all" && filteredEvents.length === 0)) ? (
+            ) : filteredEvents.length === 0 ? (
                 <div className="bg-[#1a0b2e]/70 backdrop-blur-md border border-[#3b186b]/40 rounded-lg p-6 text-center">
-                    <h3 className="font-medium mb-2 text-foreground text-sm">No upcoming meetings</h3>
-                    <p className="text-muted-foreground text-xs">Your calendar is clear!</p>
+                    <h3 className="font-medium mb-2 text-foreground text-sm">{t('Upcoming.NoMeetings')}</h3>
+                    <p className="text-muted-foreground text-xs">{t('Upcoming.NoMeetingsDesc')}</p>
                 </div>
-            ) :
-            ((filter === "g" && !g)||(filter === "z" && !z)||(filter === "o" && !o))?(
-                  <div className="bg-[#1a0b2e]/70 rounded-lg p-6 text-center border border-border">
-                    <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                        
-                        <Image height={30} width={30} alt='picture'  src = {filter == "g" ?"/gcal.png":filter == "z"?"/zoom.png":"/outlook.png"}/>
-                    </div>
-                    <h3 className="font-semibold mb-2 text-foreground text-sm">Connect Calendar</h3>
-                    <p className="text-muted-foreground mb-4 text-xs">
-                        Connect {filter == "g" ?"Google Calendar":filter == "z"?"Zoom":"Outlook"} to see upcoming meetings
-                    </p>
-                    <Link href={"/integrations"}>
-                    <Button
-                        // onClick={onConnectCalendar}
-                        disabled={loading}
-                        className="w-full text-sm cursor-pointer"
-                    >
-                        {loading ? 'Connecting…' : 'Connect Calendar'}
-                    </Button>
-                    </Link>
-                </div>
-            ):
-            (
+            ) : (
                 <div className="space-y-3">
                     <Button
                         className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 hover:scale-[0.98] px-3 py-2 rounded-lg text-sm mb-4 cursor-pointer transition"
                         onClick={onRefresh}
                         disabled={loading}
                     >
-                        {loading ? 'Loading…' : 'Refresh'}
+                        {loading ? t('Loading') : t('Upcoming.Refresh')}
                     </Button>
 
                     {filteredEvents.map(event => (
@@ -163,41 +139,39 @@ function UpcomingMeetings({
                                 <Switch
                                     checked={!!botToggles[event.id]}
                                     onCheckedChange={() => onToggleBot(event.id)}
-                                    aria-label="Toggle bot for this meeting"
+                                    aria-label={t('Upcoming.ToggleBot')}
                                     className="cursor-pointer"
                                 />
                             </div>
 
                             <h4 className="font-medium text-sm text-foreground mb-2 pr-12">
-                                {event.summary || 'No Title'}
+                                {event.summary || t('Upcoming.NoTitle')}
                             </h4>
 
                             <div className="space-y-1 text-xs text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
-                                    {format(new Date(event.start?.dateTime || event.start?.date || ''), 'MMM d, h:mm a')}
+                                    {format(new Date(event.start?.dateTime || event.start?.date || ''), 'PPP p')}
                                 </div>
 
                                 {event.attendees && (
-                                    <div>👥 {event.attendees.length} attendees</div>
+                                    <div>👥 {event.attendees.length} {t('Upcoming.Attendees')}</div>
                                 )}
                             </div>
 
                             {(event.hangoutLink || event.location) && (
                                 <div className='flex items-center justify-between gap-2'>
-                                <a
-                                    href={event.hangoutLink || event.location}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className='flex-1'
-                                >
-                                    <Button className="mt-3 w-full text-xs h-7 cursor-pointer">
-                                       <Video/> Join Meeting 
-                                    </Button> 
-                                </a>
-                                                         
-                                  <AddGuestButton subaccounts={subaccounts} meetingId={event.ID||""} initialAllowed={event.permissions} />
-                             
+                                    <a
+                                        href={event.hangoutLink || event.location}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className='flex-1'
+                                    >
+                                        <Button className="mt-3 w-full text-xs h-7 cursor-pointer">
+                                           <Video/> {t('Upcoming.JoinMeeting')}
+                                        </Button> 
+                                    </a>
+                                    <AddGuestButton subaccounts={subaccounts} meetingId={event.ID || ""} initialAllowed={event.permissions} />
                                 </div>
                             )}
                         </div>

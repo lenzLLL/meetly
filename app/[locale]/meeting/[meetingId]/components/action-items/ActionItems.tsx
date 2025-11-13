@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import { ActionItem, useActionItems } from '../../hooks/useActionItems'
 import { Button } from '@/components/ui/button'
@@ -5,6 +7,7 @@ import ActionItemsList from './ActionItemsList'
 import AddActionItemInput from './AddActionItemInput'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 export interface ActionItemsProps {
     actionItems: ActionItem[]
@@ -19,6 +22,7 @@ function ActionItems({
     onAddItem,
     meetingId
 }: ActionItemsProps) {
+    const t = useTranslations('Meetings')
     const {
         integrations,
         integrationsLoaded,
@@ -33,22 +37,16 @@ function ActionItems({
     const addToIntegration = async (platform: string, actionItem: ActionItem) => {
         setLoading(prev => ({ ...prev, [`${platform}-${actionItem.id}`]: true }))
         try {
-            toast(`✅ Action item added to ${platform}`, {
+            toast(t('addedToPlatform', { platform }), {
                 action: {
-                    label: "OK",
+                    label: t('ok'),
                     onClick: () => { },
                 },
             })
-            const response = await fetch('/api/integrations/action-items', {
+            await fetch('/api/integrations/action-items', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    platform,
-                    actionItem: actionItem.text,
-                    meetingId
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platform, actionItem: actionItem.text, meetingId })
             })
         } finally {
             setLoading(prev => ({ ...prev, [`${platform}-${actionItem.id}`]: false }))
@@ -56,27 +54,14 @@ function ActionItems({
     }
 
     const handleAddNewItem = async () => {
-        if (!newItemText.trim()) {
-            return
-        }
-
+        if (!newItemText.trim()) return
         try {
-            toast(`✅ Action item added`, {
-                action: {
-                    label: "OK",
-                    onClick: () => { },
-                },
-            })
+            toast(t('actionItemAdded'), { action: { label: t('ok'), onClick: () => {} } })
             const response = await fetch(`/api/meetings/${meetingId}/action-items`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    text: newItemText
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: newItemText })
             })
-
             if (response.ok) {
                 onAddItem(newItemText)
                 setNewItemText('')
@@ -89,19 +74,9 @@ function ActionItems({
 
     const handleDeleteItem = async (id: number) => {
         try {
-            toast(`✅ Action item deleted`, {
-                action: {
-                    label: "OK",
-                    onClick: () => { },
-                },
-            })
-            const response = await fetch(`/api/meetings/${meetingId}/action-items/${id}`, {
-                method: 'DELETE'
-            })
-
-            if (response.ok) {
-                onDeleteItem(id)
-            }
+            toast(t('actionItemDeleted'), { action: { label: t('ok'), onClick: () => {} } })
+            const response = await fetch(`/api/meetings/${meetingId}/action-items/${id}`, { method: 'DELETE' })
+            if (response.ok) onDeleteItem(id)
         } catch (error) {
             console.error('failed to delete action item:', error)
         }
@@ -113,11 +88,10 @@ function ActionItems({
         return (
             <div className='bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] rounded-lg p-6 border border-border mb-8'>
                 <h3 className='text-lg font-semibold text-foreground mb-4'>
-                    Action Items
+                    {t('actionItems')}
                 </h3>
-
                 <div className='space-y-4'>
-                    {actionItems.map((item) => (
+                    {actionItems.map(item => (
                         <div key={item.id} className='group relative'>
                             <div className='flex items-center gap-3'>
                                 <p className='flex-1 text-sm leading-relaxed text-foreground'>
@@ -126,26 +100,12 @@ function ActionItems({
                                 <div className='animate-pulse'>
                                     <div className='h-6 w-20 bg-muted rounded'></div>
                                 </div>
-
-                                <Button
-                                    variant='ghost'
-                                    size='icon'
-                                    className='opacity-0 group-hover:opacity-100 p-1 hover:border-b hover:border-gray-800 hover:bg-black/30 hover:backdrop-blur-xl text-destructive rounded transition-all'
-                                    disabled
-                                >
-
-                                </Button>
-
+                                <Button variant='ghost' size='icon' className='opacity-0 group-hover:opacity-100 p-1 hover:border-b hover:border-gray-800 hover:bg-black/30 hover:backdrop-blur-xl text-destructive rounded transition-all' disabled />
                             </div>
                         </div>
                     ))}
-
-                    <div className='animate-pulse'>
-                        <div className='h-8 bg-muted rounded-lg'></div>
-                    </div>
-
+                    <div className='animate-pulse'><div className='h-8 bg-muted rounded-lg'></div></div>
                 </div>
-
             </div>
         )
     }
@@ -153,7 +113,7 @@ function ActionItems({
     return (
         <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border mb-8'>
             <h3 className='text-lg font-semibold text-foreground mb-4'>
-                Action Items
+                {t('actionItems')}
             </h3>
 
             <ActionItemsList
@@ -176,12 +136,11 @@ function ActionItems({
                 <div className='mt-4 p-3 bg-[#1a0b2e]/70 rounded-lg border border-dashed border-muted-foreground/30'>
                     <p className='text-xs text-muted-foreground text-center'>
                         <Link href="/integrations" className='text-primary hover:underline'>
-                            Connect Integrations
-                        </Link> to add action items to your tools
+                            {t('connectIntegrations')}
+                        </Link> {t('toAddActionItems')}
                     </p>
                 </div>
             )}
-
         </div>
     )
 }

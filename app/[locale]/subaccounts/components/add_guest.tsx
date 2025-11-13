@@ -1,48 +1,44 @@
 'use client'
-import { Button } from '@/components/ui/button'
 
-import {Subaccount, User } from '@prisma/client'
-import { PlusCircleIcon, UserPlus } from 'lucide-react'
-import React,{useEffect} from 'react'
-import { twMerge } from 'tailwind-merge'
-import CustomModal from './custom_modal'
-import SubAccountDetails from './subaccountDetails'
+import { Button } from '@/components/ui/button'
+import { Subaccount } from '@prisma/client'
+import { UserPlus } from 'lucide-react'
 import { useModal } from './modal_provider'
+import CustomModal from './custom_modal'
 import MeetingPermissionList from './guess_details'
+import { useTranslations } from 'next-intl'
 
 type Props = {
-  subaccounts:Subaccount[],
-  meetingId:string,
-  initialAllowed:Subaccount[]
+  subaccounts: Subaccount[]
+  meetingId: string
+  initialAllowed: Subaccount[]
 }
 
-const AddGuestButton = ({ subaccounts,meetingId,initialAllowed }: Props) => {
+const AddGuestButton = ({ subaccounts, meetingId, initialAllowed }: Props) => {
   const { setOpen } = useModal()
+  const t = useTranslations("Meetings") // 🈯️ Section pour les textes de réunions
 
-  
   return (
-      <Button 
-            onClick={() => {
+    <Button
+      onClick={() => {
         setOpen(
           <CustomModal
-            title="Meeting Permissions"
-            subheading="Select the participants who will be able to view this meeting’s information."
+            title={t("MeetingPermissionsTitle")}
+            subheading={t("MeetingPermissionsSubheading")}
           >
-            <MeetingPermissionList  />
-          </CustomModal>,    async () => {
-              // ✅ On récupère tout : meeting + user + subaccounts + permissions
-              const res = await fetch(`/api/meetings/${meetingId}`)
-              const data = await res.json()
-
-              // ✅ Doit retourner { meeting: {...} }
-              return { meeting: data }
-            }
+            <MeetingPermissionList />
+          </CustomModal>,
+          async () => {
+            const res = await fetch(`/api/meetings/${meetingId}`)
+            const data = await res.json()
+            return { meeting: data }
+          }
         )
       }}
-      className="mt-3 w-auto  text-xs h-7 cursor-pointer">
-                                       <UserPlus/>  
-      </Button>
-
+      className="mt-3 w-auto text-xs h-7 cursor-pointer"
+    >
+      <UserPlus />
+    </Button>
   )
 }
 

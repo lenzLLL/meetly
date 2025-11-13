@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 interface TranscriptWord {
     word: string
     start: number
@@ -17,18 +19,17 @@ interface TranscriptDisplayProps {
 }
 
 export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps) {
+    const t = useTranslations('Meetings')
+
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60)
         const secs = Math.floor(seconds % 60)
-
         return `${minutes}:${secs.toString().padStart(2, '0')}`
-
     }
 
     const getSpeakerSegmentTime = (segment: TranscriptSegment) => {
         const startTime = segment.offset
         const endTime = segment.words[segment.words.length - 1]?.end || segment.offset
-
         return `${formatTime(startTime)} - ${formatTime(endTime)}`
     }
 
@@ -40,7 +41,7 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
         return (
             <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border text-center'>
                 <p className='text-muted-foreground'>
-                    No transcript available
+                    {t('noTranscript')}
                 </p>
             </div>
         )
@@ -49,7 +50,7 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
     return (
         <div className="border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border">
             <h3 className="text-lg font-semibold text-foreground mb-4">
-                Meeting transcript
+                {t('meetingTranscript')}
             </h3>
 
             <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -69,7 +70,6 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
                     </div>
                 ))}
             </div>
-
         </div>
     )
 }

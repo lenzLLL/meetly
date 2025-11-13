@@ -85,6 +85,26 @@ export const deleteSubAccount = async ({id}:{id:string}) =>{
 
 
 
+export const saveUserLang = async (lang:string) =>{
+    try{
+        const user = await currentUser();
+        await prisma.user.update({
+            where:{
+                id:user?.id
+            },
+            data:{
+                lang
+            }
+        })
+
+    }
+    catch(error:any){
+        return null
+    }
+}
+
+
+
 
 export const upsertSubAccount = async (data: SubAccountInput) => {
   return prisma.subaccount.upsert({
@@ -100,4 +120,23 @@ export const upsertSubAccount = async (data: SubAccountInput) => {
       userId: data.userId,
     },
   })
+}
+
+export const getUserMeetings = async (id:string) => {
+    try{
+        const meeting = await prisma.meeting.findMany({
+            where:{
+                user:{
+                    id
+                }
+            },
+            include:{
+                permissions:true,
+            }
+        })
+        return meeting
+    }
+    catch(error:any){
+        return null
+    }
 }

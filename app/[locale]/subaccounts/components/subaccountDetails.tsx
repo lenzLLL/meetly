@@ -31,6 +31,7 @@ import { useEffect } from 'react'
 import { useToast } from '@/components/ui/use_toast'
 import { useModal } from './modal_provider'
 import Loading from './loading'
+import { useTranslations } from 'next-intl'
 
 const formSchema = z.object({
   name: z.string().min(1),
@@ -47,11 +48,11 @@ const SubAccountDetails: React.FC<SubAccountDetailsProps> = ({
   details,
   userId,
 }) => {
+  const t = useTranslations('Subaccounts')
   const { toast } = useToast()
   const { setClose } = useModal()
   const router = useRouter()
 
-  // ✅ ALWAYS give safe default values
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,14 +67,14 @@ const SubAccountDetails: React.FC<SubAccountDetailsProps> = ({
         id: details?.id ?? v4(),
         email: values.email,
         name: values.name,
-        userId:userId||"",
+        userId: userId ?? '',
       })
 
       if (!response) throw new Error('No response from server')
 
       toast({
-        title: 'Subaccount details saved',
-        description: 'Successfully saved your subaccount details.',
+        title: t('SaveSuccessTitle'),
+        description: t('SaveSuccessDescription'),
       })
 
       setClose()
@@ -81,13 +82,12 @@ const SubAccountDetails: React.FC<SubAccountDetailsProps> = ({
     } catch {
       toast({
         variant: 'destructive',
-        title: 'Oppse!',
-        description: 'Could not save sub account details.',
+        title: t('SaveErrorTitle'),
+        description: t('SaveErrorDescription'),
       })
     }
   }
 
-  // ✅ Reset safely when details arrive
   useEffect(() => {
     if (details) {
       form.reset({
@@ -102,58 +102,54 @@ const SubAccountDetails: React.FC<SubAccountDetailsProps> = ({
   return (
     <Card className="w-full !bg-[#1a0b2e]/70">
       <CardHeader>
-        <CardTitle>Sub Account Information</CardTitle>
-        <CardDescription>Please enter account's informations</CardDescription>
+        <CardTitle>{t('CardTitle')}</CardTitle>
+        <CardDescription>{t('CardDescription')}</CardDescription>
       </CardHeader>
 
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="flex md:flex-row gap-4">
-              
-              {/* NAME */}
-            <FormField
-  control={form.control}
-  name="name"
-  render={({ field }) => (
-    <FormItem className="flex-1">
-      <FormLabel>Account Name</FormLabel>
-      <FormControl>
-        <Input
-          placeholder="Account Name"
-          {...field}
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>{t('NameLabel')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('NamePlaceholder')}
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-
-          <FormField
-  control={form.control}
-  name="email"
-  render={({ field }) => (
-    <FormItem className="flex-1">
-      <FormLabel>Account Email</FormLabel>
-      <FormControl>
-        <Input
-          placeholder="Email"
-          {...field}
-          disabled={isLoading}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormLabel>{t('EmailLabel')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('EmailPlaceholder')}
+                        {...field}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? <Loading /> : 'Save Account Information'}
+              {isLoading ? <Loading /> : t('SaveButton')}
             </Button>
-
           </form>
         </Form>
       </CardContent>

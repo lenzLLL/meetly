@@ -5,19 +5,19 @@ import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/use_toast"
 import { Subaccount } from "@prisma/client"
 import { useModal } from "./modal_provider"
+import { useTranslations } from "next-intl"
 
 export default function MeetingPermissionList() {
   const { data } = useModal()
   const { toast } = useToast()
+  const t = useTranslations("Meetings") // 🈯️ Section des traductions
 
-  // ✅ On lit meeting APRES avoir créé tous les hooks
   const meeting = data.meeting
 
-  // ✅ Hooks toujours en haut, jamais après un return
   const [subaccounts, setSubaccounts] = useState<Subaccount[]>([])
   const [allowed, setAllowed] = useState<Subaccount[]>([])
 
-  // ✅ Charger les données quand le modal fournit un meeting
+  // Charger les données du meeting
   useEffect(() => {
     if (meeting) {
       setSubaccounts(meeting.subaccounts || [])
@@ -25,9 +25,9 @@ export default function MeetingPermissionList() {
     }
   }, [meeting])
 
-  // ✅ Si pas de meeting → on retourne plus tard, après les hooks
+  // Si pas de meeting
   if (!meeting) {
-    return <p className="text-muted">No meeting loaded...</p>
+    return <p className="text-muted">{t("NoMeetingLoaded")}</p>
   }
 
   const meetingId = meeting.id
@@ -52,14 +52,14 @@ export default function MeetingPermissionList() {
 
       if (!res.ok) throw new Error()
 
-      toast({ title: "Permissions Updated" })
+      toast({ title: t("PermissionsUpdated") })
     } catch {
       setAllowed(prev =>
         hasPermission ? [...prev, sub] : prev.filter(a => a.id !== sub.id)
       )
       toast({
-        title: "Error",
-        description: "Could not update permission",
+        title: t("Error"),
+        description: t("PermissionUpdateFailed"),
         variant: "destructive",
       })
     }
@@ -71,12 +71,18 @@ export default function MeetingPermissionList() {
         const isAllowed = allowed.some(a => a.id === sub.id)
 
         return (
-          <div key={sub.id} className="flex items-center justify-between p-2 border rounded">
+          <div
+            key={sub.id}
+            className="flex items-center justify-between p-2 border rounded"
+          >
             <div>
               <p>{sub.name}</p>
               <p className="text-sm text-muted-foreground">{sub.email}</p>
             </div>
-            <Switch checked={isAllowed} onCheckedChange={() => togglePermission(sub)} />
+            <Switch
+              checked={isAllowed}
+              onCheckedChange={() => togglePermission(sub)}
+            />
           </div>
         )
       })}

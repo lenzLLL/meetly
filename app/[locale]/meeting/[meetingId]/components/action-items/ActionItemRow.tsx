@@ -1,9 +1,11 @@
+'use client'
+
 import React from 'react'
 import { Integration } from '../../hooks/useActionItems'
 import { Button } from '@/components/ui/button'
 import { ChevronDown, ExternalLink, Trash2 } from 'lucide-react'
-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useTranslations } from 'next-intl'
 
 interface ActionItemRowProps {
     item: {
@@ -23,8 +25,9 @@ function ActionItemRow({
     addToIntegration,
     handleDeleteItem
 }: ActionItemRowProps) {
-
+    const t = useTranslations('Meetings')
     const hasConnectedIntegrations = integrations.length > 0
+
     return (
         <div className='group relative'>
             <div className='flex items-start gap-3'>
@@ -42,17 +45,15 @@ function ActionItemRow({
                                 disabled={loading[`${integrations[0].platform}-${item.id}`]}
                                 size='sm'
                                 className='px-3 py-1 text-xs flex items-center gap-1'
-
                             >
                                 {loading[`${integrations[0].platform}-${item.id}`] ? (
-                                    'Adding...'
+                                    t('adding')
                                 ) : (
                                     <>
-                                        Add to {integrations[0].name}
+                                        {t('addTo', { name: integrations[0].name })}
                                         <ExternalLink className='h-3 w-3' />
                                     </>
                                 )}
-
                             </Button>
                         ) : (
                             <DropdownMenu>
@@ -62,7 +63,7 @@ function ActionItemRow({
                                         variant='default'
                                         className='px-3 py-1 text-xs flex items-center gap-1 cursor-pointer'
                                     >
-                                        Add to
+                                        {t('addTo')}
                                         <ChevronDown className='h-3 w-3' />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -83,26 +84,23 @@ function ActionItemRow({
                                                         e.currentTarget.style.display = 'none'
                                                     }}
                                                 />
-
                                             </div>
 
                                             <span>
                                                 {loading[`${integration.platform}-${item.id}`] ? (
-                                                    'Adding...'
+                                                    t('adding')
                                                 ) : (
-                                                    `Add to ${integration.name}`
+                                                    t('addTo', { name: integration.name })
                                                 )}
                                             </span>
-
                                         </DropdownMenuItem>
                                     ))}
-
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
-
                     </div>
                 )}
+
                 <Button
                     variant='ghost'
                     size='icon'
@@ -110,11 +108,8 @@ function ActionItemRow({
                     className='opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/20 text-destructive rounded transition-all cursor-pointer'
                 >
                     <Trash2 className='h-4 w-4' />
-
                 </Button>
-
             </div>
-
         </div>
     )
 }
