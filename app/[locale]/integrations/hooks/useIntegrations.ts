@@ -91,7 +91,7 @@ export function useIntegrations() {
                 if (integration.platform === 'google-calendar') {
                     return {
                         ...integration,
-                        connected: calendarData.connected || false
+                        connected: calendarData.g || false
                     }
                 }
                 // else if(integration.platform === 'zoom'){
