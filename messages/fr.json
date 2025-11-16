@@ -224,17 +224,24 @@
      "Filters": {
       "All": "Toutes"
     },
-  "Upcoming": {
+    "Upcoming": {
+      "UpcomingMeetings": "Réunions à venir",
+      "All": "Toutes",
+      "GoogleMeet": "Google Meet",
+      "Zoom": "Zoom",
+      "Outlook": "Outlook",
       "ConnectCalendar": "Connecter le calendrier",
-      "ConnectCalendarDescription": "Connectez Google Calendar, Zoom ou Outlook pour voir les réunions à venir",
-      "Connect": "Connecter",
-      "NoMeetings": "Aucune réunion à venir",
-      "NoMeetingsDesc": "Votre calendrier est vide !",
+      "ConnectMessage": "Connectez Google Calendar, Zoom ou Outlook pour voir les réunions à venir",
+      "ConnectPlatform": "Connectez {platform} pour voir les réunions à venir",
+      "NoUpcomingMeetings": "Aucune réunion à venir",
+      "NoUpcomingMeetingsMessage": "Votre calendrier est vide !",
       "Refresh": "Rafraîchir",
-      "ToggleBot": "Activer/désactiver le bot pour cette réunion",
+      "LoadingEvents": "Chargement…",
+      "Connecting": "Connexion…",
+      "JoinMeeting": "Rejoindre la réunion",
       "NoTitle": "Sans titre",
-      "Attendees": "participants",
-      "JoinMeeting": "Rejoindre la réunion"
+      "ToggleBot": "Activer/désactiver le bot pour cette réunion",
+      "AttendeesCount": "👥 {count} participants"
     }
  
   },

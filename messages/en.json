@@ -218,17 +218,25 @@
     "Filters": {
     "All": "All"
   },
-   "Upcoming": {
-    "ConnectCalendar": "Connect Calendar",
-    "ConnectMessage": "Connect Google Calendar, Zoom, or Outlook to see upcoming meetings",
-    "ConnectPlatform": "Connect {platform} to see upcoming meetings",
-    "NoUpcomingMeetings": "No upcoming meetings",
-    "NoUpcomingMeetingsMessage": "Your calendar is clear!",
-    "Refresh": "Refresh",
-    "LoadingEvents": "Loading…",
-    "Connecting": "Connecting…",
-    "JoinMeeting": "Join Meeting"
-  }
+"Upcoming": {
+      "UpcomingMeetings": "Upcoming Meetings",
+      "All": "All",
+      "GoogleMeet": "Google Meet",
+      "Zoom": "Zoom",
+      "Outlook": "Outlook",
+      "ConnectCalendar": "Connect Calendar",
+      "ConnectMessage": "Connect Google Calendar, Zoom, or Outlook to see upcoming meetings",
+      "ConnectPlatform": "Connect {platform} to see upcoming meetings",
+      "NoUpcomingMeetings": "No upcoming meetings",
+      "NoUpcomingMeetingsMessage": "Your calendar is clear!",
+      "Refresh": "Refresh",
+      "LoadingEvents": "Loading…",
+      "Connecting": "Connecting…",
+      "JoinMeeting": "Join Meeting",
+      "NoTitle": "No Title",
+      "ToggleBot": "Toggle bot for this meeting",
+      "AttendeesCount": "👥 {count} attendees"
+    }
   },
     "Meetings":{
         "suggestion1": "What deadlines were discussed in this meeting?",
