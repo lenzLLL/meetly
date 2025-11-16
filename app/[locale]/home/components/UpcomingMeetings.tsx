@@ -42,7 +42,7 @@ export default function UpcomingMeetings({
     o
 }: UpcomingMeetingsProps) {
 
-    const t = useTranslations("Dashboard.Upcoming");
+    const t = useTranslations("Dashboard");
 
     const [filter, setFilter] = useState<"all" | "z" | "g" | "o">("all");
 
@@ -56,7 +56,7 @@ export default function UpcomingMeetings({
             {/* Title */}
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-foreground">
-                    {t("UpcomingMeetings")}
+                    {t("Upcoming.UpcomingMeetings")}
                 </h2>
                 <span className="text-sm text-muted-foreground">
                     ({filteredEvents.length})
