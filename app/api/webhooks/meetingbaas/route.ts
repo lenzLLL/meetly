@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
             if (webhookData.transcript && !meeting.processed) {
                 try {
-                    const processed = await processMeetingTranscript(webhookData.transcript)
+                    const processed = await processMeetingTranscript(webhookData.transcript,meeting.user.id)
 
                     let transcriptText = ''
 

@@ -1,14 +1,16 @@
 "use client"
-import React, { useState } from 'react'
-import { CalendarEvent } from '../hooks/useMeetings'
-import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { Clock, Video, UserPlus } from 'lucide-react'
-import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Subaccount } from '@prisma/client'
+
+import React, { useState } from "react"
+import { CalendarEvent } from "../hooks/useMeetings"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Clock, Video, UserPlus } from "lucide-react"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import Link from "next/link"
+import Image from "next/image"
+import { Subaccount } from "@prisma/client"
+import { useTranslations } from "next-intl"
 
 interface UpcomingMeetingsProps {
     upcomingEvents: CalendarEvent[]
@@ -40,6 +42,8 @@ export default function UpcomingMeetings({
     o
 }: UpcomingMeetingsProps) {
 
+    const t = useTranslations("Dashboard.Upcoming")   // <-- KEY IMPORTANTE
+
     const [filter, setFilter] = useState<'all' | 'z' | 'g' | 'o'>('all')
 
     const filteredEvents = upcomingEvents.filter(event => {
@@ -54,7 +58,7 @@ export default function UpcomingMeetings({
         <div>
             {/* Section Title */}
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-foreground">Upcoming Meetings</h2>
+                <h2 className="text-xl font-bold text-foreground">{t("UpcomingMeetings")}</h2>
                 <span className="text-sm text-muted-foreground">
                     ({filteredEvents.length})
                 </span>
@@ -63,10 +67,10 @@ export default function UpcomingMeetings({
             {/* Filters */}
             <div className="flex gap-2 mb-5">
                 {[
-                    { key: 'all', label: 'All' },
-                    { key: 'g', label: 'Google Meet' },
-                    { key: 'z', label: 'Zoom' },
-                    { key: 'o', label: 'Outlook' }
+                    { key: 'all', label: t("Filters.All") },
+                    { key: 'g', label: "Google Meet" },
+                    { key: 'z', label: "Zoom" },
+                    { key: 'o', label: "Outlook" }
                 ].map(f => (
                     <Button
                         key={f.key}
@@ -105,18 +109,18 @@ export default function UpcomingMeetings({
                     <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
                         📆
                     </div>
-                    <h3 className="font-semibold mb-2 text-foreground text-sm">Connect Calendar</h3>
+                    <h3 className="font-semibold mb-2 text-foreground text-sm">{t("ConnectCalendar")}</h3>
                     <p className="text-muted-foreground mb-4 text-xs">
-                        Connect Google Calendar, Zoom, or Outlook to view your meetings.
+                        {t("ConnectMessage")}
                     </p>
                     <Link href="/integrations">
                         <Button className="w-full text-sm cursor-pointer">
-                            Connect Calendar
+                            {t("ConnectCalendar")}
                         </Button>
                     </Link>
                 </div>
             ) :
-            /* Missing provider for a filter */
+            /* Missing provider for filter */
             ((filter === "g" && !g) || (filter === "z" && !z) || (filter === "o" && !o)) ? (
                 <div className="bg-[#1a0b2e]/70 rounded-lg p-6 text-center border border-border backdrop-blur-md">
                     <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
@@ -127,15 +131,23 @@ export default function UpcomingMeetings({
                             src={filter === "g" ? "/gcal.png" : filter === "z" ? "/zoom.png" : "/outlook.png"}
                         />
                     </div>
+
                     <h3 className="font-semibold mb-2 text-foreground text-sm">
-                        Connect {filter === "g" ? "Google Calendar" : filter === "z" ? "Zoom" : "Outlook"}
+                        {t("ConnectPlatform", {
+                            platform:
+                                filter === "g" ? "Google Calendar" :
+                                filter === "z" ? "Zoom" :
+                                "Outlook"
+                        })}
                     </h3>
+
                     <p className="text-muted-foreground mb-4 text-xs">
-                        Connect this calendar to see your upcoming meetings.
+                        {t("ConnectPlatform", { platform: "" })}
                     </p>
+
                     <Link href="/integrations">
                         <Button className="w-full text-sm cursor-pointer">
-                            Connect Now
+                            {t("ConnectCalendar")}
                         </Button>
                     </Link>
                 </div>
@@ -143,19 +155,19 @@ export default function UpcomingMeetings({
             /* No events */
             (connected && filteredEvents.length === 0) ? (
                 <div className="bg-[#1a0b2e]/70 rounded-lg backdrop-blur-md border border-[#3b186b]/40 p-6 text-center">
-                    <h3 className="font-medium mb-2 text-foreground text-sm">No upcoming meetings</h3>
-                    <p className="text-muted-foreground text-xs">Your calendar is clear!</p>
+                    <h3 className="font-medium mb-2 text-foreground text-sm">{t("NoUpcomingMeetings")}</h3>
+                    <p className="text-muted-foreground text-xs">{t("NoUpcomingMeetingsMessage")}</p>
                 </div>
             ) :
-            /* Events list */
             (
+                /* Events list */
                 <div className="space-y-3">
                     <Button
                         className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 hover:scale-[0.98] px-3 py-2 rounded-lg text-sm mb-4 cursor-pointer transition"
                         onClick={onRefresh}
                         disabled={loading}
                     >
-                        {loading ? 'Loading…' : 'Refresh'}
+                        {loading ? t("LoadingEvents") : t("Refresh")}
                     </Button>
 
                     {filteredEvents.map(event => {
@@ -183,13 +195,11 @@ export default function UpcomingMeetings({
 
                                 {/* Info */}
                                 <div className="space-y-1 text-xs text-muted-foreground">
-                                    {/* Date */}
                                     <div className="flex items-center gap-1">
                                         <Clock className="w-3 h-3" />
-                                        {startDate ? format(new Date(startDate), 'MMM d, h:mm a') : "—"}
+                                        {startDate ? format(new Date(startDate), "MMM d, h:mm a") : "—"}
                                     </div>
 
-                                    {/* Attendees */}
                                     {event.attendees && (
                                         <div>👥 {event.attendees.length} attendees</div>
                                     )}
@@ -205,7 +215,7 @@ export default function UpcomingMeetings({
                                             className="flex-1"
                                         >
                                             <Button className="w-full text-xs h-7 cursor-pointer">
-                                                <Video className="w-3 h-3 mr-1" /> Join
+                                                <Video className="w-3 h-3 mr-1" /> {t("JoinMeeting")}
                                             </Button>
                                         </a>
 

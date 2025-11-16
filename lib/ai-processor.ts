@@ -1,4 +1,3 @@
-import { currentUser } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import { prisma } from "./db";
 
@@ -6,10 +5,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-export async function processMeetingTranscript(transcript: any) {
-    const user = await currentUser();
+export async function processMeetingTranscript(transcript: any,id:string) {
     const data = await prisma.user.findUnique({
-      where: { id: user?.id },
+      where: { id },
     });
     const lang = data?.lang === "en" ? "English" : "French";
   try {
