@@ -50,7 +50,7 @@ function ActionItemRow({
                                     t('adding')
                                 ) : (
                                     <>
-                                        {t('addTo', { name: integrations[0].name })}
+                                        {t('addTo')}
                                         <ExternalLink className='h-3 w-3' />
                                     </>
                                 )}
