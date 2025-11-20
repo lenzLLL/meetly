@@ -50,7 +50,7 @@ function ActionItemRow({
                                     t('adding')
                                 ) : (
                                     <>
-                                        {t('addTo')}
+                                        {t('addTo2')}
                                         <ExternalLink className='h-3 w-3' />
                                     </>
                                 )}
@@ -63,7 +63,7 @@ function ActionItemRow({
                                         variant='default'
                                         className='px-3 py-1 text-xs flex items-center gap-1 cursor-pointer'
                                     >
-                                        {t('addTo')}
+                                        {t('addTo2')}
                                         <ChevronDown className='h-3 w-3' />
                                     </Button>
                                 </DropdownMenuTrigger>

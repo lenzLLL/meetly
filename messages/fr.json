@@ -257,6 +257,7 @@
     "addActionItem": "Ajouter une tâche d’action",
       "adding": "Ajout...",
   "addTo": "Ajouter à {name}",
+  "addTo2": "Ajouter à",
      "ok": "OK",
   
   "addedToPlatform": "✅ Action ajoutée à {platform}",

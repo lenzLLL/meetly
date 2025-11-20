@@ -256,6 +256,7 @@
   "toAddActionItems": "to add action items to your tools",
   "adding": "Adding...",
   "addTo": "Add to {name}",
+  "addTo2": "Add to",
   "meetingAssistant": "Meeting Assistant",
   "askAnything": "Ask me anything about this meeting",
   "thinking": "Thinking...",
