@@ -69,7 +69,7 @@ function ActionItemRow({
                                 </DropdownMenuTrigger>
 
                                 <DropdownMenuContent align='end' className='min-w-[160px]'>
-                                    {integrations.map((integration) => (
+                                    {integrations.filter(m=>m.name !== "zoom").map((integration) => (
                                         <DropdownMenuItem
                                             key={integration.platform}
                                             onClick={() => addToIntegration(integration.platform, item)}
