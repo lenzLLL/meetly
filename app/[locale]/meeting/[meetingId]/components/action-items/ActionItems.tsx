@@ -37,16 +37,37 @@ function ActionItems({
     const addToIntegration = async (platform: string, actionItem: ActionItem) => {
         setLoading(prev => ({ ...prev, [`${platform}-${actionItem.id}`]: true }))
         try {
+            const res = await fetch('/api/integrations/action-items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ platform, actionItem: actionItem.text, meetingId })
+            })
+
+            const result = await res.json().catch(() => ({}))
+
+            if (!res.ok) {
+                console.error('integration error', platform, result)
+                toast(t('failedAddToPlatform', { platform }), {
+                    action: {
+                        label: t('ok'),
+                        onClick: () => { },
+                    },
+                })
+                return
+            }
+
+            // Log success and show a clear success toast
+            console.log('integration success', platform, result)
             toast(t('addedToPlatform', { platform }), {
                 action: {
                     label: t('ok'),
                     onClick: () => { },
                 },
             })
-            await fetch('/api/integrations/action-items', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ platform, actionItem: actionItem.text, meetingId })
+        } catch (err) {
+            console.error('integration request failed', platform, err)
+            toast(t('failedAddToPlatform', { platform }), {
+                action: { label: t('ok'), onClick: () => {} }
             })
         } finally {
             setLoading(prev => ({ ...prev, [`${platform}-${actionItem.id}`]: false }))
@@ -86,35 +107,48 @@ function ActionItems({
 
     if (!integrationsLoaded) {
         return (
-            <div className='bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] rounded-lg p-6 border border-border mb-8'>
-                <h3 className='text-lg font-semibold text-foreground mb-4'>
-                    {t('actionItems')}
-                </h3>
-                <div className='space-y-4'>
+            <div className='bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]/70 rounded-xl p-6 border border-purple-500/20 mb-8 shadow-lg'>
+                <div className='flex items-center gap-3 mb-6'>
+                    <div className='p-2 bg-gradient-to-br from-purple-500/30 to-purple-600/20 rounded-lg animate-pulse'>
+                        <span className='text-lg'>✅</span>
+                    </div>
+                    <h3 className='text-xl font-bold text-foreground'>
+                        {t('actionItems')}
+                    </h3>
+                </div>
+                <div className='space-y-3'>
                     {actionItems.map(item => (
                         <div key={item.id} className='group relative'>
-                            <div className='flex items-center gap-3'>
+                            <div className='flex items-center gap-3 p-3 bg-purple-500/5 border border-purple-500/20 rounded-lg'>
+                                <div className='w-5 h-5 rounded-full bg-purple-500/30 flex-shrink-0 animate-pulse'></div>
                                 <p className='flex-1 text-sm leading-relaxed text-foreground'>
                                     {item.text}
                                 </p>
                                 <div className='animate-pulse'>
                                     <div className='h-6 w-20 bg-muted rounded'></div>
                                 </div>
-                                <Button variant='ghost' size='icon' className='opacity-0 group-hover:opacity-100 p-1 hover:border-b hover:border-gray-800 hover:bg-black/30 hover:backdrop-blur-xl text-destructive rounded transition-all' disabled />
                             </div>
                         </div>
                     ))}
-                    <div className='animate-pulse'><div className='h-8 bg-muted rounded-lg'></div></div>
+                    <div className='animate-pulse'><div className='h-10 bg-gradient-to-r from-purple-500/10 to-purple-600/10 rounded-lg'></div></div>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border mb-8'>
-            <h3 className='text-lg font-semibold text-foreground mb-4'>
-                {t('actionItems')}
-            </h3>
+        <div className='bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]/70 rounded-xl p-6 border border-purple-500/20 mb-8 shadow-lg'>
+            <div className='flex items-center gap-3 mb-6'>
+                <div className='p-2 bg-gradient-to-br from-purple-500/30 to-purple-600/20 rounded-lg'>
+                    <span className='text-lg'>✅</span>
+                </div>
+                <h3 className='text-xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent'>
+                    {t('actionItems')}
+                </h3>
+                <span className='ml-auto text-xs bg-purple-500/30 text-purple-300 px-3 py-1 rounded-full font-medium border border-purple-500/50'>
+                    {actionItems.length} {actionItems.length === 1 ? t('item') : t('items')}
+                </span>
+            </div>
 
             <ActionItemsList
                 actionItems={actionItems}
@@ -133,9 +167,9 @@ function ActionItems({
             />
 
             {!hasConnectedIntegrations && actionItems.length > 0 && (
-                <div className='mt-4 p-3 bg-[#1a0b2e]/70 rounded-lg border border-dashed border-muted-foreground/30'>
-                    <p className='text-xs text-muted-foreground text-center'>
-                        <Link href="/integrations" className='text-primary hover:underline'>
+                <div className='mt-4 p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-dashed border-amber-500/30 hover:border-amber-500/50 transition-colors'>
+                    <p className='text-xs text-amber-200/80 text-center'>
+                        <Link href="/integrations" className='font-semibold text-amber-400 hover:text-amber-300 hover:underline transition-colors'>
                             {t('connectIntegrations')}
                         </Link> {t('toAddActionItems')}
                     </p>

@@ -16,6 +16,7 @@ export interface MeetingData {
         id: number
         text: string
     }>
+    speakers?: string[]
     processed: boolean
     processedAt?: string
     recordingUrl?: string
@@ -42,6 +43,8 @@ export function useMeetingDetail() {
 
     const [activeTab, setActiveTab] = useState<'summary' | 'transcript'|'recording'|'screens'|'permissions'>('summary')
     const [localActionItems, setLocalActionItems] = useState<any[]>([])
+    const [meetingLanguage, setMeetingLanguage] = useState<'en' | 'fr' | 'es' | 'de' | 'pt' | 'it'>('en')
+    const [isReanalyzing, setIsReanalyzing] = useState(false)
 
     const [meetingData, setMeetingData] = useState<MeetingData | null>(null)
     const [loading, setLoading] = useState(true)
@@ -175,6 +178,76 @@ export function useMeetingDetail() {
         }
     }
 
+    const handleLanguageChange = async (newLanguage: 'en' | 'fr' | 'es' | 'de' | 'pt' | 'it') => {
+        if (!isOwner || !meetingId) return
+
+        setMeetingLanguage(newLanguage)
+        setIsReanalyzing(true)
+
+        try {
+            // Fetch original transcript for analysis only
+            const response = await fetch(`/api/meetings/${meetingId}`)
+            if (!response.ok) throw new Error('failed to fetch meeting')
+            const meeting = await response.json()
+
+            let transcriptText = ''
+            if (typeof meeting.transcript === 'string') {
+                transcriptText = meeting.transcript
+            } else if (Array.isArray(meeting.transcript)) {
+                transcriptText = meeting.transcript
+                    .map((segment: any) => `${segment.speaker}: ${segment.words?.map((w: any) => w.word || w).join(' ') || segment.content || ''}`)
+                    .join('\n')
+            }
+
+            // Re-analyze the transcript with the new language (for summary/actionItems only)
+            const analyzeRes = await fetch('/api/ai/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    transcript: transcriptText,
+                    language: newLanguage,
+                }),
+            })
+
+            if (analyzeRes.ok) {
+                const result = await analyzeRes.json()
+                
+                // Translate the title
+                let translatedTitle = meeting.title
+                if (newLanguage !== 'fr') {
+                    const titleRes = await fetch('/api/ai/translate-batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            texts: [meeting.title], 
+                            targetLanguage: newLanguage 
+                        }),
+                    })
+                    if (titleRes.ok) {
+                        const { translations } = await titleRes.json()
+                        translatedTitle = translations[0] || meeting.title
+                    }
+                }
+                
+                // IMPORTANT: Do NOT persist translations to the database.
+                // Only update local UI state so nothing is modified server-side.
+                const localUpdated = {
+                    ...meeting,
+                    summary: result.summary,
+                    actionItems: result.actionItems || [],
+                    title: translatedTitle,
+                }
+
+                setMeetingData(localUpdated)
+                setLocalActionItems(localUpdated.actionItems || [])
+            }
+        } catch (error) {
+            console.error('error re-analyzing with new language:', error)
+        } finally {
+            setIsReanalyzing(false)
+        }
+    }
+
     const displayActionItems = localActionItems.length > 0
         ? localActionItems.map((item: any) => ({
             id: item.id,
@@ -221,7 +294,11 @@ export function useMeetingDetail() {
         deleteActionItem,
         addActionItem,
         displayActionItems,
-        meetingInfoData
+        meetingInfoData,
+        meetingLanguage,
+        setMeetingLanguage,
+        handleLanguageChange,
+        isReanalyzing,
     }
 
 }

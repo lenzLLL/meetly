@@ -91,10 +91,7 @@ export function AppSidebar() {
       {/* Header */}
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-purple-600 text-sidebar-primary-foreground">
-            <Bot className="w-4 h-4" />
-          </div>
-          <span className="text-lg font-semibold text-sidebar-foreground">Synopsia</span>
+            <img src={"/c.png"} className='w-[100px]'/>
         </div>
       </SidebarHeader>
 

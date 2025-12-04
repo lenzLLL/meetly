@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button';
-import { Pause, Play, SkipBack, SkipForward, Volume2 } from 'lucide-react';
+import { Pause, Play, SkipBack, SkipForward, Volume2, Download } from 'lucide-react';
 import React, { useRef, useState } from 'react'
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
+import { useTranslations } from 'next-intl';
 
 interface CustomAudioPlayerProps {
     recordingUrl?: string
@@ -13,6 +14,7 @@ function CustomAudioPlayer({
     recordingUrl,
     isOwner = true
 }: CustomAudioPlayerProps) {
+    const t = useTranslations('Meetings');
     const playerRef = useRef<any>(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const [currentTime, setCurrentTime] = useState(0)
@@ -90,7 +92,38 @@ function CustomAudioPlayer({
         const secs = Math.floor(seconds % 60)
 
         return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
 
+    const handleDownloadAudio = async () => {
+        if (!recordingUrl) return;
+        
+        try {
+            // Try to fetch and download
+            const response = await fetch(recordingUrl, { 
+                mode: 'cors',
+                credentials: 'omit' 
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Conia-recording-${new Date().toISOString().split('T')[0]}.mp4`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading audio via fetch, using direct link:', error);
+            // Fallback: open in new tab
+            if (recordingUrl) {
+                window.open(recordingUrl, '_blank');
+            }
+        }
     }
 
 
@@ -203,8 +236,19 @@ function CustomAudioPlayer({
                     </div>
 
                     <div className='text-sm text-muted-foreground'>
-                        Meeting Recording
+                        {t('recording')}
                     </div>
+
+                    <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={handleDownloadAudio}
+                        className='flex gap-2 cursor-pointer'
+                        title={t('downloadAudio')}
+                    >
+                        <Download className='h-4 w-4' />
+                        <span className='hidden sm:inline'>{t('downloadAudio')}</span>
+                    </Button>
 
                 </div>
 

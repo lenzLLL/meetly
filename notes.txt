@@ -47,3 +47,5 @@ then env in vercel google_redirec next_public_app
 slack_redirect_url
 marketplace zoom https://marketplace.zoom.us/
 generer aussi les env de zoom dans aws et 
+integration de outlook dans l'application
+lien https://portal.azure.com on ne peut pas directement avoir accès à outlook

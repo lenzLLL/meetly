@@ -29,14 +29,15 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
   export const metadata: Metadata = {
-  title: 'Synopsia — Smart Meeting Assistant',
+  title: 'Conia — Smart Meeting Assistant',
   description: 'AI-powered meeting management and summaries',
   manifest: '/manifest.json',
-  // themeColor: '#1a0033',
   icons: {
-    icon: '/icons/icon-192x192.png',
-    apple: '/icons/icon-512x512.png',
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/icon.png',
   },
+
 }
 export default async function RootLayout({
   children,

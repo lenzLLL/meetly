@@ -1,6 +1,6 @@
 {
-  "name": "Synopsia",
-  "short_name": "SNS",
+  "name": "Conia",
+  "short_name": "CN",
   "description": "Une superbe application pour gérer vos réunions",
   "start_url": "/",
   "display": "standalone",

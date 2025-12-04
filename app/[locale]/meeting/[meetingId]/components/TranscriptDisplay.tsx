@@ -9,9 +9,11 @@ interface TranscriptWord {
 }
 
 interface TranscriptSegment {
-    words: TranscriptWord[]
-    offset: number
-    speaker: string
+    words?: TranscriptWord[]
+    offset?: number
+    speaker?: string
+    content?: string
+    speakerName?: string
 }
 
 interface TranscriptDisplayProps {
@@ -28,13 +30,18 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
     }
 
     const getSpeakerSegmentTime = (segment: TranscriptSegment) => {
-        const startTime = segment.offset
-        const endTime = segment.words[segment.words.length - 1]?.end || segment.offset
+        const startTime = segment.offset || 0
+        const endTime = (segment.words && segment.words.length > 0) 
+            ? segment.words[segment.words.length - 1]?.end || startTime
+            : startTime
         return `${formatTime(startTime)} - ${formatTime(endTime)}`
     }
 
     const getSegmentText = (segment: TranscriptSegment) => {
-        return segment.words.map(word => word.word).join(' ')
+        // Support both old format (words array) and chunk format (content string)
+        if (segment.content) return segment.content
+        if (segment.words) return segment.words.map((w: any) => w.word).join(' ')
+        return ''
     }
 
     if (!transcript || transcript.length === 0) {
@@ -53,20 +60,28 @@ export default function TranscriptDisplay({ transcript }: TranscriptDisplayProps
                 {t('meetingTranscript')}
             </h3>
 
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
                 {transcript.map((segment, index) => (
-                    <div key={index} className="pb-4 border-b border-border last:border-b-0">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="font-medium text-foreground">
-                                {segment.speaker}
-                            </span>
-                            <span className="text-xs text-muted-foreground bg-[#1a0b2e]/70 px-2 py-1 rounded">
-                                {getSpeakerSegmentTime(segment)}
-                            </span>
+                    <div key={index} className="flex gap-3 items-start pb-3 border-b border-border last:border-b-0">
+                        <div className="flex-shrink-0">
+                            <div className='w-9 h-9 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-sm font-semibold text-white'>
+                                {(segment.speaker || segment.speakerName || 'U').charAt(0)}
+                            </div>
                         </div>
-                        <p className="text-muted-foreground leading-relaxed pl-4">
-                            {getSegmentText(segment)}
-                        </p>
+
+                        <div className='flex-1'>
+                            <div className='flex items-center justify-between mb-1'>
+                                <div className='flex items-center gap-3'>
+                                    <span className='font-medium text-foreground'>{segment.speaker || segment.speakerName}</span>
+                                    <span className='text-xs text-muted-foreground hidden sm:inline'>{getSpeakerSegmentTime(segment)}</span>
+                                </div>
+                                <div className='text-xs text-muted-foreground sm:hidden'>
+                                    {getSpeakerSegmentTime(segment)}
+                                </div>
+                            </div>
+
+                            <p className='text-muted-foreground leading-relaxed'>{getSegmentText(segment)}</p>
+                        </div>
                     </div>
                 ))}
             </div>

@@ -15,32 +15,37 @@ export async function processTranscript(
 
     const embeddings = await createManyEmbeddings(texts)
 
-    const dbChunks = chunks.map((chunk) => ({
-        meetingId,
-        chunkIndex: chunk.chunkIndex,
-        content: chunk.content,
-        speakerName: extractSpeaker(chunk.content),
-        vectorId: `${meetingId}_chunk_${chunk.chunkIndex}`
-    }))
+    const dbChunks = chunks.map((chunk) => {
+        const speaker = extractSpeaker(chunk.content) || 'Unknown'
+        return {
+            meetingId,
+            chunkIndex: chunk.chunkIndex,
+            content: chunk.content,
+            speakerName: speaker,
+            vectorId: `${meetingId}_chunk_${chunk.chunkIndex}`
+        }
+    })
 
     await prisma.transcriptChunk.createMany({
         data: dbChunks,
         skipDuplicates: true
     })
 
-    const vectors = chunks.map((chunk, index) => ({
-        id: `${meetingId}_chunk_${chunk.chunkIndex}`,
-        embedding: embeddings[index],
-        metadata: {
-            meetingId,
-            userId,
-            chunkIndex: chunk.chunkIndex,
-            content: chunk.content,
-            speakerName: extractSpeaker(chunk.content),
-            meetingTitle: meetingTitle || 'Untitled Meeting'
-
+    const vectors = chunks.map((chunk, index) => {
+        const speaker = extractSpeaker(chunk.content) || 'Unknown'
+        return {
+            id: `${meetingId}_chunk_${chunk.chunkIndex}`,
+            embedding: embeddings[index],
+            metadata: {
+                meetingId,
+                userId,
+                chunkIndex: chunk.chunkIndex,
+                content: chunk.content,
+                speakerName: speaker,
+                meetingTitle: meetingTitle || 'Untitled Meeting'
+            }
         }
-    }))
+    })
 
     await saveManyVectors(vectors)
 }

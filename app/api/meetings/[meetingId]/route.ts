@@ -102,3 +102,49 @@ export async function DELETE(
         return NextResponse.json({ error: 'failed to delete meeting' }, { status: 500 })
     }
 }
+
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ meetingId: string }> }
+) {
+    try {
+        const { userId } = await auth()
+
+        if (!userId) {
+            return NextResponse.json({ error: 'not authenticated' }, { status: 401 })
+        }
+
+        const { meetingId } = await params
+        const body = await request.json()
+
+        const meeting = await prisma.meeting.findUnique({
+            where: { id: meetingId },
+            include: { user: true }
+        })
+
+        if (!meeting) {
+            return NextResponse.json({ error: 'meeting not found' }, { status: 404 })
+        }
+
+        if (meeting.user.clerkId !== userId) {
+            return NextResponse.json({ error: 'not authorized' }, { status: 403 })
+        }
+
+        const updateData: any = {}
+        if (body.summary !== undefined) updateData.summary = body.summary
+        if (body.actionItems !== undefined) updateData.actionItems = body.actionItems
+        if (body.transcript !== undefined) updateData.transcript = body.transcript
+        if (body.speakers !== undefined) updateData.speakers = body.speakers
+        if (body.title !== undefined) updateData.title = body.title
+
+        const updated = await prisma.meeting.update({
+            where: { id: meetingId },
+            data: updateData,
+        })
+
+        return NextResponse.json(updated)
+    } catch (error) {
+        console.error('failed to update meeting', error)
+        return NextResponse.json({ error: 'failed to update meeting' }, { status: 500 })
+    }
+}

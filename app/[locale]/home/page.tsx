@@ -7,6 +7,7 @@ import { useAuth } from '@clerk/nextjs'
 import AppHeader from '@/components/Header'
 import PastMeetings from './components/PastMeetings'
 import UpcomingMeetings from './components/UpcomingMeetings'
+import FloatingRecordButton from '@/components/floating-record-button'
 import { Video, Clock, CalendarDays, Users } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -75,6 +76,7 @@ export default function Dashboard() {
   return (
     <>
       <AppHeader />
+      <FloatingRecordButton />
 
       {/* Metrics Section */}
       <div className="min-h-screen mt-5 sm:mt-0 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] text-white">

@@ -14,6 +14,8 @@ import MeetingPermissionList from '../../subaccounts/components/guess_details'
 import CustomModal from '../../subaccounts/components/custom_modal'
 import { useModal } from '../../subaccounts/components/modal_provider'
 import PermissionsModal from '../../meetings/permission.modal'
+import TranscriptControls from './components/TranscriptControls'
+import TranscriptInfo from './components/TranscriptInfo'
 
 function MeetingDetail() {
   const t = useTranslations('Meetings')
@@ -37,6 +39,9 @@ function MeetingDetail() {
     addActionItem,
     displayActionItems,
     meetingInfoData,
+    meetingLanguage,
+    handleLanguageChange,
+    isReanalyzing,
   } = useMeetingDetail()
 
   const [recording, setRecording] = useState('')
@@ -128,17 +133,18 @@ function MeetingDetail() {
                     </div>
                   ) : meetingData?.processed ? (
                     <div className='space-y-6'>
-                      {meetingData.summary && (
-                        <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6'>
-                          <h3 className='text-lg font-semibold text-foreground mb-3'>
-                            {t('meetingSummary')}
-                          </h3>
-                          <p className='text-muted-foreground leading-relaxed'>
-                            {meetingData.summary}
-                          </p>
-                        </div>
-                      )}
+                        {meetingData.summary && (
+                          <div className='bg-[#1a0b2e]/70 border border-border rounded-lg p-6'>
+                            <h3 className='text-lg font-semibold text-foreground mb-3'>
+                              {t('meetingSummary')}
+                            </h3>
+                            <p className='text-muted-foreground leading-relaxed'>
+                              {meetingData.summary}
+                            </p>
+                          </div>
+                        )}
 
+                      {/* Action Items - Only show if owner */}
                       {isOwner && displayActionItems.length > 0 && (
                         <ActionItems
                           actionItems={displayActionItems}
@@ -163,6 +169,8 @@ function MeetingDetail() {
                           </div>
                         </div>
                       )}
+                      {/* Points clés: placed last in the summary tab */}
+              
                     </div>
                   ) : (
                     <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl border rounded-lg p-6 text-center'>
@@ -183,7 +191,32 @@ function MeetingDetail() {
                       <p className='text-muted-foreground'>{t('loadingData')}</p>
                     </div>
                   ) : meetingData?.transcript ? (
-                    <TranscriptDisplay transcript={meetingData.transcript} />
+                    <div>
+                      {/* Transcript Controls */}
+                      {isOwner && (
+                        <TranscriptControls
+                          transcript={meetingData.transcript}
+                          meetingTitle={meetingData.title}
+                          meetingDate={new Date(meetingData.startTime).toLocaleDateString()}
+                          speakers={meetingData.speakers || []}
+                          summary={meetingData.summary}
+                          actionItems={meetingData.actionItems}
+                          currentLanguage={meetingLanguage}
+                          onLanguageChange={handleLanguageChange}
+                          isProcessing={isReanalyzing}
+                        />
+                      )}
+
+                      {/* Transcript Info */}
+                      <TranscriptInfo
+                        transcript={meetingData.transcript}
+                        meetingTitle={meetingData.title}
+                        meetingDate={new Date(meetingData.startTime).toLocaleDateString()}
+                      />
+
+                      {/* Transcript Display */}
+                      <TranscriptDisplay transcript={meetingData.transcript} />
+                    </div>
                   ) : (
                     <div className='border-b border-gray-800 bg-black/30 backdrop-blur-xl rounded-lg p-6 border text-center'>
                       <p className='text-muted-foreground'>{t('noTranscript')}</p>
