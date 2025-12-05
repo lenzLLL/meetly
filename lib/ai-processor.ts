@@ -38,13 +38,21 @@ export async function processMeetingTranscript(transcript: any,id:string) {
       messages: [
         {
           role: "system",
-          content: `You are an AI assistant that analyzes meeting transcripts and provides concise summaries and action items.
-          Return the data in ${lang}.
-          Return ONLY valid JSON with this format:
-          {
-              "summary": "string",
-              "actionItems": ["string", "string"]
-          }`,
+          content: `You are a meeting transcript analyzer. You MUST respond ONLY in ${lang}.
+
+CRITICAL RULES:
+1. Extract information ONLY from what is explicitly stated in the transcript
+2. Do NOT invent, assume, or infer anything not directly mentioned
+3. Do NOT add context from general knowledge
+4. Only mention tasks/points that are explicitly discussed or agreed upon
+5. Keep summaries factual and based solely on what was said
+
+Return ONLY valid JSON with exact keys:
+- summary: Factual summary (2-3 sentences max)
+- actionItems: ONLY explicit action items mentioned
+- keyPoints: ONLY topics actually discussed
+
+Format: {"summary": "...", "actionItems": [...], "keyPoints": [...]}`,
         },
         {
           role: "user",
@@ -69,6 +77,7 @@ export async function processMeetingTranscript(transcript: any,id:string) {
       parsed = {
         summary: "Could not parse AI response.",
         actionItems: [],
+        keyPoints: [],
       };
     }
 
@@ -79,13 +88,18 @@ export async function processMeetingTranscript(transcript: any,id:string) {
         }))
       : [];
 
+    const keyPoints = Array.isArray(parsed.keyPoints)
+      ? parsed.keyPoints
+      : [];
+
     return {
       summary:
         parsed.summary ||
         (lang === "English"
           ? "No summary could be generated."
-          : "Aucun résumé n’a pu être généré."),
+          : "Aucun résumé n'a pu être généré."),
       actionItems,
+      keyPoints,
     };
   } catch (error) {
     console.error("error processing transcript with chatgpt:", error);
@@ -95,6 +109,7 @@ export async function processMeetingTranscript(transcript: any,id:string) {
           ? "Meeting transcript processed successfully. Please check the full transcript for details."
           : "La transcription de la réunion a été traitée avec succès. Veuillez consulter la transcription complète pour plus de détails.",
       actionItems: [],
+      keyPoints: [],
     };
   }
 }

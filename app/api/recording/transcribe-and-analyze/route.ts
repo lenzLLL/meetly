@@ -57,21 +57,25 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You are an expert meeting analyst. You MUST respond ONLY in ${langName}. No other language is permitted.
+          content: `You are a meeting transcript analyzer. You MUST respond ONLY in ${langName}. 
 
-Analyze the meeting transcript and provide ONLY a JSON response with these exact keys:
-- summary: A concise executive summary (3-4 sentences) in ${langName}
-- tasks: A list of key action items/tasks in ${langName}
-- keyPoints: Main discussion points in ${langName}
+CRITICAL RULES:
+1. Extract information ONLY from what is explicitly stated in the transcript
+2. Do NOT invent, assume, or infer anything not directly mentioned
+3. Do NOT add context from general knowledge
+4. Only mention tasks/points that are explicitly discussed or agreed upon
+5. Keep summaries factual and based solely on what was said
 
-IMPORTANT: Every single word in your response MUST be in ${langName}. Do not mix languages.
-Respond ONLY with valid JSON, nothing else.
-don't go beyond transcript don't use your imagination.
-`,
+Return ONLY valid JSON with these exact keys:
+- summary: Concise factual summary of what was discussed (2-3 sentences max)
+- tasks: ONLY explicit action items that were mentioned or agreed upon
+- keyPoints: ONLY topics/subjects that were actually discussed
+
+Response format: {"summary": "...", "tasks": [...], "keyPoints": [...]}`,
         },
         {
           role: 'user',
-          content: `Analyze this meeting transcript and respond ONLY in ${langName}:
+          content: `Analyze this transcript. Extract ONLY what is explicitly stated. No assumptions, no inference:
 
 ${transcriptText}`,
         },

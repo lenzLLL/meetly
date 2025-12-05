@@ -1,11 +1,23 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import { exportTranscriptToPdf } from '@/lib/transcript-export'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
 import { useParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import {
   Mic,
   Square,
+  Pause,
+  Play,
   Download,
   RotateCcw,
   FileText,
@@ -18,14 +30,29 @@ import {
   Volume2,
   Settings,
   Upload,
+  Upload as UploadIcon,
+  Mail,
 } from 'lucide-react'
+import { useToast } from '@/components/ui/use_toast'
 
-type TabType = 'recording' | 'chat' | 'summary' | 'tasks' | 'topics' | 'transcript'
+type TabType = 'recording' | 'chat' | 'summary' | 'tasks' | 'topics' | 'transcript' | 'export'
 type AudioSource = 'microphone' | 'system' | 'both'
 type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
+}
+
+interface Subaccount {
+  id: string
+  name: string
+  email: string
+}
+
+interface EmailRecipient {
+  id: string
+  email: string
+  type: 'subaccount' | 'custom'
 }
 
 export default function RecordingPage() {
@@ -36,12 +63,17 @@ export default function RecordingPage() {
   const [activeTab, setActiveTab] = useState<TabType>('recording')
   const [isRecording, setIsRecording] = useState(false)
   const [recordedTime, setRecordedTime] = useState(0)
+  const [recordingStartTime, setRecordingStartTime] = useState<string | null>(null)
+  const [recordingEndTime, setRecordingEndTime] = useState<string | null>(null)
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
   const [audioSource, setAudioSource] = useState<AudioSource>('microphone')
   const [language, setLanguage] = useState(locale)
   const [showAudioSettings, setShowAudioSettings] = useState(false)
   const [importedTranscript, setImportedTranscript] = useState<string>('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recordingTimerRef = useRef<number | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
+  const isPausedRef = useRef(false)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -68,7 +100,26 @@ export default function RecordingPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [tasks, setTasks] = useState<string[]>([])
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [isImportingPdf, setIsImportingPdf] = useState(false)
+  const [importProgress, setImportProgress] = useState(0)
   const { user } = useUser()
+  const { toast } = useToast()
+
+  // Export states
+  const [exportTitle, setExportTitle] = useState('')
+  const [emailRecipients, setEmailRecipients] = useState<EmailRecipient[]>([])
+  const [newEmailInput, setNewEmailInput] = useState('')
+  const [subaccounts, setSubaccounts] = useState<Subaccount[]>([])
+  const [isSavingRecording, setIsSavingRecording] = useState(false)
+  const [isLoadingSubaccounts, setIsLoadingSubaccounts] = useState(false)
+
+  // PDF editor modal states
+  const [showPdfEditor, setShowPdfEditor] = useState(false)
+  const [editSummary, setEditSummary] = useState('')
+  const [editKeyPoints, setEditKeyPoints] = useState<string[]>([])
+  const [editActionItems, setEditActionItems] = useState<string[]>([])
+  const [editTranscript, setEditTranscript] = useState('')
+  const [editorMode, setEditorMode] = useState<'pdf' | 'save'>('pdf') // Track whether editing for PDF or Save
 
   // Source of truth for tasks shown in the Tasks tab
   const effectiveTasks =
@@ -80,6 +131,27 @@ export default function RecordingPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Load subaccounts for export
+  useEffect(() => {
+    const loadSubaccounts = async () => {
+      if (activeTab === 'export') {
+        setIsLoadingSubaccounts(true)
+        try {
+          const response = await fetch('/api/recording/suggest-emails')
+          if (response.ok) {
+            const data = await response.json()
+            setSubaccounts(data.subaccounts)
+          }
+        } catch (error) {
+          console.error('Failed to load subaccounts:', error)
+        } finally {
+          setIsLoadingSubaccounts(false)
+        }
+      }
+    }
+    loadSubaccounts()
+  }, [activeTab])
 
   // Format time display
   const formatTime = (seconds: number) => {
@@ -144,6 +216,21 @@ export default function RecordingPage() {
       setIsRecording(true)
       setRecordedTime(0)
       setAudioChunks([])
+      // capture start time
+      const startIso = new Date().toISOString()
+      setRecordingStartTime(startIso)
+      setRecordingEndTime(null)
+      // start timer to update recordedTime (respects pause)
+      if (recordingTimerRef.current) {
+        window.clearInterval(recordingTimerRef.current)
+      }
+      isPausedRef.current = false
+      setIsPaused(false)
+      recordingTimerRef.current = window.setInterval(() => {
+        if (!isPausedRef.current) {
+          setRecordedTime((t) => t + 1)
+        }
+      }, 1000)
 
       if (canvasRef.current && analyserRef.current) {
         visualize()
@@ -174,11 +261,13 @@ export default function RecordingPage() {
       const barHeight = (dataArray[i] / 255) * canvas.height
       const hue = (i / bars) * 360
 
-      ctx.fillStyle = `hsl(${hue}, 100%, 50%)`
+      // Subtler colors: reduced saturation and lightness
+      ctx.fillStyle = `hsl(${hue}, 60%, 55%)`
       ctx.fillRect(i * barWidth, canvas.height - barHeight, barWidth - 2, barHeight)
     }
 
-    if (isRecording) {
+    // Continue animation only if recording and not paused
+    if (!isPausedRef.current) {
       requestAnimationFrame(visualize)
     }
   }
@@ -189,6 +278,71 @@ export default function RecordingPage() {
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
       setIsRecording(false)
+      setIsPaused(false)
+      isPausedRef.current = false
+      // capture end time
+      const endIso = new Date().toISOString()
+      setRecordingEndTime(endIso)
+      // stop timer
+      if (recordingTimerRef.current) {
+        window.clearInterval(recordingTimerRef.current)
+        recordingTimerRef.current = null
+      }
+    }
+  }
+
+  const pauseRecording = () => {
+    if (!mediaRecorderRef.current) return
+    try {
+      if ((mediaRecorderRef.current as any).state === 'recording') {
+        mediaRecorderRef.current.pause()
+        setIsPaused(true)
+        isPausedRef.current = true
+      }
+    } catch (err) {
+      console.error('Error pausing recording:', err)
+    }
+  }
+
+  const resumeRecording = () => {
+    if (!mediaRecorderRef.current) return
+    try {
+      if ((mediaRecorderRef.current as any).state === 'paused') {
+        mediaRecorderRef.current.resume()
+        setIsPaused(false)
+        isPausedRef.current = false
+        // kick visualizer
+        if (canvasRef.current && analyserRef.current) visualize()
+      }
+    } catch (err) {
+      console.error('Error resuming recording:', err)
+    }
+  }
+
+  // Cancel recording
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop()
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
+      setIsRecording(false)
+      setIsPaused(false)
+      isPausedRef.current = false
+      // Reset audio and UI state to initial
+      resetRecording()
+      setRecordingStartTime(null)
+      setRecordingEndTime(null)
+      // Ensure we return to the recording tab and clear analyzing state
+      setActiveTab('recording')
+      setIsAnalyzing(false)
+      // stop timer
+      if (recordingTimerRef.current) {
+        window.clearInterval(recordingTimerRef.current)
+        recordingTimerRef.current = null
+      }
+      toast({
+        title: locale === 'fr' ? 'Annulé' : 'Cancelled',
+        description: locale === 'fr' ? 'Enregistrement annulé.' : 'Recording cancelled.',
+      })
     }
   }
 
@@ -400,45 +554,337 @@ export default function RecordingPage() {
   const downloadPdf = async () => {
     if (!summary) return
 
+    // Populate editor state and open modal for user edits before export
+    const meetingTitle = exportTitle || `Recording ${new Date().toLocaleDateString()}`
+    setEditSummary(summary.summary || '')
+    setEditKeyPoints(summary.keyPoints ? [...summary.keyPoints] : [])
+    setEditActionItems((summary.tasks || []).map((t) => t))
+    setEditTranscript(importedTranscript && importedTranscript.trim().length > 0 ? importedTranscript : (summary.summary || ''))
+    setShowPdfEditor(true)
+  }
+
+  const exportFromEditor = async () => {
+    // Called when user confirms edits in the editor modal
+    setShowPdfEditor(false)
     setIsGeneratingPdf(true)
     try {
-      const response = await fetch('/api/ai/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...summary, language }),
-      })
+      const meetingTitle = exportTitle || `Recording ${new Date().toLocaleDateString()}`
+      const metadata = {
+        date: recordingStartTime || new Date().toLocaleDateString(),
+        summary: editSummary,
+        speakers: undefined,
+        keyPoints: (editKeyPoints || []).slice(0, 25),
+        actionItems: (editActionItems || []).slice(0, 25),
+      }
 
-      const data = await response.json()
-
-      // For now, download as HTML
-      const element = document.createElement('a')
-      const file = new Blob([data.html], { type: 'text/html' })
-      element.href = URL.createObjectURL(file)
-      element.download = `meeting-summary-${new Date().toISOString().split('T')[0]}.html`
-      document.body.appendChild(element)
-      element.click()
-      document.body.removeChild(element)
+      await exportTranscriptToPdf(
+        editTranscript || '',
+        meetingTitle,
+        metadata,
+        (language as any) || 'fr'
+      )
     } catch (error) {
-      console.error('Error downloading PDF:', error)
+      console.error('Error exporting edited PDF:', error)
     } finally {
       setIsGeneratingPdf(false)
     }
   }
 
   const resetRecording = () => {
-    setAudioChunks([])
-    setRecordedTime(0)
-    setSummary(null)
-    setTasks([])
-    setImportedTranscript('')
-    setMessages([
-      {
-        id: '1',
-        role: 'assistant',
-        content:
-          'Bonjour! Je suis votre assistant IA. Posez-moi des questions sur la réunion qui vient de se terminer.',
-      },
-    ])
+    // Stop and release media recorder if still active
+    try {
+      if (mediaRecorderRef.current) {
+        try {
+          if ((mediaRecorderRef.current as any).state !== 'inactive') {
+            mediaRecorderRef.current.stop()
+          }
+        } catch (e) {
+          // ignore
+        }
+        try {
+          mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop())
+        } catch (e) {
+          // ignore
+        }
+        mediaRecorderRef.current = null
+      }
+
+      // Close audio context if open
+      if (audioContextRef.current) {
+        try {
+          audioContextRef.current.close()
+        } catch (e) {
+          // ignore
+        }
+        audioContextRef.current = null
+      }
+
+      analyserRef.current = null
+
+      // Clear canvas drawing
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext('2d')
+        if (ctx) {
+          ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+        }
+      }
+
+      // Clear timers and flags
+      if (recordingTimerRef.current) {
+        window.clearInterval(recordingTimerRef.current)
+        recordingTimerRef.current = null
+      }
+
+      setAudioChunks([])
+      setRecordedTime(0)
+      setIsRecording(false)
+      setIsPaused(false)
+      isPausedRef.current = false
+      setSummary(null)
+      setTasks([])
+      setImportedTranscript('')
+      setMessages([
+        {
+          id: '1',
+          role: 'assistant',
+          content:
+            'Bonjour! Je suis votre assistant IA. Posez-moi des questions sur la réunion qui vient de se terminer.',
+        },
+      ])
+      toast({
+        title: locale === 'fr' ? 'Réinitialisé' : 'Reset',
+        description: locale === 'fr' ? "L'enregistrement a été réinitialisé." : 'Recording has been reset.',
+      })
+    } catch (err) {
+      console.error('Error during resetRecording cleanup:', err)
+    }
+  }
+
+  // Save recording to database
+  const saveRecording = async () => {
+    if (!exportTitle.trim()) {
+      toast({
+        title: locale === 'fr' ? 'Titre requis' : 'Title required',
+        description: locale === 'fr' ? "Veuillez entrer le titre de la réunion" : 'Please enter the meeting title',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!summary) {
+      toast({
+        title: locale === 'fr' ? 'Aucune analyse' : 'No summary',
+        description: locale === 'fr' ? "Aucun résumé disponible. Veuillez d'abord analyser l'audio." : 'No summary available. Please analyze the audio first.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Populate editor and open modal for user edits before saving
+    setEditSummary(summary.summary || '')
+    setEditKeyPoints(summary.keyPoints ? [...summary.keyPoints] : [])
+    setEditActionItems((summary.tasks || []).map((t) => t))
+    setEditTranscript(importedTranscript && importedTranscript.trim().length > 0 ? importedTranscript : (summary.summary || ''))
+    setEditorMode('save')
+    setShowPdfEditor(true)
+  }
+
+  const saveFromEditor = async () => {
+    // Called when user confirms edits in the editor modal for saving
+    setShowPdfEditor(false)
+    setIsSavingRecording(true)
+
+    // Create a unique request ID to prevent duplicate submissions
+    const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+    try {
+      console.log('Saving recording payload', {
+        title: exportTitle,
+        emailRecipients: emailRecipients.map((r) => r.email),
+        startTime: recordingStartTime,
+        endTime: recordingEndTime,
+      })
+
+      const response = await fetch('/api/recording/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': requestId,
+        },
+        body: JSON.stringify({
+          title: exportTitle,
+          transcript: editTranscript,
+          summary: editSummary,
+          keyPoints: (editKeyPoints || []).slice(0, 25),
+          actionItems: (editActionItems || []).slice(0, 25).map((item, idx) => ({ id: idx + 1, text: item })),
+          emailRecipients: emailRecipients.map(r => r.email),
+          startTime: recordingStartTime,
+          endTime: recordingEndTime,
+          language,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: locale === 'fr' ? 'Enregistré' : 'Saved',
+          description: locale === 'fr' ? 'Enregistrement sauvegardé avec succès! Les emails ont été envoyés.' : 'Recording saved successfully! Emails have been sent.',
+        })
+        // Reset form immediately
+        setExportTitle('')
+        setEmailRecipients([])
+        setNewEmailInput('')
+        setIsSavingRecording(false)
+      } else {
+        setIsSavingRecording(false)
+        toast({
+          title: locale === 'fr' ? 'Erreur' : 'Error',
+          description: data.error || (locale === 'fr' ? 'Erreur lors de la sauvegarde' : 'Error saving recording'),
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Error saving recording:', error)
+      setIsSavingRecording(false)
+      toast({
+        title: locale === 'fr' ? 'Erreur' : 'Error',
+        description: locale === 'fr' ? 'Erreur lors de la sauvegarde' : 'Error saving recording',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const oldSaveRecording = async () => {
+    if (!exportTitle.trim()) {
+      toast({
+        title: locale === 'fr' ? 'Titre requis' : 'Title required',
+        description: locale === 'fr' ? "Veuillez entrer le titre de la réunion" : 'Please enter the meeting title',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!summary) {
+      toast({
+        title: locale === 'fr' ? 'Aucune analyse' : 'No summary',
+        description: locale === 'fr' ? "Aucun résumé disponible. Veuillez d'abord analyser l'audio." : 'No summary available. Please analyze the audio first.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Prevent double submission
+    if (isSavingRecording) {
+      console.warn('Already saving, ignoring duplicate submission')
+      return
+    }
+
+    setIsSavingRecording(true)
+    
+    // Create a unique request ID to prevent duplicate submissions
+    const requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    
+    try {
+      console.log('Saving recording payload', {
+        title: exportTitle,
+        emailRecipients: emailRecipients.map((r) => r.email),
+        startTime: recordingStartTime,
+        endTime: recordingEndTime,
+      })
+
+      const response = await fetch('/api/recording/save', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': requestId,
+        },
+        body: JSON.stringify({
+          title: exportTitle,
+          transcript: importedTranscript,
+          summary: summary.summary,
+          keyPoints: summary.keyPoints || [],
+          actionItems: (summary.tasks || []).map((task, idx) => ({ id: idx + 1, text: task })),
+          emailRecipients: emailRecipients.map(r => r.email),
+          startTime: recordingStartTime,
+          endTime: recordingEndTime,
+          language,
+        }),
+      })
+
+      const data = await response.json()
+
+        if (response.ok) {
+        toast({
+          title: locale === 'fr' ? 'Enregistré' : 'Saved',
+          description: locale === 'fr' ? 'Enregistrement sauvegardé avec succès! Les emails ont été envoyés.' : 'Recording saved successfully! Emails have been sent.',
+        })
+        // Reset form immediately, then change tab after a brief delay for UI feedback
+        setExportTitle('')
+        setEmailRecipients([])
+        setNewEmailInput('')
+        setIsSavingRecording(false)
+          // NOTE: keep user on export tab so they can continue working there
+      } else {
+        setIsSavingRecording(false)
+        toast({
+          title: locale === 'fr' ? 'Erreur' : 'Error',
+          description: data.error || (locale === 'fr' ? 'Erreur lors de la sauvegarde' : 'Error saving recording'),
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      console.error('Error saving recording:', error)
+      setIsSavingRecording(false)
+      toast({
+        title: locale === 'fr' ? 'Erreur' : 'Error',
+        description: locale === 'fr' ? 'Erreur lors de la sauvegarde' : 'Error saving recording',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  // Add email recipient
+  const addEmailRecipient = (email: string) => {
+    if (!email.trim() || !email.includes('@')) {
+      toast({
+        title: locale === 'fr' ? 'Email invalide' : 'Invalid email',
+        description: locale === 'fr' ? 'Veuillez fournir une adresse email valide.' : 'Please provide a valid email address.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    if (emailRecipients.some(r => r.email === email)) {
+      toast({
+        title: locale === 'fr' ? 'Doublon' : 'Duplicate',
+        description: locale === 'fr' ? 'Email déjà ajouté' : 'Email already added',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setEmailRecipients([...emailRecipients, { id: Date.now().toString(), email, type: 'custom' }])
+    setNewEmailInput('')
+  }
+
+  // Remove email recipient
+  const removeEmailRecipient = (id: string) => {
+    setEmailRecipients(emailRecipients.filter(r => r.id !== id))
+  }
+
+  // Add subaccount email
+  const addSubaccountEmail = (subaccount: Subaccount) => {
+    if (emailRecipients.some(r => r.email === subaccount.email)) {
+      toast({
+        title: locale === 'fr' ? 'Doublon' : 'Duplicate',
+        description: locale === 'fr' ? 'Email déjà ajouté' : 'Email already added',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    setEmailRecipients([...emailRecipients, { id: subaccount.id, email: subaccount.email, type: 'subaccount' }])
   }
 
   // Import audio file
@@ -478,24 +924,58 @@ export default function RecordingPage() {
     try {
       setSummary(null)
       setTasks([])
-      const formData = new FormData()
-      formData.append('file', file)
+      setIsImportingPdf(true)
+      setImportProgress(0)
 
-      const response = await fetch('/api/ai/process-pdf', {
-        method: 'POST',
-        body: formData,
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        const formData = new FormData()
+        formData.append('file', file)
+
+        xhr.open('POST', '/api/ai/process-pdf')
+
+        // Track upload progress (0-80%)
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 80)
+            setImportProgress(percent)
+          }
+        }
+
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const data = JSON.parse(xhr.responseText)
+                setImportedTranscript(data.text || `PDF file imported: ${file.name}`)
+              } catch (err) {
+                setImportedTranscript(`PDF file imported: ${file.name}. Send it to AI for analysis.`)
+              }
+              setImportProgress(100)
+              resolve()
+            } else {
+              setImportedTranscript(`PDF file imported: ${file.name}. Send it to AI for analysis.`)
+              setImportProgress(100)
+              resolve()
+            }
+          }
+        }
+
+        xhr.onerror = () => {
+          reject(new Error('Upload failed'))
+        }
+
+        xhr.send(formData)
       })
-
-      if (!response.ok) {
-        setImportedTranscript(`PDF file imported: ${file.name}. Send it to AI for analysis.`)
-        return
-      }
-
-      const data = await response.json()
-      setImportedTranscript(data.text || `PDF file imported: ${file.name}`)
     } catch (error) {
       console.error('Error importing PDF:', error)
       setImportedTranscript(`PDF file imported: ${file.name}. Ready for analysis.`)
+    } finally {
+      // keep progress visible very briefly then hide
+      setTimeout(() => {
+        setIsImportingPdf(false)
+        setImportProgress(0)
+      }, 700)
     }
   }
 
@@ -573,16 +1053,7 @@ export default function RecordingPage() {
     event.target.value = ''
   }
 
-  // Timer
-  useEffect(() => {
-    if (!isRecording) return
-
-    const interval = setInterval(() => {
-      setRecordedTime((prev) => prev + 1)
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [isRecording])
+  // NOTE: timer is managed via recordingTimerRef in start/stop and respects pause state
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] text-white flex flex-col p-6">
@@ -765,6 +1236,12 @@ export default function RecordingPage() {
               icon: Brain,
               disabled: !summary,
             },
+            {
+              id: 'export' as TabType,
+              label: 'Exporter',
+              icon: UploadIcon,
+              disabled: !summary,
+            },
           ].map((tab) => {
             const Icon = tab.icon
             const isDisabled = tab.disabled
@@ -794,11 +1271,11 @@ export default function RecordingPage() {
           {activeTab === 'recording' && (
             <div className="lg:col-span-3 space-y-6">
               {/* Visualizer */}
-              <div className="canvas-wrapper rounded-2xl overflow-hidden p-4 bg-gradient-to-br from-violet-950/40 to-purple-950/40 border border-violet-700/15">
+              <div className="canvas-wrapper rounded-2xl overflow-hidden p-3 bg-gradient-to-br from-violet-950/30 to-purple-950/30 border border-violet-700/10">
                 <canvas
                   ref={canvasRef}
                   width={600}
-                  height={200}
+                  height={120}
                   className="w-full h-auto rounded-lg"
                 />
               </div>
@@ -830,12 +1307,41 @@ export default function RecordingPage() {
                     <Mic className="h-8 w-8 text-white" />
                   </button>
                 ) : (
-                  <button
-                    onClick={stopRecording}
-                    className="record-button active w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-700 animate-pulse flex items-center justify-center cursor-pointer shadow-lg"
-                  >
-                    <Square className="h-8 w-8 text-white" fill="white" />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={stopRecording}
+                      className="record-button active w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-700 animate-pulse flex items-center justify-center cursor-pointer shadow-lg"
+                      title={locale === 'fr' ? 'Arrêter' : 'Stop'}
+                    >
+                      <Square className="h-8 w-8 text-white" fill="white" />
+                    </button>
+
+                    {!isPaused ? (
+                      <button
+                        onClick={pauseRecording}
+                        className="px-4 py-3 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white flex items-center gap-2 shadow-md"
+                        title={locale === 'fr' ? 'Pause' : 'Pause'}
+                      >
+                        <Pause className="h-5 w-5" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={resumeRecording}
+                        className="px-4 py-3 rounded-full bg-green-600 hover:bg-green-500 text-white flex items-center gap-2 shadow-md"
+                        title={locale === 'fr' ? 'Reprendre' : 'Resume'}
+                      >
+                        <Play className="h-5 w-5" />
+                      </button>
+                    )}
+
+                    <button
+                      onClick={cancelRecording}
+                      className="px-4 py-3 rounded-full bg-gray-600 hover:bg-gray-500 text-white flex items-center gap-2 shadow-md"
+                      title={locale === 'fr' ? 'Annuler' : 'Cancel'}
+                    >
+                      <RotateCcw className="h-5 w-5" />
+                    </button>
+                  </div>
                 )}
 
                 {audioChunks.length > 0 && !isRecording && (
@@ -889,6 +1395,19 @@ export default function RecordingPage() {
                       className="hidden"
                     />
                   </label>
+                )}
+
+                {/* PDF import progress */}
+                {isImportingPdf && (
+                  <div className="w-full px-6">
+                    <div className="h-2 bg-white/10 rounded overflow-hidden mb-2">
+                      <div
+                        className="h-2 bg-emerald-500 rounded"
+                        style={{ width: `${importProgress}%`, transition: 'width 200ms' }}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-300 px-1">Importation PDF… {importProgress}%</p>
+                  </div>
                 )}
 
                 {!isRecording && (audioChunks.length > 0 || importedTranscript) && (
@@ -1099,8 +1618,312 @@ export default function RecordingPage() {
               </div>
             </div>
           )}
+
+          {/* Export Tab */}
+          {activeTab === 'export' && summary && (
+            <div className="lg:col-span-3">
+              <div className="rounded-2xl bg-gradient-to-br from-violet-900/20 to-purple-900/20 border border-violet-500/30 p-8">
+                <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <UploadIcon className="h-6 w-6 text-violet-400" />
+                  {locale === 'fr' ? 'Exporter l\'enregistrement' : 'Export Recording'}
+                </h3>
+
+                <div className="space-y-6">
+                  {/* Title Input */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                      {locale === 'fr' ? 'Titre de la réunion*' : 'Meeting Title*'}
+                    </label>
+                    <input
+                      type="text"
+                      value={exportTitle}
+                      onChange={(e) => setExportTitle(e.target.value)}
+                      placeholder={locale === 'fr' ? 'Entrez le titre...' : 'Enter title...'}
+                      className="w-full px-4 py-3 rounded-lg bg-white/5 border border-violet-700/30 text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    />
+                  </div>
+
+
+
+                  {/* Email Recipients */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-300 mb-3">
+                      {locale === 'fr' ? 'Destinataires du résumé' : 'Summary Recipients'}
+                    </label>
+
+                    {/* Add email input */}
+                    <div className="flex gap-2 mb-3">
+                      <input
+                        type="email"
+                        value={newEmailInput}
+                        onChange={(e) => setNewEmailInput(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            addEmailRecipient(newEmailInput)
+                          }
+                        }}
+                        placeholder={locale === 'fr' ? 'Ajouter un email...' : 'Add an email...'}
+                        className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-violet-700/30 text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                      />
+                      <button
+                        onClick={() => addEmailRecipient(newEmailInput)}
+                        className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium transition-colors"
+                      >
+                        {locale === 'fr' ? 'Ajouter' : 'Add'}
+                      </button>
+                    </div>
+
+                    {/* Email list */}
+                    <div className="space-y-2 max-h-40 overflow-y-auto mb-3">
+                      {emailRecipients.length > 0 ? (
+                        emailRecipients.map((recipient) => (
+                          <div
+                            key={recipient.id}
+                            className="flex items-center justify-between gap-2 p-3 rounded-lg bg-white/5 border border-violet-500/20"
+                          >
+                            <div className="flex-1">
+                              <p className="text-gray-200 text-sm">{recipient.email}</p>
+                              {recipient.type === 'subaccount' && (
+                                <p className="text-gray-400 text-xs">{locale === 'fr' ? 'Sous-compte' : 'Subaccount'}</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => removeEmailRecipient(recipient.id)}
+                              className="px-2 py-1 rounded text-red-400 hover:bg-red-500/20 transition-colors text-sm"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-gray-400 text-sm">
+                          {locale === 'fr' ? 'Aucun destinataire ajouté' : 'No recipients added'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Quick add from subaccounts */}
+                    {subaccounts.length > 0 && (
+                      <div>
+                        <p className="text-gray-400 text-xs mb-2">
+                          {locale === 'fr' ? 'Ajouter rapidement depuis les sous-comptes:' : 'Quick add from subaccounts:'}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {subaccounts.map((subaccount) => (
+                            <button
+                              key={subaccount.id}
+                              onClick={() => addSubaccountEmail(subaccount)}
+                              disabled={emailRecipients.some(r => r.email === subaccount.email)}
+                              className="px-3 py-1 text-xs rounded-full bg-violet-600/20 hover:bg-violet-600/40 disabled:opacity-50 disabled:cursor-not-allowed text-violet-300 border border-violet-500/30 transition-colors"
+                            >
+                              + {subaccount.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={saveRecording}
+                      disabled={isSavingRecording || !exportTitle.trim()}
+                      className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-green-700 to-emerald-700 hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold flex items-center justify-center gap-2 transition-all duration-300"
+                    >
+                      {isSavingRecording ? (
+                        <>
+                          <Loader className="h-5 w-5 animate-spin" />
+                          {locale === 'fr' ? 'Enregistrement...' : 'Saving...'}
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-5 w-5" />
+                          {locale === 'fr' ? 'Enregistrer' : 'Save Recording'}
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={downloadPdf}
+                      disabled={isGeneratingPdf}
+                      className="flex-1 px-6 py-3 rounded-lg bg-gradient-to-r from-blue-700 to-cyan-700 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold flex items-center justify-center gap-2 transition-all duration-300"
+                    >
+                      {isGeneratingPdf ? (
+                        <>
+                          <Loader className="h-5 w-5 animate-spin" />
+                          PDF
+                        </>
+                      ) : (
+                        <>
+                          <FileJson className="h-5 w-5" />
+                          PDF
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* PDF Editor Modal (handles both PDF export and Save modes) */}
+      <Dialog open={showPdfEditor} onOpenChange={setShowPdfEditor}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editorMode === 'pdf'
+                ? (locale === 'fr' ? 'Éditer avant export PDF' : 'Edit before PDF export')
+                : (locale === 'fr' ? 'Éditer avant enregistrement' : 'Edit before saving')}
+            </DialogTitle>
+            <DialogDescription>
+              {editorMode === 'pdf'
+                ? (locale === 'fr'
+                    ? 'Modifiez le résumé, les points clés, les actions et la transcription avant de générer le PDF.'
+                    : 'Modify summary, key points, action items, and transcript before generating the PDF.')
+                : (locale === 'fr'
+                    ? 'Modifiez le résumé, les points clés, les actions et la transcription avant de sauvegarder.'
+                    : 'Modify summary, key points, action items, and transcript before saving.')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Summary */}
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                {locale === 'fr' ? 'Résumé' : 'Summary'}
+              </label>
+              <textarea
+                value={editSummary}
+                onChange={(e) => setEditSummary(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-violet-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-violet-500/60 h-24"
+                placeholder={locale === 'fr' ? 'Entrez le résumé...' : 'Enter summary...'}
+              />
+            </div>
+
+            {/* Key Points */}
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                {locale === 'fr' ? 'Points clés (max 25)' : 'Key Points (max 25)'}
+              </label>
+              <div className="space-y-2 max-h-40 overflow-y-auto mb-2">
+                {editKeyPoints.map((point, idx) => (
+                  <div key={idx} className="flex gap-2 items-start">
+                    <input
+                      type="text"
+                      value={point}
+                      onChange={(e) => {
+                        const updated = [...editKeyPoints]
+                        updated[idx] = e.target.value
+                        setEditKeyPoints(updated)
+                      }}
+                      className="flex-1 px-3 py-1 rounded-lg bg-white/5 border border-violet-500/20 text-white text-sm focus:outline-none focus:border-violet-500/60"
+                    />
+                    <button
+                      onClick={() => setEditKeyPoints(editKeyPoints.filter((_, i) => i !== idx))}
+                      className="px-2 py-1 text-red-400 hover:bg-red-500/20 rounded text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setEditKeyPoints([...editKeyPoints, ''])}
+                disabled={editKeyPoints.length >= 25}
+                className="px-3 py-1 text-sm rounded-lg bg-violet-600/30 hover:bg-violet-600/50 disabled:opacity-50 disabled:cursor-not-allowed text-violet-300 border border-violet-500/30"
+              >
+                {locale === 'fr' ? '+ Ajouter point clé' : '+ Add Key Point'}
+              </button>
+            </div>
+
+            {/* Action Items */}
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                {locale === 'fr' ? 'Actions (max 25)' : 'Action Items (max 25)'}
+              </label>
+              <div className="space-y-2 max-h-40 overflow-y-auto mb-2">
+                {editActionItems.map((item, idx) => (
+                  <div key={idx} className="flex gap-2 items-start">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => {
+                        const updated = [...editActionItems]
+                        updated[idx] = e.target.value
+                        setEditActionItems(updated)
+                      }}
+                      className="flex-1 px-3 py-1 rounded-lg bg-white/5 border border-violet-500/20 text-white text-sm focus:outline-none focus:border-violet-500/60"
+                    />
+                    <button
+                      onClick={() => setEditActionItems(editActionItems.filter((_, i) => i !== idx))}
+                      className="px-2 py-1 text-red-400 hover:bg-red-500/20 rounded text-sm"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setEditActionItems([...editActionItems, ''])}
+                disabled={editActionItems.length >= 25}
+                className="px-3 py-1 text-sm rounded-lg bg-violet-600/30 hover:bg-violet-600/50 disabled:opacity-50 disabled:cursor-not-allowed text-violet-300 border border-violet-500/30"
+              >
+                {locale === 'fr' ? '+ Ajouter action' : '+ Add Action Item'}
+              </button>
+            </div>
+
+            {/* Transcript */}
+            <div>
+              <label className="block text-sm font-semibold mb-2">
+                {locale === 'fr' ? 'Transcription' : 'Transcript'}
+              </label>
+              <textarea
+                value={editTranscript}
+                onChange={(e) => setEditTranscript(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-violet-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-violet-500/60 h-24"
+                placeholder={locale === 'fr' ? 'Entrez la transcription...' : 'Enter transcript...'}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <DialogClose asChild>
+              <button className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white">
+                {locale === 'fr' ? 'Annuler' : 'Cancel'}
+              </button>
+            </DialogClose>
+            <button
+              onClick={editorMode === 'pdf' ? exportFromEditor : saveFromEditor}
+              disabled={isGeneratingPdf || isSavingRecording}
+              className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold flex items-center gap-2"
+            >
+              {(isGeneratingPdf || isSavingRecording) ? (
+                <>
+                  <Loader className="h-4 w-4 animate-spin" />
+                  {editorMode === 'pdf' ? 'PDF' : (locale === 'fr' ? 'Enregistrement...' : 'Saving...')}
+                </>
+              ) : (
+                <>
+                  {editorMode === 'pdf' ? (
+                    <>
+                      <FileJson className="h-4 w-4" />
+                      {locale === 'fr' ? 'Générer PDF' : 'Generate PDF'}
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      {locale === 'fr' ? 'Enregistrer' : 'Save Recording'}
+                    </>
+                  )}
+                </>
+              )}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
+

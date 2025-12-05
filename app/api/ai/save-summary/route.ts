@@ -13,65 +13,40 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
     }
 
-    // create a meeting record
-    const meeting = await prisma.meeting.create({
-      data: {
-        userId: userId,
-        title: meetingTitle || `Meeting ${new Date().toISOString()}`,
-        startTime: new Date(),
-        endTime: new Date(),
-        transcript: transcript ? transcript : null,
-        summary: summary || null,
-        actionItems: tasks || [],
-        processed: true,
-        processedAt: new Date(),
-        transcriptReady: !!transcript,
-      },
-    })
-
-    // Optionally process RAG/indexing for search
-    try {
-      if (transcript) {
-        await processTranscript(meeting.id, userId, transcript, meeting.title)
-      }
-    } catch (err) {
-      console.error('processTranscript error:', err)
-    }
-
-    // send email using Resend templates
+    // For analysis flow we do NOT create a Meeting record here.
+    // Meeting persistence will be performed only when the user explicitly saves (exports) the recording.
+    // Here we only optionally send the summary to the user email (useful for immediate feedback),
+    // but do not persist data or run RAG indexing to avoid duplicate meetings.
     try {
       if (userEmail) {
+        const titleToUse = meetingTitle || `Meeting ${new Date().toISOString()}`
         if (language === 'en' || !language) {
           await sendMeetingSummaryEmail({
             userEmail,
             userName: '',
-            meetingTitle: meeting.title,
+            meetingTitle: titleToUse,
             summary: summary || '',
             actionItems: tasks || [],
-            meetingId: meeting.id,
-            meetingDate: meeting.startTime.toISOString(),
+            meetingId: '',
+            meetingDate: new Date().toISOString(),
           })
         } else {
           await sendMeetingSummaryEmailFr({
             userEmail,
             userName: '',
-            meetingTitle: meeting.title,
+            meetingTitle: titleToUse,
             summary: summary || '',
             actionItems: tasks || [],
-            meetingId: meeting.id,
-            meetingDate: meeting.startTime.toISOString(),
+            meetingId: '',
+            meetingDate: new Date().toISOString(),
           })
         }
-        await prisma.meeting.update({
-          where: { id: meeting.id },
-          data: { emailSent: true, emailSentAt: new Date() },
-        })
       }
     } catch (emailErr) {
-      console.error('Failed to send summary email:', emailErr)
+      console.error('Failed to send summary email during analysis (no persistence):', emailErr)
     }
 
-    return NextResponse.json({ success: true, meetingId: meeting.id })
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('save-summary error:', error)
     return NextResponse.json({ error: 'internal server error' }, { status: 500 })

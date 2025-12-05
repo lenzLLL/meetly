@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme_provider";
@@ -11,34 +10,22 @@ import { UsageProvider } from "@/context/UsageContext";
 import { ConditionalLayout } from "@/components/conditional-layout";
 import ModalProvider from "./subaccounts/components/modal_provider";
 import { Toaster } from "@/components/ui/toaster";
-// ✅ Chargement des polices Google (pas besoin d'installer @geist/font)
-const geistSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-  display: "swap",
-});
-
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
-  export const metadata: Metadata = {
-  title: 'Conia — Smart Meeting Assistant',
-  description: 'AI-powered meeting management and summaries',
-  manifest: '/manifest.json',
-  icons: {
-    icon: '/icon.png',
-    shortcut: '/icon.png',
-    apple: '/icon.png',
-  },
 
-}
+export const metadata: Metadata = {
+  title: "Conia — Smart Meeting Assistant",
+  description: "AI-powered meeting management and summaries",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
+};
+
 export default async function RootLayout({
   children,
   params,
@@ -55,25 +42,22 @@ export default async function RootLayout({
   return (
     <ClerkProvider>
       <html lang={locale} suppressHydrationWarning className="dark">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-          suppressHydrationWarning
-        >  <NextIntlClientProvider locale={locale}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >  <ModalProvider>
-            <Toaster/>
-          
-              <UsageProvider>
-                <ConditionalLayout>{children}</ConditionalLayout>
-              </UsageProvider>
-            </ModalProvider>
-          </ThemeProvider>
-            </NextIntlClientProvider>
-
+        <body className="font-geist antialiased" suppressHydrationWarning>
+          <NextIntlClientProvider locale={locale}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <ModalProvider>
+                <Toaster />
+                <UsageProvider>
+                  <ConditionalLayout>{children}</ConditionalLayout>
+                </UsageProvider>
+              </ModalProvider>
+            </ThemeProvider>
+          </NextIntlClientProvider>
         </body>
       </html>
     </ClerkProvider>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { summary, tasks, keyPoints, language } = await req.json()
+    const { summary, tasks, keyPoints, language, meetingTitle } = await req.json()
 
     const langCode = typeof language === 'string' ? language : 'fr'
     const labelsByLang: Record<string, {
@@ -14,20 +14,52 @@ export async function POST(req: NextRequest) {
       footerText: string
     }> = {
       fr: {
-        reportTitle: 'Compte-rendu de réunion',
+        reportTitle: 'Compte-rendu d\'enregistrement',
         generatedOnLabel: 'Généré le',
         execSummaryTitle: 'Résumé exécutif',
         keyPointsTitle: 'Points clés de discussion',
         actionItemsTitle: 'Actions à réaliser',
-        footerText: 'Ce rapport a été généré automatiquement par Meetly Recording Studio',
+        footerText: 'Ce rapport a été généré automatiquement par Conia Recording Studio',
       },
       en: {
-        reportTitle: 'Meeting Summary Report',
+        reportTitle: 'Recording Summary Report',
         generatedOnLabel: 'Generated on',
         execSummaryTitle: 'Executive Summary',
         keyPointsTitle: 'Key Discussion Points',
         actionItemsTitle: 'Action Items',
-        footerText: 'This report was generated automatically by Meetly Recording Studio',
+        footerText: 'This report was generated automatically by Conia Recording Studio',
+      },
+      es: {
+        reportTitle: 'Informe de Resumen de Grabación',
+        generatedOnLabel: 'Generado el',
+        execSummaryTitle: 'Resumen Ejecutivo',
+        keyPointsTitle: 'Puntos Clave de Discusión',
+        actionItemsTitle: 'Elementos de Acción',
+        footerText: 'Este informe fue generado automáticamente por Conia Recording Studio',
+      },
+      de: {
+        reportTitle: 'Aufnahmezusammenfassungsbericht',
+        generatedOnLabel: 'Generiert am',
+        execSummaryTitle: 'Zusammenfassung',
+        keyPointsTitle: 'Wichtige Diskussionspunkte',
+        actionItemsTitle: 'Aktionselemente',
+        footerText: 'Dieser Bericht wurde automatisch von Conia Recording Studio generiert',
+      },
+      pt: {
+        reportTitle: 'Relatório de Resumo de Gravação',
+        generatedOnLabel: 'Gerado em',
+        execSummaryTitle: 'Resumo Executivo',
+        keyPointsTitle: 'Pontos-Chave da Discussão',
+        actionItemsTitle: 'Itens de Ação',
+        footerText: 'Este relatório foi gerado automaticamente pelo Conia Recording Studio',
+      },
+      it: {
+        reportTitle: 'Rapporto di Sintesi della Registrazione',
+        generatedOnLabel: 'Generato il',
+        execSummaryTitle: 'Sommario Esecutivo',
+        keyPointsTitle: 'Punti Chiave della Discussione',
+        actionItemsTitle: 'Elementi di Azione',
+        footerText: 'Questo rapporto è stato generato automaticamente da Conia Recording Studio',
       },
     }
 
@@ -37,21 +69,9 @@ export async function POST(req: NextRequest) {
     let topicsSection = ''
     if (Array.isArray(keyPoints) && keyPoints.length > 0) {
       const points = keyPoints.map((p: any) => String(p || ''))
-      const rawScores = points.map((p) => Math.max(1, p.length))
-      const maxScore = Math.max(...rawScores)
-      const widths = rawScores.map((s) => 40 + Math.round((s / maxScore) * 60)) // 40%–100%
 
       const listItems = points
         .map((point) => `<li class="task-item">${point}</li>`)
-        .join('')
-
-      const bars = points
-        .map((point, index) => {
-          const width = Math.min(Math.max(widths[index] || 40, 40), 100)
-          return `<div class="topic-bar" style="width:${width}%">
-              <span class="topic-bar-label">${index + 1}</span>
-            </div>`
-        })
         .join('')
 
       topicsSection = `
@@ -60,9 +80,6 @@ export async function POST(req: NextRequest) {
               <ul class="task-list">
                 ${listItems}
               </ul>
-              <div class="topics-graph">
-                ${bars}
-              </div>
             </div>
       `
     }
@@ -137,26 +154,6 @@ export async function POST(req: NextRequest) {
               margin-right: 10px;
               font-size: 18px;
             }
-            .topics-graph {
-              margin-top: 12px;
-            }
-            .topic-bar {
-              height: 10px;
-              border-radius: 999px;
-              background: linear-gradient(90deg, #8b5cf6, #ec4899);
-              margin-bottom: 8px;
-              position: relative;
-              overflow: hidden;
-            }
-            .topic-bar-label {
-              position: absolute;
-              left: 8px;
-              top: 50%;
-              transform: translateY(-50%);
-              font-size: 10px;
-              color: #f9f5ff;
-              font-weight: bold;
-            }
             .footer {
               text-align: center;
               color: #999;
@@ -170,7 +167,7 @@ export async function POST(req: NextRequest) {
         <body>
           <div class="container">
             <div class="header">
-              <h1>${labels.reportTitle}</h1>
+              <h1>${meetingTitle || labels.reportTitle}</h1>
               <div class="date">${labels.generatedOnLabel} ${new Date().toLocaleDateString()}</div>
             </div>
 

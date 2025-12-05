@@ -37,9 +37,23 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You are an expert meeting analyst. You MUST respond ONLY in ${langName}. Respond ONLY in valid JSON with keys: summary, tasks, keyPoints don't go beyond transcript don't use your imagination.`
+          content: `You are a meeting transcript analyzer. You MUST respond ONLY in ${langName}.
+
+CRITICAL RULES:
+1. Extract information ONLY from what is explicitly stated in the transcript
+2. Do NOT invent, assume, or infer anything not directly mentioned
+3. Do NOT add context from general knowledge
+4. Only mention tasks/points that are explicitly discussed or agreed upon
+5. Keep summaries factual and based solely on what was said
+
+Return ONLY valid JSON with exact keys:
+- summary: Factual summary of what was discussed (2-3 sentences max)
+- tasks: ONLY explicit action items mentioned or agreed upon
+- keyPoints: ONLY topics/subjects actually discussed
+
+Format: {"summary": "...", "tasks": [...], "keyPoints": [...]}`
         },
-        { role: 'user', content: transcriptText }
+        { role: 'user', content: `Extract information ONLY explicitly stated in transcript. No assumptions:\n\n${transcriptText}` }
       ],
       temperature: 0.3,
       max_tokens: 2000,
@@ -79,7 +93,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       summary:parsed.summary|| '',
       tasks: tasks,
-      keyPoints:[]
+      keyPoints: keyPoints
     })
 
   } catch (error) {
