@@ -15,7 +15,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'no file provided' }, { status: 400 })
     }
 
-    if (!file.type.startsWith('audio/')) {
+    // Check file type by MIME or filename
+    const isAudioType = file.type.startsWith('audio/') || 
+                        file.name.toLowerCase().endsWith('.webm') ||
+                        file.name.toLowerCase().endsWith('.mp3') ||
+                        file.name.toLowerCase().endsWith('.wav') ||
+                        file.name.toLowerCase().endsWith('.m4a') ||
+                        file.name.toLowerCase().endsWith('.ogg')
+    
+    if (!isAudioType) {
       return NextResponse.json(
         { error: 'invalid file type, audio expected' },
         { status: 400 },
@@ -23,10 +31,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Transcription audio → texte via OpenAI
+    // Ensure file has proper extension for OpenAI
+    const fileName = file.name || 'audio.webm'
+    const fileExt = fileName.split('.').pop()?.toLowerCase() || 'webm'
+    
+    // Create a properly named file blob for OpenAI
+    const audioFile = new File([await file.arrayBuffer()], `audio.${fileExt}`, { type: file.type || 'audio/webm' })
+    
+    console.log('Sending to OpenAI:', { fileName: audioFile.name, type: audioFile.type, size: audioFile.size })
+    
     const transcription = await openai.audio.transcriptions.create({
-      file,
-      // Adapte le modèle si besoin selon ta config OpenAI
-      model: 'gpt-4o-mini-transcribe',
+      file: audioFile,
+      model: 'whisper-1',
       language,
     } as any)
 
@@ -102,12 +118,14 @@ ${transcriptText}`,
        }
     // EXTRACTION PROPRE DU JSON
      
-    const tasks = Array.isArray(parsed.tasks)
-  ? parsed.tasks // tableau de string directement
-  : [];
-   const keyPoints = Array.isArray(parsed.keyPoints)
-  ? parsed.keyPoints
-  : [];
+    const toText = (item: any) => {
+      if (typeof item === 'string') return item
+      if (!item) return ''
+      return item.text || item.content || item.title || item.name || JSON.stringify(item)
+    }
+
+    const tasks = Array.isArray(parsed.tasks) ? parsed.tasks.map(toText) : []
+    const keyPoints = Array.isArray(parsed.keyPoints) ? parsed.keyPoints.map(toText) : []
     console.log('ANALYZE RESULT:', { parsed, tasks, keyPoints });
     return NextResponse.json({
       transcript: transcriptText,

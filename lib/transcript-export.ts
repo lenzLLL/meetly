@@ -71,7 +71,8 @@ export async function exportTranscriptToPdf(
   transcript: any,
   meetingTitle: string,
   metadata?: { date?: string; summary?: string; speakers?: string[]; keyPoints?: string[]; actionItems?: any[] },
-  language: 'en' | 'fr' | 'es' | 'de' | 'pt' | 'it' = 'en'
+  language: 'en' | 'fr' | 'es' | 'de' | 'pt' | 'it' = 'en',
+  skipTranscript: boolean = false
 ): Promise<void> {
   // Translation labels based on language (declared outside try so available in catch)
   const labels: Record<string, any> = {
@@ -275,11 +276,21 @@ export async function exportTranscriptToPdf(
       keyPointsList.style.color = '#555';
       keyPointsList.style.paddingLeft = '30px';
 
+      const toText = (item: any) => {
+        if (typeof item === 'string') return item
+        if (!item) return ''
+        if (typeof item.text === 'string') return item.text
+        if (typeof item.content === 'string') return item.content
+        if (item.title) return String(item.title)
+        if (item.name) return String(item.name)
+        if (item.text && typeof item.text !== 'string') return JSON.stringify(item.text)
+        return JSON.stringify(item)
+      }
       metadata.keyPoints.forEach((point: any) => {
         const listItem = document.createElement('li');
         listItem.style.marginBottom = '10px';
         listItem.style.pageBreakInside = 'avoid';
-        listItem.textContent = typeof point === 'string' ? point : (point.text || JSON.stringify(point));
+        listItem.textContent = toText(point);
         keyPointsList.appendChild(listItem);
       });
 
@@ -320,81 +331,94 @@ export async function exportTranscriptToPdf(
       actionItemsList.style.color = '#555';
       actionItemsList.style.paddingLeft = '30px';
 
+      const toTextAction = (item: any) => {
+        if (typeof item === 'string') return item
+        if (!item) return ''
+        if (typeof item.text === 'string') return item.text
+        if (typeof item.content === 'string') return item.content
+        if (item.title) return String(item.title)
+        if (item.name) return String(item.name)
+        if (item.text && typeof item.text !== 'string') return JSON.stringify(item.text)
+        return JSON.stringify(item)
+      }
       metadata.actionItems.forEach((item: any) => {
         const listItem = document.createElement('li');
         listItem.style.marginBottom = '10px';
         listItem.style.pageBreakInside = 'avoid';
-        listItem.textContent = typeof item === 'string' ? item : (item.text || JSON.stringify(item));
+        listItem.textContent = toTextAction(item);
         actionItemsList.appendChild(listItem);
       });
 
       htmlContent.appendChild(actionItemsList);
     }
 
-    // Transcript header
-    const transcriptHeader = document.createElement('h2');
-    transcriptHeader.textContent = l.transcript;
-    transcriptHeader.style.fontSize = '22px';
-    transcriptHeader.style.marginTop = '30px';
-    transcriptHeader.style.marginBottom = '20px';
-    transcriptHeader.style.color = '#7c3aed';
-    transcriptHeader.style.pageBreakAfter = 'avoid';
-    htmlContent.appendChild(transcriptHeader);
+    // Transcript section (skip if requested, e.g., for imported PDFs)
+    if (!skipTranscript) {
+      // Transcript header
+      const transcriptHeader = document.createElement('h2');
+      transcriptHeader.textContent = l.transcript;
+      transcriptHeader.style.fontSize = '22px';
+      transcriptHeader.style.marginTop = '30px';
+      transcriptHeader.style.marginBottom = '20px';
+      transcriptHeader.style.color = '#7c3aed';
+      transcriptHeader.style.pageBreakAfter = 'avoid';
+      htmlContent.appendChild(transcriptHeader);
 
-    // Transcript content
-    const transcriptEl = document.createElement('div');
-    transcriptEl.style.fontSize = '16px';
-    transcriptEl.style.lineHeight = '1.6';
+      // Transcript content
+      const transcriptEl = document.createElement('div');
+      transcriptEl.style.fontSize = '16px';
+      transcriptEl.style.lineHeight = '1.6';
 
-    if (Array.isArray(transcript)) {
-      transcript.forEach((segment: any, idx: number) => {
-        // Support both formats: segment.words (old) or chunk.content (new)
-        const speaker = segment.speaker || segment.speakerName || 'Speaker';
-        
-        // Extract text from segment
-        let displayText = '';
-        if (segment.content) {
-          displayText = segment.content;
-        } else if (Array.isArray(segment.words)) {
-          displayText = segment.words.map((w: any) => w.word || w).join(' ');
-        } else if (typeof segment.words === 'string') {
-          displayText = segment.words;
-        }
+      if (Array.isArray(transcript)) {
+        transcript.forEach((segment: any, idx: number) => {
+          // Support both formats: segment.words (old) or chunk.content (new)
+          const speaker = segment.speaker || segment.speakerName || 'Speaker';
+          
+          // Extract text from segment
+          let displayText = '';
+          if (segment.content) {
+            displayText = segment.content;
+          } else if (Array.isArray(segment.words)) {
+            displayText = segment.words.map((w: any) => w.word || w).join(' ');
+          } else if (typeof segment.words === 'string') {
+            displayText = segment.words;
+          }
 
-        const itemEl = document.createElement('div');
-        itemEl.style.marginBottom = '12px';
-        itemEl.style.pageBreakInside = 'avoid';
-        if (idx % 10 === 0) {
-          itemEl.style.pageBreakBefore = 'avoid';
-        }
+          const itemEl = document.createElement('div');
+          itemEl.style.marginBottom = '12px';
+          itemEl.style.pageBreakInside = 'avoid';
+          if (idx % 10 === 0) {
+            itemEl.style.pageBreakBefore = 'avoid';
+          }
 
-        const speakerEl = document.createElement('strong');
-        speakerEl.textContent = speaker;
-        speakerEl.style.color = '#7c3aed';
-        speakerEl.style.display = 'block';
-        speakerEl.style.marginBottom = '4px';
-        itemEl.appendChild(speakerEl);
+          const speakerEl = document.createElement('strong');
+          speakerEl.textContent = speaker;
+          speakerEl.style.color = '#7c3aed';
+          speakerEl.style.display = 'block';
+          speakerEl.style.marginBottom = '4px';
+          itemEl.appendChild(speakerEl);
 
-        // Display text
-        const textEl = document.createElement('p');
-        textEl.textContent = displayText;
-        textEl.style.margin = '0';
-        textEl.style.marginLeft = '15px';
-        textEl.style.color = '#555';
-        textEl.style.whiteSpace = 'pre-wrap';
-        textEl.style.wordWrap = 'break-word';
-        itemEl.appendChild(textEl);
-        transcriptEl.appendChild(itemEl);
-      });
-    } else if (typeof transcript === 'string') {
-      const para = document.createElement('p');
-      para.textContent = transcript;
-      para.style.whiteSpace = 'pre-wrap';
-      para.style.wordWrap = 'break-word';
-      transcriptEl.appendChild(para);
+          // Display text
+          const textEl = document.createElement('p');
+          textEl.textContent = displayText;
+          textEl.style.margin = '0';
+          textEl.style.marginLeft = '15px';
+          textEl.style.color = '#555';
+          textEl.style.whiteSpace = 'pre-wrap';
+          textEl.style.wordWrap = 'break-word';
+          itemEl.appendChild(textEl);
+          transcriptEl.appendChild(itemEl);
+        });
+      } else if (typeof transcript === 'string') {
+        const para = document.createElement('p');
+        para.textContent = transcript;
+        para.style.whiteSpace = 'pre-wrap';
+        para.style.wordWrap = 'break-word';
+        transcriptEl.appendChild(para);
+      }
+
+      htmlContent.appendChild(transcriptEl);
     }
-
-    htmlContent.appendChild(transcriptEl);
 
     // Create an isolated iframe to avoid CSS color parsing issues
     const iframe = document.createElement('iframe');

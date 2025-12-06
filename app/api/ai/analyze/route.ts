@@ -77,18 +77,14 @@ Format: {"summary": "...", "tasks": [...], "keyPoints": [...]}`
        }
     // EXTRACTION PROPRE DU JSON
      
-      const tasks = Array.isArray(parsed.tasks)
-      ? parsed.tasks.map((text: string, index: number) => ({
-          id: index + 1,
-          text,
-        }))
-      : [];
-      const keyPoints  = Array.isArray(parsed.keyPoints)
-      ? parsed.keyPoints.map((text: string, index: number) => ({
-          id: index + 1,
-          text,
-        }))
-      : [];
+      const toText = (item: any) => {
+        if (typeof item === 'string') return item
+        if (!item) return ''
+        return item.text || item.content || item.title || item.name || JSON.stringify(item)
+      }
+
+      const tasks = Array.isArray(parsed.tasks) ? parsed.tasks.map(toText) : []
+      const keyPoints = Array.isArray(parsed.keyPoints) ? parsed.keyPoints.map(toText) : []
     // Retourne les trois valeurs bien séparées
     return NextResponse.json({
       summary:parsed.summary|| '',

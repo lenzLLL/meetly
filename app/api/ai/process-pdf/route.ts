@@ -21,9 +21,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large' }, { status: 413 })
     }
 
-    // Convert uploaded File to Buffer
-    const arrayBuffer = await (file as any).arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    // Convert uploaded File to Buffer (handle different runtimes)
+    let buffer: Buffer
+    try {
+      if (typeof (file as any).arrayBuffer === 'function') {
+        const arrayBuffer = await (file as any).arrayBuffer()
+        buffer = Buffer.from(arrayBuffer)
+      } else if (typeof (file as any).stream === 'function' || (file as any).stream) {
+        // Node-like stream
+        const stream = (file as any).stream()
+        const chunks: Buffer[] = []
+        for await (const chunk of stream) {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+        }
+        buffer = Buffer.concat(chunks)
+      } else if (typeof (file as any).stream === 'object' && (file as any).stream?.getReader) {
+        // Web ReadableStream
+        const reader = (file as any).stream().getReader()
+        const chunks: Buffer[] = []
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          chunks.push(Buffer.from(value))
+        }
+        buffer = Buffer.concat(chunks)
+      } else {
+        // Last resort: try to read as arrayBuffer from request body (not ideal)
+        console.warn('process-pdf: unknown File shape, attempting request.arrayBuffer() fallback')
+        const ab = await request.arrayBuffer()
+        buffer = Buffer.from(ab)
+      }
+    } catch (err) {
+      console.error('Error reading uploaded file into buffer:', err)
+      return NextResponse.json({ error: 'Failed to read uploaded file' }, { status: 500 })
+    }
 
     // Use pdf-parse to extract text
     const data = await pdfParse(buffer)

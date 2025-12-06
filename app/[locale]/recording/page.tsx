@@ -1,5 +1,6 @@
 'use client'
 
+
 import React, { useState, useRef, useEffect } from 'react'
 import { exportTranscriptToPdf } from '@/lib/transcript-export'
 import {
@@ -32,6 +33,7 @@ import {
   Upload,
   Upload as UploadIcon,
   Mail,
+  Layers,
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use_toast'
 
@@ -70,6 +72,8 @@ export default function RecordingPage() {
   const [language, setLanguage] = useState(locale)
   const [showAudioSettings, setShowAudioSettings] = useState(false)
   const [importedTranscript, setImportedTranscript] = useState<string>('')
+  const [importedPdfFileName, setImportedPdfFileName] = useState<string | null>(null)
+  const [importedAudioFileName, setImportedAudioFileName] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordingTimerRef = useRef<number | null>(null)
   const [isPaused, setIsPaused] = useState(false)
@@ -77,6 +81,8 @@ export default function RecordingPage() {
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const recordingStreamRef = useRef<MediaStream | null>(null)
+  const trackEndListenersRef = useRef<Map<MediaStreamTrack, () => void>>(new Map())
 
   // Chat states
   const [messages, setMessages] = useState<Message[]>([
@@ -102,6 +108,9 @@ export default function RecordingPage() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [isImportingPdf, setIsImportingPdf] = useState(false)
   const [importProgress, setImportProgress] = useState(0)
+  const [isImportingAudio, setIsImportingAudio] = useState(false)
+  const [audioImportProgress, setAudioImportProgress] = useState(0)
+  const [analyzeProgress, setAnalyzeProgress] = useState(0)
   const { user } = useUser()
   const { toast } = useToast()
 
@@ -121,6 +130,27 @@ export default function RecordingPage() {
   const [editTranscript, setEditTranscript] = useState('')
   const [editorMode, setEditorMode] = useState<'pdf' | 'save'>('pdf') // Track whether editing for PDF or Save
 
+  // Audio source selection modal
+  const [showAudioSourceModal, setShowAudioSourceModal] = useState(false)
+  const [pendingAudioSource, setPendingAudioSource] = useState<AudioSource | null>(null)
+
+  // Helper to safely render possibly-structured text (strings, arrays, or objects)
+  const renderAsText = (value: any) => {
+    if (!value && value !== 0) return ''
+    if (typeof value === 'string') return value
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => {
+          if (typeof item === 'string') return item
+          if (typeof item === 'object' && item !== null) return item.text || item.content || JSON.stringify(item)
+          return String(item)
+        })
+        .join('\n')
+    }
+    if (typeof value === 'object') return (value && (value.text || value.content)) || JSON.stringify(value)
+    return String(value)
+  }
+
   // Source of truth for tasks shown in the Tasks tab
   const effectiveTasks =
     summary && Array.isArray(summary.tasks) && summary.tasks.length > 0
@@ -131,6 +161,15 @@ export default function RecordingPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Auto-trigger analysis after audio import (when audioChunks changes and importedAudioFileName is set)
+  useEffect(() => {
+    console.log('useEffect triggered - audioChunks:', audioChunks.length, 'importedAudioFileName:', importedAudioFileName, 'isRecording:', isRecording, 'isAnalyzing:', isAnalyzing, 'summary:', !!summary)
+    if (audioChunks.length > 0 && importedAudioFileName && !isRecording && !isAnalyzing && !summary) {
+      console.log('Auto-triggering analysis after audio import:', importedAudioFileName)
+      analyzeRecording()
+    }
+  }, [audioChunks.length, importedAudioFileName, isRecording, isAnalyzing, !!summary])
 
   // Load subaccounts for export
   useEffect(() => {
@@ -161,61 +200,173 @@ export default function RecordingPage() {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
   }
 
-  // Initialize recording
-  const startRecording = async () => {
+  // Show audio source selection modal
+  const promptAudioSource = () => {
+    setShowAudioSourceModal(true)
+  }
+
+  // Handle audio source selection from modal
+  const confirmAudioSource = async (selectedSource: AudioSource) => {
+    setPendingAudioSource(selectedSource)
+    setShowAudioSourceModal(false)
+    setAudioSource(selectedSource)
+    
+    // Show feedback toast
+    const sourceLabels: Record<AudioSource, string> = {
+      microphone: locale === 'fr' ? 'Microphone' : 'Microphone',
+      system: locale === 'fr' ? 'Audio du système' : 'System Audio',
+      both: locale === 'fr' ? 'Microphone + Audio système' : 'Microphone + System Audio',
+    }
+    
+    toast({
+      title: locale === 'fr' ? 'Source audio sélectionnée' : 'Audio Source Selected',
+      description: sourceLabels[selectedSource],
+    })
+    
+    // Start recording with the selected source
+    startRecordingWithSource(selectedSource)
+  }
+
+  // Initialize recording with specific audio source
+  const startRecordingWithSource = async (source: AudioSource) => {
     try {
-      const constraints: MediaStreamConstraints = { audio: false }
-
-      if (audioSource === 'microphone' || audioSource === 'both') {
-        constraints.audio = true
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints)
-
-      // Handle system audio (requires getDisplayMedia on supported browsers)
+      let stream: MediaStream | null = null
       let systemAudioStream: MediaStream | null = null
+      
+      // Try system audio first if requested
       if (
-        (audioSource === 'system' || audioSource === 'both') &&
+        (source === 'system' || source === 'both') &&
         navigator.mediaDevices.getDisplayMedia
       ) {
         try {
+          console.log('Requesting display media (system audio)...')
+          // Note: video MUST be true for getDisplayMedia to work properly
           const displayStream = await navigator.mediaDevices.getDisplayMedia({
-            audio: true,
-            video: false,
+            audio: { echoCancellation: false },
+            video: { mediaSource: 'screen' } as any,
           } as DisplayMediaStreamOptions)
+          
+          // If user only wants audio, we'll extract just the audio track
           systemAudioStream = displayStream
-        } catch (e) {
-          console.log('System audio not available')
+          console.log('Display media obtained:', displayStream.getTracks().map(t => t.kind))
+        } catch (error: any) {
+          const errorMessage = error?.message || String(error)
+          console.log('System audio capture failed:', errorMessage)
+          
+          // For 'system' only mode, this is a hard error
+          if (source === 'system') {
+            throw new Error(`System audio capture failed: ${errorMessage}`)
+          }
+          // For 'both' mode, we'll fall through to microphone
         }
+      }
+      
+      // Request microphone if needed
+      if ((source === 'microphone' || source === 'both') || !systemAudioStream) {
+        try {
+          console.log('Requesting microphone...')
+          const constraints: MediaStreamConstraints = { audio: true }
+          stream = await navigator.mediaDevices.getUserMedia(constraints)
+          console.log('Microphone obtained')
+        } catch (error: any) {
+          const errorMessage = error?.message || String(error)
+          console.error('Microphone capture failed:', errorMessage)
+          
+          // Only throw if we don't have system audio
+          if (!systemAudioStream) {
+            throw new Error(`Microphone capture failed: ${errorMessage}`)
+          }
+        }
+      }
+
+      // Check we have at least one stream
+      if (!stream && !systemAudioStream) {
+        throw new Error('No audio source available')
       }
 
       // Merge streams if both are available
       const finalStream = new MediaStream()
-      if (audioSource === 'both' && systemAudioStream) {
-        stream.getAudioTracks().forEach((track) => finalStream.addTrack(track))
-        systemAudioStream.getAudioTracks().forEach((track) => finalStream.addTrack(track))
-      } else if (systemAudioStream) {
-        finalStream.addTrack(systemAudioStream.getAudioTracks()[0])
+      if (source === 'both' && stream && systemAudioStream) {
+        // Both streams available
+        stream.getAudioTracks().forEach((track) => {
+          console.log('Adding microphone track to final stream')
+          finalStream.addTrack(track)
+        })
+        systemAudioStream.getAudioTracks().forEach((track) => {
+          console.log('Adding system audio track to final stream')
+          finalStream.addTrack(track)
+        })
+      } else if (systemAudioStream && source === 'system') {
+        // System audio only - use only system audio
+        const audioTracks = systemAudioStream.getAudioTracks()
+        if (audioTracks.length > 0) {
+          console.log('Using system audio track only')
+          finalStream.addTrack(audioTracks[0])
+        } else {
+          throw new Error('System audio stream has no audio tracks')
+        }
+      } else if (stream) {
+        // Microphone or fallback - use microphone
+        const audioTracks = stream.getAudioTracks()
+        if (audioTracks.length > 0) {
+          console.log('Using microphone track only')
+          finalStream.addTrack(audioTracks[0])
+        } else {
+          throw new Error('Microphone stream has no audio tracks')
+        }
       } else {
-        finalStream.addTrack(stream.getAudioTracks()[0])
+        throw new Error('No audio tracks available')
       }
 
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
       analyserRef.current = audioContextRef.current.createAnalyser()
-      const source = audioContextRef.current.createMediaStreamSource(finalStream)
-      source.connect(analyserRef.current)
+      const mediaStreamSource = audioContextRef.current.createMediaStreamSource(finalStream)
+      mediaStreamSource.connect(analyserRef.current)
 
       const mediaRecorder = new MediaRecorder(finalStream)
       mediaRecorderRef.current = mediaRecorder
+      recordingStreamRef.current = finalStream
 
       const chunks: Blob[] = []
       mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
       mediaRecorder.onstop = () => setAudioChunks(chunks)
 
+      // Monitor for stream ending (e.g., user stops screen sharing)
+      const handleTrackEnded = () => {
+        console.log('Track ended - user stopped sharing screen or closed permissions')
+        if (mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop()
+          setIsRecording(false)
+          
+          // Stop the timer
+          if (recordingTimerRef.current) {
+            window.clearInterval(recordingTimerRef.current)
+            recordingTimerRef.current = null
+          }
+          
+          // Notify user
+          toast({
+            title: locale === 'fr' ? 'Enregistrement arrêté' : 'Recording Stopped',
+            description: locale === 'fr'
+              ? 'Vous avez fermé le partage d\'écran. L\'enregistrement a été arrêté.'
+              : 'You closed screen sharing. Recording has been stopped.',
+            variant: 'destructive',
+          })
+        }
+      }
+
+      // Listen for track ended events on all tracks
+      finalStream.getTracks().forEach((track) => {
+        track.addEventListener('ended', handleTrackEnded)
+        // Store listeners for cleanup
+        trackEndListenersRef.current.set(track, handleTrackEnded)
+      })
+
       mediaRecorder.start()
       setIsRecording(true)
       setRecordedTime(0)
       setAudioChunks([])
+      setAudioSource(source) // Store selected source
       // capture start time
       const startIso = new Date().toISOString()
       setRecordingStartTime(startIso)
@@ -237,6 +388,34 @@ export default function RecordingPage() {
       }
     } catch (error) {
       console.error('Error accessing audio:', error)
+      setIsRecording(false)
+      
+      // Show user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('No audio source available')) {
+          toast({
+            title: locale === 'fr' ? 'Erreur' : 'Error',
+            description: locale === 'fr' 
+              ? 'Aucune source audio disponible. Vérifiez vos permissions.' 
+              : 'No audio source available. Check your permissions.',
+            variant: 'destructive',
+          })
+        } else if (error.message.includes('Permission denied')) {
+          toast({
+            title: locale === 'fr' ? 'Permission refusée' : 'Permission Denied',
+            description: locale === 'fr'
+              ? 'Vous devez autoriser l\'accès à l\'audio pour enregistrer.'
+              : 'You must allow audio access to record.',
+            variant: 'destructive',
+          })
+        } else {
+          toast({
+            title: locale === 'fr' ? 'Erreur d\'enregistrement' : 'Recording Error',
+            description: error.message,
+            variant: 'destructive',
+          })
+        }
+      }
     }
   }
 
@@ -276,7 +455,25 @@ export default function RecordingPage() {
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop()
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
+      
+      // Clean up stream and listeners
+      if (recordingStreamRef.current) {
+        recordingStreamRef.current.getTracks().forEach((track) => {
+          // Remove listener if it exists
+          const listener = trackEndListenersRef.current.get(track)
+          if (listener) {
+            track.removeEventListener('ended', listener)
+            trackEndListenersRef.current.delete(track)
+          }
+          // Stop the track
+          track.stop()
+        })
+        recordingStreamRef.current = null
+      }
+      
+      // Clear all listeners
+      trackEndListenersRef.current.clear()
+      
       setIsRecording(false)
       setIsPaused(false)
       isPausedRef.current = false
@@ -323,7 +520,25 @@ export default function RecordingPage() {
   const cancelRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop()
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop())
+      
+      // Clean up stream and listeners
+      if (recordingStreamRef.current) {
+        recordingStreamRef.current.getTracks().forEach((track) => {
+          // Remove listener if it exists
+          const listener = trackEndListenersRef.current.get(track)
+          if (listener) {
+            track.removeEventListener('ended', listener)
+            trackEndListenersRef.current.delete(track)
+          }
+          // Stop the track
+          track.stop()
+        })
+        recordingStreamRef.current = null
+      }
+      
+      // Clear all listeners
+      trackEndListenersRef.current.clear()
+      
       setIsRecording(false)
       setIsPaused(false)
       isPausedRef.current = false
@@ -375,67 +590,97 @@ export default function RecordingPage() {
     }
 
     setIsAnalyzing(true)
+    setAnalyzeProgress(0)
     try {
       let transcript = importedTranscript
       let result: { summary: string; tasks: string[]; keyPoints: string[] } | null = null
 
       if (audioChunks.length > 0) {
-        // Always prefer audio when available
+        // Upload audio via XHR so we can track progress
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
         const formData = new FormData()
         formData.append('file', audioBlob, `recording-${Date.now()}.webm`)
         formData.append('language', language)
 
-        const response = await fetch('/api/recording/transcribe-and-analyze', {
-          method: 'POST',
-          body: formData,
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('POST', '/api/recording/transcribe-and-analyze')
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 80)
+              setAnalyzeProgress(percent)
+            }
+          }
+
+          xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4) {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const data = JSON.parse(xhr.responseText)
+                  transcript = data.transcript || ''
+                  const rawTasks = Array.isArray(data.tasks)
+                    ? data.tasks
+                    : Array.isArray((data as any).actionItems)
+                      ? (data as any).actionItems
+                      : []
+                  const rawKeyPoints = Array.isArray(data.keyPoints) ? data.keyPoints : []
+                  const toText = (item: any) => {
+                    if (typeof item === 'string') return item
+                    if (!item) return ''
+                    return item.text || item.content || item.title || item.name || JSON.stringify(item)
+                  }
+                  const normalizedTasks = rawTasks.map(toText)
+                  const normalizedKeyPoints = rawKeyPoints.map(toText)
+                  result = {
+                    summary: data.summary || '',
+                    tasks: normalizedTasks,
+                    keyPoints: normalizedKeyPoints,
+                  }
+                  setImportedTranscript(transcript || '')
+                  setAnalyzeProgress(100)
+                  resolve()
+                } catch (err) {
+                  reject(err)
+                }
+              } else {
+                reject(new Error('Failed to transcribe and analyze audio'))
+              }
+            }
+          }
+
+          xhr.onerror = () => reject(new Error('Network error during transcription'))
+          xhr.send(formData)
         })
-
-        if (!response.ok) {
-          console.error('Error during OpenAI audio transcription/analysis')
-          throw new Error('Failed to transcribe and analyze audio')
-        }
-
-        const data = await response.json()
-        transcript = data.transcript || ''
-        const normalizedTasks =
-          Array.isArray(data.tasks)
-            ? data.tasks
-            : Array.isArray((data as any).actionItems)
-              ? (data as any).actionItems
-              : []
-        const normalizedKeyPoints = Array.isArray(data.keyPoints) ? data.keyPoints : []
-        result = {
-          summary: data.summary || '',
-          tasks: normalizedTasks,
-          keyPoints: normalizedKeyPoints,
-        }
-
-        setImportedTranscript(transcript || '')
       } else if (hasRealTranscript) {
-        // Direct analysis of existing text transcript
+        // Direct analysis of existing text transcript (no large upload progress available)
+        setAnalyzeProgress(30)
         const response = await fetch('/api/ai/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            transcript,
-            language,
-          }),
+          body: JSON.stringify({ transcript, language }),
         })
 
         const data = await response.json()
-        const normalizedTasks =
-          Array.isArray(data.tasks)
-            ? data.tasks
-            : Array.isArray((data as any).actionItems)
-              ? (data as any).actionItems
-              : []
-        const normalizedKeyPoints = Array.isArray(data.keyPoints) ? data.keyPoints : []
+        const rawTasks = Array.isArray(data.tasks)
+          ? data.tasks
+          : Array.isArray((data as any).actionItems)
+            ? (data as any).actionItems
+            : []
+        const rawKeyPoints = Array.isArray(data.keyPoints) ? data.keyPoints : []
+        const toText = (item: any) => {
+          if (typeof item === 'string') return item
+          if (!item) return ''
+          return item.text || item.content || item.title || item.name || JSON.stringify(item)
+        }
+        const normalizedTasks = rawTasks.map(toText)
+        const normalizedKeyPoints = rawKeyPoints.map(toText)
         result = {
           summary: data.summary || '',
           tasks: normalizedTasks,
           keyPoints: normalizedKeyPoints,
         }
+        setAnalyzeProgress(100)
       }
 
       if (!transcript || !result) {
@@ -472,7 +717,10 @@ export default function RecordingPage() {
     } catch (error) {
       console.error('Error analyzing recording:', error)
     } finally {
-      setIsAnalyzing(false)
+      setTimeout(() => {
+        setIsAnalyzing(false)
+        setAnalyzeProgress(0)
+      }, 800)
     }
   }
 
@@ -555,10 +803,16 @@ export default function RecordingPage() {
     if (!summary) return
 
     // Populate editor state and open modal for user edits before export
-    const meetingTitle = exportTitle || `Recording ${new Date().toLocaleDateString()}`
+    const meetingTitle = exportTitle || importedAudioFileName || importedPdfFileName || `Recording ${new Date().toLocaleDateString()}`
     setEditSummary(summary.summary || '')
     setEditKeyPoints(summary.keyPoints ? [...summary.keyPoints] : [])
-    setEditActionItems((summary.tasks || []).map((t) => t))
+    // Ensure action items are strings for the editor
+    const toText = (item: any) => {
+      if (typeof item === 'string') return item
+      if (!item) return ''
+      return item.text || item.content || item.title || item.name || JSON.stringify(item)
+    }
+    setEditActionItems((summary.tasks || []).map((t) => toText(t)))
     setEditTranscript(importedTranscript && importedTranscript.trim().length > 0 ? importedTranscript : (summary.summary || ''))
     setShowPdfEditor(true)
   }
@@ -569,19 +823,31 @@ export default function RecordingPage() {
     setIsGeneratingPdf(true)
     try {
       const meetingTitle = exportTitle || `Recording ${new Date().toLocaleDateString()}`
+      const toText = (item: any) => {
+        if (typeof item === 'string') return item
+        if (!item) return ''
+        return item.text || item.content || item.title || item.name || JSON.stringify(item)
+      }
+
       const metadata = {
         date: recordingStartTime || new Date().toLocaleDateString(),
         summary: editSummary,
         speakers: undefined,
-        keyPoints: (editKeyPoints || []).slice(0, 25),
-        actionItems: (editActionItems || []).slice(0, 25),
+        keyPoints: (editKeyPoints || []).slice(0, 25).map(toText),
+        actionItems: (editActionItems || []).slice(0, 25).map(toText),
       }
+
+      // Skip transcript section only if:
+      // - PDF imported AND no audio was recorded, OR
+      // - Audio imported AND recording time is 0 (pure audio import, not a recording)
+      const skipTranscript: boolean = (importedPdfFileName !== null && audioChunks.length === 0) || (importedAudioFileName !== null && recordedTime === 0)
 
       await exportTranscriptToPdf(
         editTranscript || '',
         meetingTitle,
         metadata,
-        (language as any) || 'fr'
+        (language as any) || 'fr',
+        skipTranscript
       )
     } catch (error) {
       console.error('Error exporting edited PDF:', error)
@@ -643,6 +909,8 @@ export default function RecordingPage() {
       setSummary(null)
       setTasks([])
       setImportedTranscript('')
+      setImportedPdfFileName(null)
+      setImportedAudioFileName(null)
       setMessages([
         {
           id: '1',
@@ -683,7 +951,12 @@ export default function RecordingPage() {
     // Populate editor and open modal for user edits before saving
     setEditSummary(summary.summary || '')
     setEditKeyPoints(summary.keyPoints ? [...summary.keyPoints] : [])
-    setEditActionItems((summary.tasks || []).map((t) => t))
+    const toText = (item: any) => {
+      if (typeof item === 'string') return item
+      if (!item) return ''
+      return item.text || item.content || item.title || item.name || JSON.stringify(item)
+    }
+    setEditActionItems((summary.tasks || []).map((t) => toText(t)))
     setEditTranscript(importedTranscript && importedTranscript.trim().length > 0 ? importedTranscript : (summary.summary || ''))
     setEditorMode('save')
     setShowPdfEditor(true)
@@ -889,10 +1162,37 @@ export default function RecordingPage() {
 
   // Import audio file
   const handleAudioImport = async (file: File) => {
+    console.log('handleAudioImport called with:', file.name)
     try {
+      // If file is already a common audio type (webm, mp3, m4a, wav), skip client-side decoding
+      if (file.type && file.type.startsWith('audio/')) {
+        console.log('Recognized as audio type, setting audioChunks and fileName')
+        setIsImportingAudio(true)
+        setAudioImportProgress(30)
+        // Use the raw file directly for server-side transcription
+        setAudioChunks([file])
+        setImportedAudioFileName(file.name)
+        setSummary(null)
+        setTasks([])
+        setImportedTranscript('')
+        setAudioImportProgress(100)
+        setTimeout(() => {
+          setIsImportingAudio(false)
+          setAudioImportProgress(0)
+          // Analysis will be auto-triggered by useEffect when audioChunks is updated
+          console.log('Audio import complete, waiting for useEffect to trigger analysis')
+        }, 1000)
+        return
+      }
+
+      // Fallback: attempt to decode/convert (for non-audio blobs)
+      setIsImportingAudio(true)
+      setAudioImportProgress(10)
       const arrayBuffer = await file.arrayBuffer()
+      setAudioImportProgress(40)
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      setAudioImportProgress(60)
 
       // Convert to WAV format for processing
       const offlineContext = new OfflineAudioContext(
@@ -908,14 +1208,47 @@ export default function RecordingPage() {
       const renderedBuffer = await offlineContext.startRendering()
       const wavBlob = audioBufferToWav(renderedBuffer)
       setAudioChunks([wavBlob])
+      setImportedAudioFileName(file.name)
       // Reset previous analysis when a new audio file is imported
       setSummary(null)
       setTasks([])
 
       // Clear any previous transcript to force fresh transcription
       setImportedTranscript('')
+      setAudioImportProgress(100)
+      setTimeout(() => {
+        setIsImportingAudio(false)
+        setAudioImportProgress(0)
+        // Analysis will be auto-triggered by useEffect when audioChunks is updated
+      }, 1000)
     } catch (error) {
-      console.error('Error importing audio:', error)
+      console.error('Error importing audio (conversion failed), falling back to raw file:', error)
+      // Fallback: use the original file as the audio chunk and let downstream handle decoding
+      try {
+        setAudioChunks([file])
+        setImportedAudioFileName(file.name)
+        setSummary(null)
+        setTasks([])
+        setImportedTranscript('')
+        toast({
+          title: locale === 'fr' ? 'Import partiel' : 'Partial import',
+          description:
+            locale === 'fr'
+              ? "Le fichier audio a été importé mais la conversion a échoué ; il sera traité tel quel."
+              : 'Audio imported but conversion failed; it will be processed as-is.',
+        })
+      } catch (err2) {
+        console.error('Fallback import also failed:', err2)
+        toast({
+          title: locale === 'fr' ? 'Erreur' : 'Error',
+          description: locale === 'fr' ? "Impossible d'importer le fichier audio." : 'Could not import audio file.',
+          variant: 'destructive',
+        })
+      } finally {
+        setIsImportingAudio(false)
+        setAudioImportProgress(0)
+        // Analysis will be auto-triggered by useEffect when audioChunks is updated
+      }
     }
   }
 
@@ -948,13 +1281,16 @@ export default function RecordingPage() {
               try {
                 const data = JSON.parse(xhr.responseText)
                 setImportedTranscript(data.text || `PDF file imported: ${file.name}`)
+                setImportedPdfFileName(file.name)
               } catch (err) {
                 setImportedTranscript(`PDF file imported: ${file.name}. Send it to AI for analysis.`)
+                setImportedPdfFileName(file.name)
               }
               setImportProgress(100)
               resolve()
             } else {
               setImportedTranscript(`PDF file imported: ${file.name}. Send it to AI for analysis.`)
+              setImportedPdfFileName(file.name)
               setImportProgress(100)
               resolve()
             }
@@ -970,6 +1306,7 @@ export default function RecordingPage() {
     } catch (error) {
       console.error('Error importing PDF:', error)
       setImportedTranscript(`PDF file imported: ${file.name}. Ready for analysis.`)
+      setImportedPdfFileName(file.name)
     } finally {
       // keep progress visible very briefly then hide
       setTimeout(() => {
@@ -1043,10 +1380,20 @@ export default function RecordingPage() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (file.type.startsWith('audio/')) {
+    console.log('handleFileImport - File:', file.name, 'Type:', file.type)
+
+    // Check by MIME type or file extension
+    const isAudio = file.type.startsWith('audio/') || file.name.toLowerCase().endsWith('.webm') || file.name.toLowerCase().endsWith('.mp3') || file.name.toLowerCase().endsWith('.wav') || file.name.toLowerCase().endsWith('.m4a')
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+
+    if (isAudio) {
+      console.log('Detected as audio, calling handleAudioImport')
       handleAudioImport(file)
-    } else if (file.type === 'application/pdf') {
+    } else if (isPdf) {
+      console.log('Detected as PDF, calling handlePdfImport')
       handlePdfImport(file)
+    } else {
+      console.log('File type not recognized:', file.type, file.name)
     }
 
     // Reset input
@@ -1280,6 +1627,45 @@ export default function RecordingPage() {
                 />
               </div>
 
+              {/* Import/Analysis Progress Bars */}
+              {(isImportingPdf || isImportingAudio || isAnalyzing || analyzeProgress > 0) && (
+                <div className="space-y-4 bg-gradient-to-br from-violet-950/20 to-purple-950/20 border border-violet-700/20 rounded-lg p-4">
+                  {isImportingPdf && (
+                    <div>
+                      <p className="text-sm text-gray-300 mb-2 font-medium">Importation PDF… {importProgress}%</p>
+                      <div className="h-2 bg-white/10 rounded overflow-hidden">
+                        <div
+                          className="h-2 bg-emerald-500 rounded"
+                          style={{ width: `${importProgress}%`, transition: 'width 200ms' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {isImportingAudio && (
+                    <div>
+                      <p className="text-sm text-gray-300 mb-2 font-medium">Importation audio… {audioImportProgress}%</p>
+                      <div className="h-2 bg-white/10 rounded overflow-hidden">
+                        <div
+                          className="h-2 bg-sky-500 rounded"
+                          style={{ width: `${audioImportProgress}%`, transition: 'width 200ms' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {(isAnalyzing || analyzeProgress > 0) && (
+                    <div>
+                      <p className="text-sm text-gray-300 mb-2 font-medium">Analyse… {analyzeProgress}%</p>
+                      <div className="h-2 bg-white/10 rounded overflow-hidden">
+                        <div
+                          className="h-2 bg-indigo-500 rounded"
+                          style={{ width: `${analyzeProgress}%`, transition: 'width 200ms' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Timer */}
               <div className="text-center">
                 <div className="inline-block bg-gradient-to-r from-violet-800/20 to-purple-800/20 border border-violet-700/25 rounded-xl px-8 py-4 backdrop-blur-md">
@@ -1301,7 +1687,7 @@ export default function RecordingPage() {
               <div className="flex gap-4 justify-center flex-wrap">
                 {!isRecording ? (
                   <button
-                    onClick={startRecording}
+                    onClick={promptAudioSource}
                     className="record-button group relative w-20 h-20 rounded-full bg-gradient-to-br from-violet-700 via-violet-600 to-purple-700 hover:from-violet-600 hover:to-purple-600 transition-all duration-300 flex items-center justify-center cursor-pointer shadow-lg"
                   >
                     <Mic className="h-8 w-8 text-white" />
@@ -1397,19 +1783,6 @@ export default function RecordingPage() {
                   </label>
                 )}
 
-                {/* PDF import progress */}
-                {isImportingPdf && (
-                  <div className="w-full px-6">
-                    <div className="h-2 bg-white/10 rounded overflow-hidden mb-2">
-                      <div
-                        className="h-2 bg-emerald-500 rounded"
-                        style={{ width: `${importProgress}%`, transition: 'width 200ms' }}
-                      />
-                    </div>
-                    <p className="text-sm text-gray-300 px-1">Importation PDF… {importProgress}%</p>
-                  </div>
-                )}
-
                 {!isRecording && (audioChunks.length > 0 || importedTranscript) && (
                   <label className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
                     <Upload className="h-5 w-5" />
@@ -1490,7 +1863,7 @@ export default function RecordingPage() {
                 <div className="space-y-6">
                   <div className="p-4 rounded-lg bg-white/5 border border-violet-500/20">
                     <p className="text-violet-300 font-semibold mb-2">Résumé Exécutif</p>
-                    <p className="text-gray-200 leading-relaxed">{summary.summary}</p>
+                    <p className="text-gray-200 leading-relaxed">{renderAsText(summary.summary)}</p>
                   </div>
 
                   {summary.keyPoints && summary.keyPoints.length > 0 && (
@@ -1500,7 +1873,7 @@ export default function RecordingPage() {
                         {summary.keyPoints.map((point, idx) => (
                           <li key={idx} className="flex items-start gap-2">
                             <CheckCircle className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
-                            <span>{point}</span>
+                            <span>{renderAsText(point)}</span>
                           </li>
                         ))}
                       </ul>
@@ -1548,7 +1921,7 @@ export default function RecordingPage() {
                         type="checkbox"
                         className="mt-1 w-5 h-5 rounded accent-violet-600 cursor-pointer"
                       />
-                      <span className="text-gray-200 flex-1">{task}</span>
+                      <span className="text-gray-200 flex-1">{renderAsText(task)}</span>
                     </div>
                   ))}
                 </div>
@@ -1568,13 +1941,13 @@ export default function RecordingPage() {
                     Points clés détectés
                   </h3>
                   <ul className="space-y-3">
-                    {summary.keyPoints.map((point, idx) => (
+                        {summary.keyPoints.map((point, idx) => (
                       <li
                         key={idx}
                         className="p-4 rounded-lg bg-white/5 border border-violet-500/20 hover:border-violet-500/50 transition-all duration-300 flex items-start gap-3"
                       >
                         <span className="mt-1 w-2 h-2 rounded-full bg-violet-400 flex-shrink-0" />
-                        <span className="text-gray-200 flex-1">{point}</span>
+                        <span className="text-gray-200 flex-1">{renderAsText(point)}</span>
                       </li>
                     ))}
                   </ul>
@@ -1598,12 +1971,12 @@ export default function RecordingPage() {
                   ) : summary ? (
                     <div className="space-y-3">
                       {summary.summary && (
-                        <p className="text-gray-300 leading-relaxed">{summary.summary}</p>
+                        <p className="text-gray-300 leading-relaxed">{renderAsText(summary.summary)}</p>
                       )}
                       {Array.isArray(summary.keyPoints) && summary.keyPoints.length > 0 && (
                         <ul className="list-disc list-inside text-gray-300 text-sm space-y-1">
                           {summary.keyPoints.map((point, idx) => (
-                            <li key={idx}>{point}</li>
+                            <li key={idx}>{renderAsText(point)}</li>
                           ))}
                         </ul>
                       )}
@@ -1920,6 +2293,95 @@ export default function RecordingPage() {
                 </>
               )}
             </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Audio Source Selection Modal */}
+      <Dialog open={showAudioSourceModal} onOpenChange={setShowAudioSourceModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {locale === 'fr' ? 'Sélectionner la source audio' : 'Select Audio Source'}
+            </DialogTitle>
+            <DialogDescription>
+              {locale === 'fr'
+                ? 'Choisissez d\'où vous souhaitez capturer l\'audio pour l\'enregistrement.'
+                : 'Choose where you want to capture audio from for the recording.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-6">
+            {/* Microphone Option */}
+            <button
+              onClick={() => confirmAudioSource('microphone')}
+              className="w-full p-4 rounded-lg border-2 border-violet-500/30 hover:border-violet-500/60 bg-white/5 hover:bg-white/10 transition-all duration-300 text-left flex items-center gap-3"
+            >
+              <Mic className="h-6 w-6 text-violet-400" />
+              <div>
+                <p className="font-semibold text-white">
+                  {locale === 'fr' ? 'Microphone' : 'Microphone'}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {locale === 'fr'
+                    ? 'Capturer l\'audio de votre microphone'
+                    : 'Capture audio from your microphone'}
+                </p>
+              </div>
+            </button>
+
+            {/* System Audio Option */}
+            <button
+              onClick={() => confirmAudioSource('system')}
+              className="w-full p-4 rounded-lg border-2 border-amber-500/30 hover:border-amber-500/60 bg-white/5 hover:bg-white/10 transition-all duration-300 text-left flex items-center gap-3"
+            >
+              <Volume2 className="h-6 w-6 text-amber-400" />
+              <div>
+                <p className="font-semibold text-white">
+                  {locale === 'fr' ? 'Audio du système' : 'System Audio'}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {locale === 'fr'
+                    ? 'Capturer l\'audio d\'une autre application (ex: vidéo YouTube)'
+                    : 'Capture audio from another app (e.g., YouTube video)'}
+                </p>
+              </div>
+            </button>
+
+            {/* Both Option */}
+            <button
+              onClick={() => confirmAudioSource('both')}
+              className="w-full p-4 rounded-lg border-2 border-emerald-500/30 hover:border-emerald-500/60 bg-white/5 hover:bg-white/10 transition-all duration-300 text-left flex items-center gap-3"
+            >
+              <Layers className="h-6 w-6 text-emerald-400" />
+              <div>
+                <p className="font-semibold text-white">
+                  {locale === 'fr' ? 'Les deux' : 'Both'}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {locale === 'fr'
+                    ? 'Capturer microphone + audio système'
+                    : 'Capture microphone + system audio'}
+                </p>
+              </div>
+            </button>
+
+            {/* Help Text */}
+            <div className="mt-6 p-3 rounded-lg bg-amber-900/20 border border-amber-700/30">
+              <p className="text-xs text-amber-200">
+                {locale === 'fr'
+                  ? '💡 L\'audio du système nécessite que vous sélectionniez l\'écran ou l\'application à enregistrer quand le navigateur le demande.'
+                  : '💡 System audio requires you to select the screen or application when the browser asks.'}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <button className="w-full px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white font-medium">
+                {locale === 'fr' ? 'Annuler' : 'Cancel'}
+              </button>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
