@@ -2,6 +2,7 @@
 
 
 import React, { useState, useRef, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { exportTranscriptToPdf } from '@/lib/transcript-export'
 import {
   Dialog,
@@ -60,6 +61,7 @@ interface EmailRecipient {
 export default function RecordingPage() {
   const params = useParams()
   const locale = (params?.locale as string) || 'fr'
+  const t = useTranslations('Recording')
 
   // Recording states
   const [activeTab, setActiveTab] = useState<TabType>('recording')
@@ -89,8 +91,7 @@ export default function RecordingPage() {
     {
       id: '1',
       role: 'assistant',
-      content:
-        'Bonjour! Je suis votre assistant IA. Posez-moi des questions sur la réunion qui vient de se terminer.',
+      content: t('chat_initial_message'),
     },
   ])
   const [inputMessage, setInputMessage] = useState('')
@@ -213,13 +214,13 @@ export default function RecordingPage() {
     
     // Show feedback toast
     const sourceLabels: Record<AudioSource, string> = {
-      microphone: locale === 'fr' ? 'Microphone' : 'Microphone',
-      system: locale === 'fr' ? 'Audio du système' : 'System Audio',
-      both: locale === 'fr' ? 'Microphone + Audio système' : 'Microphone + System Audio',
+      microphone: t('source_microphone'),
+      system: t('source_system_audio'),
+      both: t('source_both'),
     }
     
     toast({
-      title: locale === 'fr' ? 'Source audio sélectionnée' : 'Audio Source Selected',
+      title: t('audio_selected'),
       description: sourceLabels[selectedSource],
     })
     
@@ -285,16 +286,45 @@ export default function RecordingPage() {
       }
 
       // Merge streams if both are available
-      const finalStream = new MediaStream()
+      let finalStream = new MediaStream()
+      
       if (source === 'both' && stream && systemAudioStream) {
-        // Both streams available
-        stream.getAudioTracks().forEach((track) => {
-          console.log('Adding microphone track to final stream')
-          finalStream.addTrack(track)
-        })
-        systemAudioStream.getAudioTracks().forEach((track) => {
-          console.log('Adding system audio track to final stream')
-          finalStream.addTrack(track)
+        // Both streams available - need to mix them properly with Web Audio API
+        const micTracks = stream.getAudioTracks()
+        const sysTracks = systemAudioStream.getAudioTracks()
+        
+        console.log(`Mixing: ${micTracks.length} microphone tracks + ${sysTracks.length} system audio tracks`)
+        
+        if (micTracks.length > 0 && sysTracks.length > 0) {
+          // Create audio context for mixing
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+          const destination = audioContext.createMediaStreamDestination()
+          
+          // Create source from microphone
+          const micSource = audioContext.createMediaStreamSource(stream)
+          micSource.connect(destination)
+          console.log('Connected microphone to mixer')
+          
+          // Create source from system audio
+          const sysSource = audioContext.createMediaStreamSource(systemAudioStream)
+          sysSource.connect(destination)
+          console.log('Connected system audio to mixer')
+          
+          // The mixed stream is in destination.stream
+          finalStream = destination.stream
+          
+          // Store the audio context for cleanup later
+          audioContextRef.current = audioContext
+          analyserRef.current = audioContext.createAnalyser()
+          micSource.connect(analyserRef.current)
+        } else {
+          throw new Error('Missing audio tracks for mixing')
+        }
+        
+        // Stop the video track from displayMedia (we only need audio)
+        systemAudioStream.getVideoTracks().forEach((track) => {
+          console.log('Stopping video track from screen share')
+          track.stop()
         })
       } else if (systemAudioStream && source === 'system') {
         // System audio only - use only system audio
@@ -305,6 +335,12 @@ export default function RecordingPage() {
         } else {
           throw new Error('System audio stream has no audio tracks')
         }
+        
+        // Stop the video track from displayMedia (we only need audio)
+        systemAudioStream.getVideoTracks().forEach((track) => {
+          console.log('Stopping video track from screen share')
+          track.stop()
+        })
       } else if (stream) {
         // Microphone or fallback - use microphone
         const audioTracks = stream.getAudioTracks()
@@ -318,10 +354,13 @@ export default function RecordingPage() {
         throw new Error('No audio tracks available')
       }
 
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
-      analyserRef.current = audioContextRef.current.createAnalyser()
-      const mediaStreamSource = audioContextRef.current.createMediaStreamSource(finalStream)
-      mediaStreamSource.connect(analyserRef.current)
+      // Only create new audio context if not already created (for 'both' mode, we created it above)
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+        analyserRef.current = audioContextRef.current.createAnalyser()
+        const mediaStreamSource = audioContextRef.current.createMediaStreamSource(finalStream)
+        mediaStreamSource.connect(analyserRef.current)
+      }
 
       const mediaRecorder = new MediaRecorder(finalStream)
       mediaRecorderRef.current = mediaRecorder
@@ -346,10 +385,8 @@ export default function RecordingPage() {
           
           // Notify user
           toast({
-            title: locale === 'fr' ? 'Enregistrement arrêté' : 'Recording Stopped',
-            description: locale === 'fr'
-              ? 'Vous avez fermé le partage d\'écran. L\'enregistrement a été arrêté.'
-              : 'You closed screen sharing. Recording has been stopped.',
+            title: t('recording_stopped'),
+            description: t('screen_sharing_closed'),
             variant: 'destructive',
           })
         }
@@ -394,23 +431,19 @@ export default function RecordingPage() {
       if (error instanceof Error) {
         if (error.message.includes('No audio source available')) {
           toast({
-            title: locale === 'fr' ? 'Erreur' : 'Error',
-            description: locale === 'fr' 
-              ? 'Aucune source audio disponible. Vérifiez vos permissions.' 
-              : 'No audio source available. Check your permissions.',
+            title: t('error'),
+            description: t('no_audio_source'),
             variant: 'destructive',
           })
         } else if (error.message.includes('Permission denied')) {
           toast({
-            title: locale === 'fr' ? 'Permission refusée' : 'Permission Denied',
-            description: locale === 'fr'
-              ? 'Vous devez autoriser l\'accès à l\'audio pour enregistrer.'
-              : 'You must allow audio access to record.',
+            title: t('permission_denied'),
+            description: t('allow_audio_access'),
             variant: 'destructive',
           })
         } else {
           toast({
-            title: locale === 'fr' ? 'Erreur d\'enregistrement' : 'Recording Error',
+            title: t('recording_error'),
             description: error.message,
             variant: 'destructive',
           })
@@ -555,8 +588,8 @@ export default function RecordingPage() {
         recordingTimerRef.current = null
       }
       toast({
-        title: locale === 'fr' ? 'Annulé' : 'Cancelled',
-        description: locale === 'fr' ? 'Enregistrement annulé.' : 'Recording cancelled.',
+        title: t('cancelled'),
+        description: t('recording_cancelled'),
       })
     }
   }
@@ -1121,7 +1154,7 @@ export default function RecordingPage() {
   const addEmailRecipient = (email: string) => {
     if (!email.trim() || !email.includes('@')) {
       toast({
-        title: locale === 'fr' ? 'Email invalide' : 'Invalid email',
+        title: t('invalid_email'),
         description: locale === 'fr' ? 'Veuillez fournir une adresse email valide.' : 'Please provide a valid email address.',
         variant: 'destructive',
       })
@@ -1150,8 +1183,8 @@ export default function RecordingPage() {
   const addSubaccountEmail = (subaccount: Subaccount) => {
     if (emailRecipients.some(r => r.email === subaccount.email)) {
       toast({
-        title: locale === 'fr' ? 'Doublon' : 'Duplicate',
-        description: locale === 'fr' ? 'Email déjà ajouté' : 'Email already added',
+        title: t('duplicate'),
+        description: t('email_already_added'),
         variant: 'destructive',
       })
       return
@@ -1231,17 +1264,14 @@ export default function RecordingPage() {
         setTasks([])
         setImportedTranscript('')
         toast({
-          title: locale === 'fr' ? 'Import partiel' : 'Partial import',
-          description:
-            locale === 'fr'
-              ? "Le fichier audio a été importé mais la conversion a échoué ; il sera traité tel quel."
-              : 'Audio imported but conversion failed; it will be processed as-is.',
+          title: t('partial_import'),
+          description: t('audio_imported_conversion_failed'),
         })
       } catch (err2) {
         console.error('Fallback import also failed:', err2)
         toast({
-          title: locale === 'fr' ? 'Erreur' : 'Error',
-          description: locale === 'fr' ? "Impossible d'importer le fichier audio." : 'Could not import audio file.',
+          title: t('error'),
+          description: t('could_not_import_audio'),
           variant: 'destructive',
         })
       } finally {
@@ -1481,9 +1511,9 @@ export default function RecordingPage() {
         {/* Title and Settings */}
         <div className="text-center mb-8 pt-6 relative">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent mb-2">
-            Recording Studio
+            {t('studio_title')}
           </h1>
-          <p className="text-gray-500">Enregistrez, analysez et partagez vos audios</p>
+          <p className="text-gray-500">{t('studio_subtitle')}</p>
 
           {/* Settings Button */}
           <button
@@ -1496,16 +1526,16 @@ export default function RecordingPage() {
           {/* Audio Settings Panel */}
           {showAudioSettings && (
             <div className="absolute top-12 right-0 bg-gradient-to-br from-violet-950/95 to-purple-950/95 z-[100] border border-violet-700/30 rounded-xl p-6 w-80 backdrop-blur-md shadow-lg">
-              <h3 className="font-bold text-lg mb-4 text-violet-200">Paramètres</h3>
+              <h3 className="font-bold text-lg mb-4 text-violet-200">{t('settings_title')}</h3>
 
               {/* Audio Source Selection */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-400 mb-2">Source Audio</label>
+                <label className="block text-sm font-semibold text-gray-400 mb-2">{t('audio_source_label')}</label>
                 <div className="space-y-2">
                   {[
-                    { value: 'microphone', label: '🎤 Microphone' },
-                    { value: 'system', label: '🔊 Audio Système' },
-                    { value: 'both', label: '🎧 Microphone + Système' },
+                    { value: 'microphone', label: t('mic_label') },
+                    { value: 'system', label: t('system_audio_label') },
+                    { value: 'both', label: t('both_label') },
                   ].map((option) => (
                     <label
                       key={option.value}
@@ -1528,7 +1558,7 @@ export default function RecordingPage() {
 
               {/* Language Selection */}
               <div>
-                <label className="block text-sm font-semibold text-gray-400 mb-2">Langue</label>
+                <label className="block text-sm font-semibold text-gray-400 mb-2">{t('language_label')}</label>
                 <select
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
@@ -1552,40 +1582,40 @@ export default function RecordingPage() {
         {/* Tabs */}
         <div className="flex gap-2 mb-8 border-b border-violet-700/20 overflow-x-auto pb-4">
           {[
-            { id: 'recording' as TabType, label: 'Enregistrement', icon: Mic },
+            { id: 'recording' as TabType, label: t('tabs.recording'), icon: Mic },
             {
               id: 'chat' as TabType,
-              label: 'Assistant IA',
+              label: t('tabs.chat'),
               icon: Brain,
               disabled: audioChunks.length === 0 && !importedTranscript,
             },
             {
               id: 'summary' as TabType,
-              label: 'Résumé',
+              label: t('tabs.summary'),
               icon: FileText,
               disabled: !summary,
             },
             {
               id: 'tasks' as TabType,
-              label: 'Tâches',
+              label: t('tabs.tasks'),
               icon: ListChecks,
               disabled: effectiveTasks.length === 0,
             },
             {
               id: 'topics' as TabType,
-              label: 'Points clés',
+              label: t('tabs.topics'),
               icon: ListChecks,
               disabled: !summary,
             },
             {
               id: 'transcript' as TabType,
-              label: 'Transcription',
+              label: t('tabs.transcript'),
               icon: Brain,
               disabled: !summary,
             },
             {
               id: 'export' as TabType,
-              label: 'Exporter',
+              label: t('tabs.export'),
               icon: UploadIcon,
               disabled: !summary,
             },
@@ -1669,7 +1699,7 @@ export default function RecordingPage() {
               {/* Timer */}
               <div className="text-center">
                 <div className="inline-block bg-gradient-to-r from-violet-800/20 to-purple-800/20 border border-violet-700/25 rounded-xl px-8 py-4 backdrop-blur-md">
-                  <p className="text-gray-500 text-sm mb-1">Temps d'enregistrement</p>
+                  <p className="text-gray-500 text-sm mb-1">{t('timer')}</p>
                   <p className="text-4xl font-bold font-mono text-violet-200">{formatTime(recordedTime)}</p>
                 </div>
               </div>
@@ -1678,7 +1708,7 @@ export default function RecordingPage() {
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
-                    <span className="text-red-500 font-semibold">En cours d'enregistrement...</span>
+                    <span className="text-red-500 font-semibold">{t('recording_indicator')}</span>
                   </div>
                 </div>
               )}
@@ -1697,7 +1727,7 @@ export default function RecordingPage() {
                     <button
                       onClick={stopRecording}
                       className="record-button active w-20 h-20 rounded-full bg-gradient-to-br from-red-600 to-red-700 animate-pulse flex items-center justify-center cursor-pointer shadow-lg"
-                      title={locale === 'fr' ? 'Arrêter' : 'Stop'}
+                      title={t('stop_button')}
                     >
                       <Square className="h-8 w-8 text-white" fill="white" />
                     </button>
@@ -1706,7 +1736,7 @@ export default function RecordingPage() {
                       <button
                         onClick={pauseRecording}
                         className="px-4 py-3 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white flex items-center gap-2 shadow-md"
-                        title={locale === 'fr' ? 'Pause' : 'Pause'}
+                        title={t('pause_button')}
                       >
                         <Pause className="h-5 w-5" />
                       </button>
@@ -1714,7 +1744,7 @@ export default function RecordingPage() {
                       <button
                         onClick={resumeRecording}
                         className="px-4 py-3 rounded-full bg-green-600 hover:bg-green-500 text-white flex items-center gap-2 shadow-md"
-                        title={locale === 'fr' ? 'Reprendre' : 'Resume'}
+                        title={t('resume_button')}
                       >
                         <Play className="h-5 w-5" />
                       </button>
@@ -1723,7 +1753,7 @@ export default function RecordingPage() {
                     <button
                       onClick={cancelRecording}
                       className="px-4 py-3 rounded-full bg-gray-600 hover:bg-gray-500 text-white flex items-center gap-2 shadow-md"
-                      title={locale === 'fr' ? 'Annuler' : 'Cancel'}
+                      title={t('cancel_button')}
                     >
                       <RotateCcw className="h-5 w-5" />
                     </button>
@@ -1737,7 +1767,7 @@ export default function RecordingPage() {
                       className="px-6 py-3 rounded-full bg-gradient-to-r from-green-700 to-emerald-700 hover:from-green-600 hover:to-emerald-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg"
                     >
                       <Download className="h-5 w-5" />
-                      Télécharger Audio
+                      {t('download_audio')}
                     </button>
 
                     <button
@@ -1745,7 +1775,7 @@ export default function RecordingPage() {
                       className="px-6 py-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg"
                     >
                       <RotateCcw className="h-5 w-5" />
-                      Réinitialiser
+                      {t('reset_button')}
                     </button>
                   </>
                 )}
@@ -1759,12 +1789,12 @@ export default function RecordingPage() {
                     {isAnalyzing ? (
                       <>
                         <Loader className="h-5 w-5 animate-spin" />
-                        Analyse...
+                        {t('analyzing')}
                       </>
                     ) : (
                       <>
                         <Brain className="h-5 w-5" />
-                        Analyser
+                        {t('analyze_button')}
                       </>
                     )}
                   </button>
@@ -1773,7 +1803,7 @@ export default function RecordingPage() {
                 {!isRecording && audioChunks.length === 0 && !importedTranscript && (
                   <label className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
                     <Upload className="h-5 w-5" />
-                    Importer Audio/PDF
+                    {t('import_audio_pdf')}
                     <input
                       type="file"
                       accept="audio/*,.pdf"
@@ -1786,7 +1816,7 @@ export default function RecordingPage() {
                 {!isRecording && (audioChunks.length > 0 || importedTranscript) && (
                   <label className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
                     <Upload className="h-5 w-5" />
-                    Importer Fichier
+                    {t('import_file')}
                     <input
                       type="file"
                       accept="audio/*,.pdf"
@@ -1983,8 +2013,7 @@ export default function RecordingPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      Aucune transcription n'est disponible pour le moment. Lance une analyse ou importe un
-                      transcript pour la voir ici.
+                      {t('no_transcript')}
                     </p>
                   )}
                 </div>
@@ -1998,20 +2027,20 @@ export default function RecordingPage() {
               <div className="rounded-2xl bg-gradient-to-br from-violet-900/20 to-purple-900/20 border border-violet-500/30 p-8">
                 <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
                   <UploadIcon className="h-6 w-6 text-violet-400" />
-                  {locale === 'fr' ? 'Exporter l\'enregistrement' : 'Export Recording'}
+                  {t('export_recording')}
                 </h3>
 
                 <div className="space-y-6">
                   {/* Title Input */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-300 mb-2">
-                      {locale === 'fr' ? 'Titre de la réunion*' : 'Meeting Title*'}
+                      {t('meeting_title_required')}
                     </label>
                     <input
                       type="text"
                       value={exportTitle}
                       onChange={(e) => setExportTitle(e.target.value)}
-                      placeholder={locale === 'fr' ? 'Entrez le titre...' : 'Enter title...'}
+                      placeholder={t('enter_title')}
                       className="w-full px-4 py-3 rounded-lg bg-white/5 border border-violet-700/30 text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                     />
                   </div>
@@ -2021,7 +2050,7 @@ export default function RecordingPage() {
                   {/* Email Recipients */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-300 mb-3">
-                      {locale === 'fr' ? 'Destinataires du résumé' : 'Summary Recipients'}
+                      {t('summary_recipients')}
                     </label>
 
                     {/* Add email input */}
@@ -2035,14 +2064,14 @@ export default function RecordingPage() {
                             addEmailRecipient(newEmailInput)
                           }
                         }}
-                        placeholder={locale === 'fr' ? 'Ajouter un email...' : 'Add an email...'}
+                        placeholder={t('add_email')}
                         className="flex-1 px-4 py-2 rounded-lg bg-white/5 border border-violet-700/30 text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                       />
                       <button
                         onClick={() => addEmailRecipient(newEmailInput)}
                         className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-medium transition-colors"
                       >
-                        {locale === 'fr' ? 'Ajouter' : 'Add'}
+                        {t('add_recipient')}
                       </button>
                     </div>
 
@@ -2057,7 +2086,7 @@ export default function RecordingPage() {
                             <div className="flex-1">
                               <p className="text-gray-200 text-sm">{recipient.email}</p>
                               {recipient.type === 'subaccount' && (
-                                <p className="text-gray-400 text-xs">{locale === 'fr' ? 'Sous-compte' : 'Subaccount'}</p>
+                                <p className="text-gray-400 text-xs">{t('subaccount')}</p>
                               )}
                             </div>
                             <button
@@ -2070,7 +2099,7 @@ export default function RecordingPage() {
                         ))
                       ) : (
                         <p className="text-gray-400 text-sm">
-                          {locale === 'fr' ? 'Aucun destinataire ajouté' : 'No recipients added'}
+                          {t('no_recipients')}
                         </p>
                       )}
                     </div>
@@ -2079,7 +2108,7 @@ export default function RecordingPage() {
                     {subaccounts.length > 0 && (
                       <div>
                         <p className="text-gray-400 text-xs mb-2">
-                          {locale === 'fr' ? 'Ajouter rapidement depuis les sous-comptes:' : 'Quick add from subaccounts:'}
+                          {t('quick_add_subaccounts')}
                         </p>
                         <div className="flex flex-wrap gap-2">
                           {subaccounts.map((subaccount) => (
@@ -2107,12 +2136,12 @@ export default function RecordingPage() {
                       {isSavingRecording ? (
                         <>
                           <Loader className="h-5 w-5 animate-spin" />
-                          {locale === 'fr' ? 'Enregistrement...' : 'Saving...'}
+                          {t('saving')}
                         </>
                       ) : (
                         <>
                           <CheckCircle className="h-5 w-5" />
-                          {locale === 'fr' ? 'Enregistrer' : 'Save Recording'}
+                          {t('save_recording')}
                         </>
                       )}
                     </button>
@@ -2147,17 +2176,13 @@ export default function RecordingPage() {
           <DialogHeader>
             <DialogTitle>
               {editorMode === 'pdf'
-                ? (locale === 'fr' ? 'Éditer avant export PDF' : 'Edit before PDF export')
-                : (locale === 'fr' ? 'Éditer avant enregistrement' : 'Edit before saving')}
+                ? t('edit_before_export')
+                : t('edit_before_saving')}
             </DialogTitle>
             <DialogDescription>
               {editorMode === 'pdf'
-                ? (locale === 'fr'
-                    ? 'Modifiez le résumé, les points clés, les actions et la transcription avant de générer le PDF.'
-                    : 'Modify summary, key points, action items, and transcript before generating the PDF.')
-                : (locale === 'fr'
-                    ? 'Modifiez le résumé, les points clés, les actions et la transcription avant de sauvegarder.'
-                    : 'Modify summary, key points, action items, and transcript before saving.')}
+                ? t('modify_before_export')
+                : t('modify_before_save')}
             </DialogDescription>
           </DialogHeader>
 
@@ -2165,20 +2190,20 @@ export default function RecordingPage() {
             {/* Summary */}
             <div>
               <label className="block text-sm font-semibold mb-2">
-                {locale === 'fr' ? 'Résumé' : 'Summary'}
+                {t('summary')}
               </label>
               <textarea
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg bg-white/5 border border-violet-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-violet-500/60 h-24"
-                placeholder={locale === 'fr' ? 'Entrez le résumé...' : 'Enter summary...'}
+                placeholder={t('enter_summary')}
               />
             </div>
 
             {/* Key Points */}
             <div>
               <label className="block text-sm font-semibold mb-2">
-                {locale === 'fr' ? 'Points clés (max 25)' : 'Key Points (max 25)'}
+                {t('max_key_points')}
               </label>
               <div className="space-y-2 max-h-40 overflow-y-auto mb-2">
                 {editKeyPoints.map((point, idx) => (
@@ -2207,14 +2232,14 @@ export default function RecordingPage() {
                 disabled={editKeyPoints.length >= 25}
                 className="px-3 py-1 text-sm rounded-lg bg-violet-600/30 hover:bg-violet-600/50 disabled:opacity-50 disabled:cursor-not-allowed text-violet-300 border border-violet-500/30"
               >
-                {locale === 'fr' ? '+ Ajouter point clé' : '+ Add Key Point'}
+                {t('add_key_point')}
               </button>
             </div>
 
             {/* Action Items */}
             <div>
               <label className="block text-sm font-semibold mb-2">
-                {locale === 'fr' ? 'Actions (max 25)' : 'Action Items (max 25)'}
+                {t('max_actions')}
               </label>
               <div className="space-y-2 max-h-40 overflow-y-auto mb-2">
                 {editActionItems.map((item, idx) => (
@@ -2243,20 +2268,20 @@ export default function RecordingPage() {
                 disabled={editActionItems.length >= 25}
                 className="px-3 py-1 text-sm rounded-lg bg-violet-600/30 hover:bg-violet-600/50 disabled:opacity-50 disabled:cursor-not-allowed text-violet-300 border border-violet-500/30"
               >
-                {locale === 'fr' ? '+ Ajouter action' : '+ Add Action Item'}
+                {t('add_action')}
               </button>
             </div>
 
             {/* Transcript */}
             <div>
               <label className="block text-sm font-semibold mb-2">
-                {locale === 'fr' ? 'Transcription' : 'Transcript'}
+                {t('transcript')}
               </label>
               <textarea
                 value={editTranscript}
                 onChange={(e) => setEditTranscript(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg bg-white/5 border border-violet-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-violet-500/60 h-24"
-                placeholder={locale === 'fr' ? 'Entrez la transcription...' : 'Enter transcript...'}
+                placeholder={t('enter_transcript')}
               />
             </div>
           </div>
@@ -2264,7 +2289,7 @@ export default function RecordingPage() {
           <DialogFooter className="flex gap-2">
             <DialogClose asChild>
               <button className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white">
-                {locale === 'fr' ? 'Annuler' : 'Cancel'}
+                {t('cancel_button_text')}
               </button>
             </DialogClose>
             <button
@@ -2275,19 +2300,19 @@ export default function RecordingPage() {
               {(isGeneratingPdf || isSavingRecording) ? (
                 <>
                   <Loader className="h-4 w-4 animate-spin" />
-                  {editorMode === 'pdf' ? 'PDF' : (locale === 'fr' ? 'Enregistrement...' : 'Saving...')}
+                  {editorMode === 'pdf' ? t('generate_pdf') : t('saving')}
                 </>
               ) : (
                 <>
                   {editorMode === 'pdf' ? (
                     <>
                       <FileJson className="h-4 w-4" />
-                      {locale === 'fr' ? 'Générer PDF' : 'Generate PDF'}
+                      {t('generate_pdf')}
                     </>
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4" />
-                      {locale === 'fr' ? 'Enregistrer' : 'Save Recording'}
+                      {t('save_recording')}
                     </>
                   )}
                 </>
@@ -2302,12 +2327,10 @@ export default function RecordingPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {locale === 'fr' ? 'Sélectionner la source audio' : 'Select Audio Source'}
+              {t('audio_source_modal_title')}
             </DialogTitle>
             <DialogDescription>
-              {locale === 'fr'
-                ? 'Choisissez d\'où vous souhaitez capturer l\'audio pour l\'enregistrement.'
-                : 'Choose where you want to capture audio from for the recording.'}
+              {t('audio_source_modal_description')}
             </DialogDescription>
           </DialogHeader>
 
@@ -2320,12 +2343,10 @@ export default function RecordingPage() {
               <Mic className="h-6 w-6 text-violet-400" />
               <div>
                 <p className="font-semibold text-white">
-                  {locale === 'fr' ? 'Microphone' : 'Microphone'}
+                  {t('microphone_option')}
                 </p>
                 <p className="text-xs text-gray-400">
-                  {locale === 'fr'
-                    ? 'Capturer l\'audio de votre microphone'
-                    : 'Capture audio from your microphone'}
+                  {t('microphone_description')}
                 </p>
               </div>
             </button>
@@ -2338,12 +2359,10 @@ export default function RecordingPage() {
               <Volume2 className="h-6 w-6 text-amber-400" />
               <div>
                 <p className="font-semibold text-white">
-                  {locale === 'fr' ? 'Audio du système' : 'System Audio'}
+                  {t('system_audio_option')}
                 </p>
                 <p className="text-xs text-gray-400">
-                  {locale === 'fr'
-                    ? 'Capturer l\'audio d\'une autre application (ex: vidéo YouTube)'
-                    : 'Capture audio from another app (e.g., YouTube video)'}
+                  {t('system_audio_description')}
                 </p>
               </div>
             </button>
@@ -2356,12 +2375,10 @@ export default function RecordingPage() {
               <Layers className="h-6 w-6 text-emerald-400" />
               <div>
                 <p className="font-semibold text-white">
-                  {locale === 'fr' ? 'Les deux' : 'Both'}
+                  {t('both_option')}
                 </p>
                 <p className="text-xs text-gray-400">
-                  {locale === 'fr'
-                    ? 'Capturer microphone + audio système'
-                    : 'Capture microphone + system audio'}
+                  {t('both_description')}
                 </p>
               </div>
             </button>
@@ -2369,9 +2386,7 @@ export default function RecordingPage() {
             {/* Help Text */}
             <div className="mt-6 p-3 rounded-lg bg-amber-900/20 border border-amber-700/30">
               <p className="text-xs text-amber-200">
-                {locale === 'fr'
-                  ? '💡 L\'audio du système nécessite que vous sélectionniez l\'écran ou l\'application à enregistrer quand le navigateur le demande.'
-                  : '💡 System audio requires you to select the screen or application when the browser asks.'}
+                {t('audio_source_help')}
               </p>
             </div>
           </div>
@@ -2379,7 +2394,7 @@ export default function RecordingPage() {
           <DialogFooter>
             <DialogClose asChild>
               <button className="w-full px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white font-medium">
-                {locale === 'fr' ? 'Annuler' : 'Cancel'}
+                {t('cancel_button')}
               </button>
             </DialogClose>
           </DialogFooter>

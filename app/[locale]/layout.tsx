@@ -1,8 +1,6 @@
-import type { Metadata } from "next";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme_provider";
-import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
@@ -10,23 +8,13 @@ import { UsageProvider } from "@/context/UsageContext";
 import { ConditionalLayout } from "@/components/conditional-layout";
 import ModalProvider from "./subaccounts/components/modal_provider";
 import { Toaster } from "@/components/ui/toaster";
+import { LocaleHtmlWrapper } from "./locale-html-wrapper";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export const metadata: Metadata = {
-  title: "Conia — Smart Meeting Assistant",
-  description: "AI-powered meeting management and summaries",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
-  },
-};
-
-export default async function RootLayout({
+export default async function LocaleLayout({
   children,
   params,
 }: Readonly<{
@@ -40,26 +28,22 @@ export default async function RootLayout({
   }
 
   return (
-    <ClerkProvider>
-      <html lang={locale} suppressHydrationWarning className="dark">
-        <body className="font-geist antialiased" suppressHydrationWarning>
-          <NextIntlClientProvider locale={locale}>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <ModalProvider>
-                <Toaster />
-                <UsageProvider>
-                  <ConditionalLayout>{children}</ConditionalLayout>
-                </UsageProvider>
-              </ModalProvider>
-            </ThemeProvider>
-          </NextIntlClientProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <LocaleHtmlWrapper locale={locale}>
+      <NextIntlClientProvider locale={locale}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ModalProvider>
+            <Toaster />
+            <UsageProvider>
+              <ConditionalLayout>{children}</ConditionalLayout>
+            </UsageProvider>
+          </ModalProvider>
+        </ThemeProvider>
+      </NextIntlClientProvider>
+    </LocaleHtmlWrapper>
   );
 }
