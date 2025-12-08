@@ -20,7 +20,7 @@ const UpdateSubaccountButton = ({ data }: Props) => {
   return (
     <Button
       size="sm"
-      className="mr-2"
+      className="mr-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white border-0 rounded-lg shadow-lg hover:shadow-violet-500/40 transition-all duration-300"
       onClick={() => {
         setOpen(
           <CustomModal

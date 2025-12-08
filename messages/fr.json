@@ -393,6 +393,7 @@
   },
 "Sidebar": {
     "Home": "Accueil",
+     "Recording":"Enregistrement",
     "Integrations": "Intégrations",
     "Settings": "Paramètres",
     "ChatWithAI": "Discussion avec l'IA",

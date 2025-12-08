@@ -10,8 +10,8 @@ export default function MeetingTableClient({ meetings }: { meetings: any[] }) {
   const columns = meetingColumns(t) // ✅ côté client, autorisé
 
   return (
-    <div>
-    <DataTable columns={columns} data={meetings} filterValue="title" />
+    <div className="w-full">
+      <DataTable columns={columns} data={meetings} filterValue="title" />
     </div>
   )
 }

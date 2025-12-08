@@ -2,10 +2,9 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Users, Settings, Trash, Video } from "lucide-react"
+import { Users, Trash, Video } from "lucide-react"
 import { useModal } from "../subaccounts/components/modal_provider"
 import AttendeeList from "./attendees"
-import PermissionsModal from "./permission.modal"
 import { useToast } from "@/components/ui/use_toast"
 import CustomModal from "../subaccounts/components/custom_modal"
 import Link from "next/link"
@@ -44,7 +43,7 @@ export const meetingColumns = (t: ReturnType<typeof useTranslations>): ColumnDef
 
       return (
         <Button
-          variant="outline"
+          className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white border-0 rounded-lg shadow-lg hover:shadow-violet-500/40 transition-all duration-300"
           onClick={() =>
             setOpen(
               <CustomModal
@@ -58,33 +57,6 @@ export const meetingColumns = (t: ReturnType<typeof useTranslations>): ColumnDef
         >
           <Users size={16} className="mr-2" />
           {t("View")}
-        </Button>
-      )
-    },
-  },
-  {
-    id: "permissions",
-    header: t("Permissions"),
-    cell: ({ row }) => {
-      const { setOpen } = useModal()
-      const meeting = row.original
-
-      return (
-        <Button
-          variant="outline"
-          onClick={() =>
-            setOpen(
-              <PermissionsModal meetingId={meeting.id} />,
-              async () => {
-                const res = await fetch(`/api/meetings/${meeting.id}`)
-                const data = await res.json()
-                return { meeting: data }
-              }
-            )
-          }
-        >
-          <Settings size={16} className="mr-2" />
-          {t("Edit")}
         </Button>
       )
     },
@@ -108,12 +80,12 @@ export const meetingColumns = (t: ReturnType<typeof useTranslations>): ColumnDef
       return (
         <div className="flex items-center gap-2">
           <Link className="cursor-pointer" href={`/meeting/${row.original.id}`}>
-            <Button className="flex gap-2 cursor-pointer">
+            <Button className="flex gap-2 cursor-pointer bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white border-0 rounded-lg shadow-lg hover:shadow-violet-500/40 transition-all duration-300">
               <Video size={15} />
               {t("View")}
             </Button>
           </Link>
-          <Button variant="destructive" className="flex gap-2 cursor-pointer" onClick={deleteMeeting}>
+          <Button size="sm" className="ml-2" onClick={deleteMeeting}>
             <Trash size={15} />
             {t("Delete")}
           </Button>

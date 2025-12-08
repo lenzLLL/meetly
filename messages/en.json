@@ -383,6 +383,7 @@
   },
 "Sidebar": {
     "Home": "Home",
+     "Recording":"Recording",
     "Integrations": "Integrations",
     "Settings": "Settings",
     "ChatWithAI": "Chat with AI",
