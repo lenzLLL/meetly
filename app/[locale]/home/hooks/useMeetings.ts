@@ -114,19 +114,35 @@ export function useMeetings() {
         setPastLoading(true)
         try {
             const response = await fetch('/api/meetings/past')
-            const result = await response.json()
 
             if (!response.ok) {
-                console.error('faild to fetch past meetings:', result.error)
+                // Try to parse error body if possible
+                let result: any = {}
+                try {
+                    result = await response.json()
+                } catch {}
+
+                if (response.status === 401) {
+                    setError('Not authenticated. Please sign in.')
+                } else {
+                    setError(result?.error || 'Failed to fetch past meetings')
+                    console.error('failed to fetch past meetings:', result?.error || response.status)
+                }
+                setPastLoading(false)
                 return
             }
 
-            if (result.error) {
+            const result = await response.json()
+            if (result?.error) {
+                setError(result.error)
+                setPastLoading(false)
                 return
             }
+
             setPastMeetings(result.meetings as PastMeeting[])
         } catch (error) {
-            // console.error('faild to fetch past meetings:', error)
+            console.error('failed to fetch past meetings:', error)
+            setError('Failed to fetch past meetings')
         }
         setPastLoading(false)
     }

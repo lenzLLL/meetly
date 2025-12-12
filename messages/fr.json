@@ -211,7 +211,25 @@
   },
   "Sections": {
     "PastMeetings": "Réunions passées",
-    "UpcomingMeetings": "Réunions à venir"
+    "UpcomingMeetings": "Réunions à venir",
+    "StudioRecordings": "Enregistrements Studio",
+    "CalendarMeetings": "Réunions du Calendrier"
+  },
+  "QuickActions": {
+    "Title": "Actions Rapides",
+    "StartRecording": "Démarrer l'enregistrement",
+    "ExploreIntegrations": "Explorer les intégrations",
+    "MeetingHistory": "Historique des réunions"
+  },
+  "StudioRecordings": {
+    "Title": "Enregistrements Studio",
+    "NoRecordings": "Aucun enregistrement",
+    "NoRecordingsDesc": "Démarrez l'enregistrement depuis le bouton flottant pour voir vos enregistrements ici",
+    "StartRecording": "Démarrer l'enregistrement"
+  },
+  "Hero": {
+    "Welcome": "Bienvenue",
+    "ActivitySummary": "réunions enregistrées • à venir"
   },
   "Loading": "Chargement...",
   "NoPastMeetings": "Aucune réunion passée",

@@ -8,12 +8,14 @@ import AppHeader from '@/components/Header'
 import PastMeetings from './components/PastMeetings'
 import UpcomingMeetings from './components/UpcomingMeetings'
 import FloatingRecordButton from '@/components/floating-record-button'
-import { Video, Clock, CalendarDays, Users, Mic, TrendingUp, Play } from 'lucide-react'
+import { Video, Clock, CalendarDays, Users, Mic, Play, Zap } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
 
 export default function Dashboard() {
   const t = useTranslations('Dashboard')
+  const locale = useLocale()
   const router = useRouter()
   const { isSignedIn, isLoaded } = useAuth()
 
@@ -39,22 +41,30 @@ export default function Dashboard() {
     subaccounts
   } = useMeetings()
 
-  // Mock recordings data - en production, cela viendrait d'une API
-  const [recordings, setRecordings] = React.useState([])
+  // Studio recordings - meetings with type == 'recording'
+  const [studioRecordings, setStudioRecordings] = React.useState<any[]>([])
 
   React.useEffect(() => {
     if (userId) {
-      fetchRecordings()
+      fetchStudioRecordings()
     }
   }, [userId])
 
-  const fetchRecordings = async () => {
+  const fetchStudioRecordings = async () => {
     try {
-      const response = await fetch('/api/recordings')
+      const response = await fetch('/api/studio-recordings')
       const data = await response.json()
-      setRecordings(data || [])
+      // API may return either an array or an object { meetings: [...] }
+      if (Array.isArray(data)) {
+        setStudioRecordings(data)
+      } else if (data && Array.isArray(data.meetings)) {
+        setStudioRecordings(data.meetings)
+      } else {
+        console.warn('Unexpected studio recordings response shape', data)
+        setStudioRecordings([])
+      }
     } catch (error) {
-      console.log('No recordings API yet')
+      console.log('No studio recordings API yet')
     }
   }
 
@@ -128,11 +138,16 @@ export default function Dashboard() {
         {/* Hero Section */}
         <div className="p-6 sm:p-8 border-b border-violet-500/20 animate-fade-in">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
-              Welcome back! 👋
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
+                {t('Hero.Welcome')}
+              </h1>
+              <div className="p-2 bg-gradient-to-br from-violet-600/30 to-purple-600/30 rounded-lg border border-violet-500/30 cursor-pointer hover:scale-110 transition-transform">
+                <Mic className="w-8 h-8 text-violet-300" />
+              </div>
+            </div>
             <p className="text-gray-400 text-lg">
-              {pastMeetings?.length || 0} meetings recorded • {upcomingEvents?.length || 0} upcoming
+              {pastMeetings?.length || 0} {t('Hero.ActivitySummary').split('•')[0].trim()} • {upcomingEvents?.length || 0} {t('Hero.ActivitySummary').split('•')[1].trim()}
             </p>
           </div>
         </div>
@@ -151,7 +166,7 @@ export default function Dashboard() {
                   
                   <div className="relative flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="p-3 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-lg border border-violet-500/30 group-hover:border-violet-500/60 transition-colors">
+                      <div className="p-3 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-lg border border-violet-500/30 group-hover:border-violet-500/60 transition-colors cursor-pointer">
                         {metric.icon}
                       </div>
                       <div>
@@ -167,19 +182,28 @@ export default function Dashboard() {
 
             {/* Quick Actions */}
             <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <h3 className="text-lg font-semibold mb-4 text-violet-200">Quick Actions</h3>
+              <h3 className="text-lg font-semibold mb-4 text-violet-200">{t('QuickActions.Title')}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Button className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl py-6 font-semibold transition-all hover:scale-105">
-                  <Video className="w-5 h-5 mr-2" />
-                  Start Recording
-                </Button>
-                <Button className="bg-gradient-to-r from-violet-600/40 to-purple-600/40 border border-violet-500/40 hover:border-violet-500/70 text-white rounded-xl py-6 font-semibold transition-all hover:scale-105">
-                  <CalendarDays className="w-5 h-5 mr-2" />
-                  Schedule Meeting
-                </Button>
-                <Button className="bg-gradient-to-r from-violet-600/40 to-purple-600/40 border border-violet-500/40 hover:border-violet-500/70 text-white rounded-xl py-6 font-semibold transition-all hover:scale-105">
+                <Button 
+                  onClick={() => router.push('/recording')}
+                  className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl py-6 font-semibold transition-all hover:scale-105 cursor-pointer"
+                >
                   <Mic className="w-5 h-5 mr-2" />
-                  Upload Audio
+                  {t('QuickActions.StartRecording')}
+                </Button>
+                <Button 
+                  onClick={() => router.push('/integrations')}
+                  className="bg-gradient-to-r from-violet-600/40 to-purple-600/40 border border-violet-500/40 hover:border-violet-500/70 text-white rounded-xl py-6 font-semibold transition-all hover:scale-105 cursor-pointer"
+                >
+                  <Zap className="w-5 h-5 mr-2" />
+                  {t('QuickActions.ExploreIntegrations')}
+                </Button>
+                <Button 
+                  onClick={() => router.push(`/${locale}/meetings`)}
+                  className="bg-gradient-to-r from-violet-600/40 to-purple-600/40 border border-violet-500/40 hover:border-violet-500/70 text-white rounded-xl py-6 font-semibold transition-all hover:scale-105 cursor-pointer"
+                >
+                  <Clock className="w-5 h-5 mr-2" />
+                  {t('QuickActions.MeetingHistory')}
                 </Button>
               </div>
             </div>
@@ -195,7 +219,7 @@ export default function Dashboard() {
                       <CalendarDays className="w-5 h-5 text-violet-300" />
                     </div>
                     <h2 className="text-2xl font-bold text-white">
-                      Upcoming Meetings
+                      {t('Sections.UpcomingMeetings')}
                     </h2>
                   </div>
                   <UpcomingMeetings
@@ -222,7 +246,7 @@ export default function Dashboard() {
                       <Clock className="w-5 h-5 text-blue-300" />
                     </div>
                     <h2 className="text-2xl font-bold text-white">
-                      Calendar Meetings
+                      {t('Sections.CalendarMeetings')}
                     </h2>
                   </div>
                   <PastMeetings
@@ -243,30 +267,34 @@ export default function Dashboard() {
                       <Mic className="w-5 h-5 text-pink-300" />
                     </div>
                     <h3 className="text-2xl font-bold text-white">
-                      Studio Recordings
+                      {t('Sections.StudioRecordings')}
                     </h3>
                   </div>
 
                   <div className="rounded-2xl border border-pink-500/30 bg-gradient-to-br from-pink-900/20 to-rose-900/20 backdrop-blur-md overflow-hidden">
-                    {!recordings || recordings.length === 0 ? (
+                    {!studioRecordings || studioRecordings.length === 0 ? (
                       <div className="p-8 text-center">
                         <Mic className="h-12 w-12 mx-auto text-pink-300/50 mb-4" />
                         <h4 className="text-lg font-semibold text-pink-200 mb-2">
-                          No Recordings Yet
+                          {t('StudioRecordings.NoRecordings')}
                         </h4>
                         <p className="text-sm text-pink-300/60 mb-6">
-                          Start recording from the floating button to see your recordings here
+                          {t('StudioRecordings.NoRecordingsDesc')}
                         </p>
-                        <Button className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-lg font-semibold">
-                          <Video className="w-4 h-4 mr-2" />
-                          Start Recording
+                        <Button 
+                          onClick={() => router.push('/recording')}
+                          className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white rounded-lg font-semibold cursor-pointer"
+                        >
+                          <Mic className="w-4 h-4 mr-2" />
+                          {t('StudioRecordings.StartRecording')}
                         </Button>
                       </div>
                     ) : (
                       <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
-                        {recordings.map((recording: any, idx: number) => (
+                        {studioRecordings.map((recording: any, idx: number) => (
                           <div
                             key={idx}
+                            onClick={() => router.push(`/${locale}/recording/${recording.id}`)}
                             className="p-4 rounded-lg bg-pink-900/30 border border-pink-500/20 hover:border-pink-500/40 transition-all hover:scale-105 cursor-pointer group"
                           >
                             <div className="flex items-start gap-3">
@@ -278,7 +306,7 @@ export default function Dashboard() {
                                   {recording.title || 'Recording ' + (idx + 1)}
                                 </h4>
                                 <p className="text-xs text-pink-300/60 mt-1">
-                                  {recording.duration || '45 min'}
+                                  {new Date(recording.startTime).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
@@ -286,33 +314,6 @@ export default function Dashboard() {
                         ))}
                       </div>
                     )}
-                  </div>
-
-                  {/* Stats Summary */}
-                  <div className="mt-6 rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-900/20 to-purple-900/20 backdrop-blur-md p-6">
-                    <h4 className="text-sm font-semibold text-violet-300 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4" />
-                      Quick Stats
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-violet-300/70">Total Recordings</span>
-                        <span className="font-bold text-violet-200">{recordings?.length || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-violet-300/70">This Month</span>
-                        <span className="font-bold text-violet-200">{recordings?.filter((r: any) => {
-                          const date = new Date(r.createdAt || new Date())
-                          return date.getMonth() === new Date().getMonth()
-                        }).length || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-violet-300/70">Total Duration</span>
-                        <span className="font-bold text-violet-200">
-                          {recordings?.reduce((total: number, r: any) => total + (r.durationMinutes || 0), 0) || 0}m
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>

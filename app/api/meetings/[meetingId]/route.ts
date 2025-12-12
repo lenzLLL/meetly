@@ -7,18 +7,18 @@ export async function GET(
     { params }: { params: Promise<{ meetingId: string }> }
 ) {
     try {
-        const { userId: clerkUserId } = await auth()
-        
+        const { userId } = await auth()
+
         const { meetingId } = await params
         const user = await prisma.user.findUnique({
-            where:{
-                id:clerkUserId||""
+            where: {
+                id: userId || ""
             },
-            include:{
-                subaccounts:true
+            include: {
+                subaccounts: true
             }
         })
-        let subaccounts = user?.subaccounts||[]
+        let subaccounts = user?.subaccounts || []
         const meeting = await prisma.meeting.findUnique({
             where: {
                 id: meetingId
@@ -45,7 +45,7 @@ export async function GET(
         const responseData = {
             ...meeting,
             subaccounts,
-            isOwner: clerkUserId === meeting.user?.clerkId
+            isOwner: userId === meeting.user?.id
         }
 
         return NextResponse.json(responseData)
@@ -82,7 +82,7 @@ export async function DELETE(
             return NextResponse.json({ error: 'meeting not found' }, { status: 404 })
         }
 
-        if (meeting.user.clerkId !== userId) {
+        if (meeting.user.id !== userId) {
             return NextResponse.json({ error: 'not authorized to delete this meeting' }, { status: 403 })
         }
 
@@ -126,7 +126,7 @@ export async function PUT(
             return NextResponse.json({ error: 'meeting not found' }, { status: 404 })
         }
 
-        if (meeting.user.clerkId !== userId) {
+        if (meeting.user.id !== userId) {
             return NextResponse.json({ error: 'not authorized' }, { status: 403 })
         }
 

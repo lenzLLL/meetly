@@ -24,6 +24,10 @@ export async function GET(
             return NextResponse.json({ error: 'meeting not found' }, { status: 404 })
         }
 
+        if (meeting.userId !== userId) {
+            return NextResponse.json({ error: 'not authorized' }, { status: 403 })
+        }
+
         // Get chunks for this meeting
         const chunks = await prisma.transcriptChunk.findMany({
             where: { meetingId },

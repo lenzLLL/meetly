@@ -11,17 +11,17 @@ export async function GET() {
         }
 
         const user = await prisma.user.findUnique({
-            where: { clerkId: userId },include:{subaccounts:true}
+            where: { id: userId },
+            include: { subaccounts: true }
         })
 
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 })
         }
-
         const now = new Date()
         const upcomingMeetings = await prisma.meeting.findMany({
             where: {
-                userId: user.id,
+                userId: userId,
                 startTime: { gte: now },
                 isFromCalendar: true,
             },

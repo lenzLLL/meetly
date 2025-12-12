@@ -10,25 +10,18 @@ export async function GET() {
         if (!userId) {
             return NextResponse.json({ error: "not authed" }, { status: 401 })
         }
-        const user = await prisma.user.findUnique({
-            where: {
-                clerkId: userId
-            }
-        })
 
-        if (!user) {
-            return NextResponse.json({ error: "user not found" }, { status: 404 })
-        }
-
+        // `auth()` returns the database user id in this app's configuration.
+        // Use it directly to query meetings instead of mapping via clerkId.
         const pastMeetings = await prisma.meeting.findMany({
             where: {
-                userId: user.id,
-                meetingEnded: true
+                userId: userId,
+                meetingEnded: true,
             },
             orderBy: {
-                endTime: 'desc'
+                endTime: 'desc',
             },
-            take: 10
+            take: 10,
         })
 
         return NextResponse.json({ meetings: pastMeetings })

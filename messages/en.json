@@ -205,7 +205,25 @@
     },
     "Sections": {
       "PastMeetings": "Past Meetings",
-      "UpcomingMeetings": "Upcoming Meetings"
+      "UpcomingMeetings": "Upcoming Meetings",
+      "StudioRecordings": "Studio Recordings",
+      "CalendarMeetings": "Calendar Meetings"
+    },
+    "QuickActions": {
+      "Title": "Quick Actions",
+      "StartRecording": "Start Recording",
+      "ExploreIntegrations": "Explore Integrations",
+      "MeetingHistory": "Meeting History"
+    },
+    "StudioRecordings": {
+      "Title": "Studio Recordings",
+      "NoRecordings": "No Recordings Yet",
+      "NoRecordingsDesc": "Start recording from the floating button to see your recordings here",
+      "StartRecording": "Start Recording"
+    },
+    "Hero": {
+      "Welcome": "Welcome back",
+      "ActivitySummary": "meetings recorded • upcoming"
     },
     "Loading": "Loading...",
       "NoPastMeetings": "No past meetings",

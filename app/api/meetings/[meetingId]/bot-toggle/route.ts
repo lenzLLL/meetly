@@ -16,24 +16,23 @@ export async function POST(
         const { meetingId } = await params
         const { botScheduled } = await request.json()
 
-        const user = await prisma.user.findUnique({
-            where: {
-                clerkId: userId
-            }
+        // Verify meeting belongs to this user
+        const meetingOwner = await prisma.meeting.findUnique({
+            where: { id: meetingId },
+            select: { userId: true }
         })
 
-        if (!user) {
-            return NextResponse.json({ error: "user not found" }, { status: 404 })
+        if (!meetingOwner) {
+            return NextResponse.json({ error: "meeting not found" }, { status: 404 })
+        }
+
+        if (meetingOwner.userId !== userId) {
+            return NextResponse.json({ error: "not authorized" }, { status: 403 })
         }
 
         const meeting = await prisma.meeting.update({
-            where: {
-                id: meetingId,
-                userId: user.id
-            },
-            data: {
-                botScheduled: botScheduled
-            }
+            where: { id: meetingId },
+            data: { botScheduled: botScheduled }
         })
 
         return NextResponse.json({
