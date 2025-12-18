@@ -8,6 +8,7 @@ import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import IntegrationSection from "@/components/landing/integrationSection";
 import MoreFeaturesSection from "@/components/landing/MoreFeaturesSection";
 import StatsSection from "@/components/landing/StatsSection";
+import StudioFeatures from "@/components/landing/studioFeatures";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import InstallButton from "@/components/install_button";
@@ -28,6 +29,7 @@ export default function Home() {
       <div className="bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen ">
           <Herosection/>
           <FeaturesSection/>
+          <StudioFeatures />
           <IntegrationSection/>
           <HowItWorksSection/>
           <StatsSection/>

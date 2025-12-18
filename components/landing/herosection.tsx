@@ -6,6 +6,7 @@ import { Button } from '../ui/button'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl';
 import { useRouter, usePathname } from "next/navigation";
+import buildLocalizedPath from '@/lib/buildLocalizedPath'
 import LanguageSwitcher from './switchlanguage'
 import { cn } from '@/lib/utils'
 import { AnimatedGradientText } from '../ui/animated-gradient-text'
@@ -15,11 +16,14 @@ export default function Herosection() {
     const router = useRouter();
     const pathname = usePathname();
       const switchLanguage = (locale: string) => {
-    // Remplace le premier segment de l'URL par la langue choisie
-    const segments = pathname.split("/");
-    segments[1] = locale;
-    const newPath = segments.join("/");
-    router.push(newPath);
+    try {
+      if (typeof window === 'undefined') return
+      const href = typeof window === 'undefined' ? pathname : window.location.href
+      const target = buildLocalizedPath(href, locale)
+      router.push(target)
+    } catch (err) {
+      router.push(`/${locale}`)
+    }
   };
  const [open,setOpen] = useState(false)
   return (
@@ -165,6 +169,7 @@ export default function Herosection() {
                             <span>{t('Check3')}</span>
                         </div>
                     </div>
+                    {/* studio features (moved to Features section per request) */}
                 </div>
 
              </section>

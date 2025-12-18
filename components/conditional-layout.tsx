@@ -12,7 +12,11 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
 
    const showSidebar =
   pathname !== "/fr" &&
-  pathname !== "/en" &&
+  pathname !== "/en" &&  
+  pathname !== "/de" &&
+  pathname !== "/pt" &&
+  pathname !== "/it" &&
+  pathname !== "/es" &&
   !(pathname.startsWith("/meeting/") && !isSignedIn);
     if (!showSidebar) {
         return <div className="min-h-screen">{children}</div>

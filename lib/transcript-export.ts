@@ -145,8 +145,8 @@ export async function exportTranscriptToPdf(
     const html2canvasModule = await import('html2canvas');
     const html2canvas = html2canvasModule.default;
 
-    // If keyPoints not provided, auto-generate up to 25 key points and top 25 keywords
-    const generateKeyPointsAndKeywords = () => {
+    // If keyPoints not provided, auto-generate up to 25 key points
+    const generateKeyPoints = () => {
       const maxItems = 25;
       // Gather source text: prefer summary, else transcript
       let sourceText = '';
@@ -169,30 +169,12 @@ export async function exportTranscriptToPdf(
       const uniqueSentences = Array.from(new Set(sentences));
       const keyPoints = uniqueSentences.slice(0, maxItems);
 
-      // Keywords: token frequency, basic stopwords removal
-      const stopwords = new Set([
-        'the','and','a','to','of','in','for','on','is','it','that','this','we','you','with','are','be','as','have','has','at','by','an','or','from','not','but','your','our','their','they'
-      ]);
-      const tokens = sourceText
-        .toLowerCase()
-        .replace(/[^a-zà-ÿ0-9\s]/gi, ' ')
-        .split(/\s+/)
-        .filter((t) => t.length > 2 && !stopwords.has(t));
-
-      const freq: Record<string, number> = {};
-      tokens.forEach((t) => { freq[t] = (freq[t] || 0) + 1; });
-      const topKeywords = Object.keys(freq)
-        .sort((a, b) => freq[b] - freq[a])
-        .slice(0, maxItems);
-
-      return { keyPoints, topKeywords };
+      return { keyPoints };
     };
 
     if ((!metadata?.keyPoints || metadata.keyPoints.length === 0)) {
-      const generated = generateKeyPointsAndKeywords();
+      const generated = generateKeyPoints();
       metadata = Object.assign({}, metadata, { keyPoints: generated.keyPoints });
-      // attach keywords for optional rendering later
-      (metadata as any).topKeywords = generated.topKeywords;
     }
 
     // Create HTML content with professional styling
@@ -295,23 +277,7 @@ export async function exportTranscriptToPdf(
       });
 
       htmlContent.appendChild(keyPointsList);
-      // Optional: top keywords (auto-generated) shown as a compact comma-separated list
-      if ((metadata as any).topKeywords && Array.isArray((metadata as any).topKeywords) && (metadata as any).topKeywords.length > 0) {
-        const kwHeader = document.createElement('h3');
-        kwHeader.textContent = l.keywords;
-        kwHeader.style.fontSize = '16px';
-        kwHeader.style.marginTop = '10px';
-        kwHeader.style.marginBottom = '8px';
-        kwHeader.style.color = '#7c3aed';
-        htmlContent.appendChild(kwHeader);
-
-        const kwDiv = document.createElement('div');
-        kwDiv.style.fontSize = '14px';
-        kwDiv.style.color = '#555';
-        kwDiv.style.marginBottom = '20px';
-        kwDiv.textContent = (metadata as any).topKeywords.slice(0, 25).join(', ');
-        htmlContent.appendChild(kwDiv);
-      }
+      // (Keywords section removed)
     }
 
     // Action Items section
@@ -510,6 +476,26 @@ export async function exportTranscriptToPdf(
 
     // Save PDF
     const filename = `${meetingTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+    // If running in Electron with a saveFile API, use it to let user choose location
+    try {
+        if (typeof (window as any) !== 'undefined' && typeof (window as any).electron?.saveFile === 'function') {
+        const dataUri = pdf.output('datauristring') as string;
+        const base64 = dataUri.split(',')[1];
+        const res = await (window as any).electron.saveFile(base64, filename);
+        try {
+          if (res && !res.canceled && res.filePath) {
+            window.dispatchEvent(new CustomEvent('electron-file-saved', { detail: { filePath: res.filePath } }))
+          }
+        } catch (e) {
+          // ignore (window may be unavailable in some environments)
+        }
+        return;
+      }
+    } catch (err) {
+      console.error('Electron save fallback failed:', err);
+    }
+
+    // Browser fallback
     pdf.save(filename);
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -636,6 +622,24 @@ export async function exportTranscriptToPdf(
       }
 
       const filename = `Conia-${meetingTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+      try {
+        if (typeof (window as any) !== 'undefined' && typeof (window as any).electron?.saveFile === 'function') {
+          const dataUri = pdf.output('datauristring') as string;
+          const base64 = dataUri.split(',')[1];
+          const res = await (window as any).electron.saveFile(base64, filename);
+          try {
+            if (res && !res.canceled && res.filePath) {
+              window.dispatchEvent(new CustomEvent('electron-file-saved', { detail: { filePath: res.filePath } }))
+            }
+          } catch (e) {
+            // ignore
+          }
+          return;
+        }
+      } catch (err) {
+        console.error('Electron save fallback failed:', err);
+      }
+
       pdf.save(filename);
     } catch (simplePdfError) {
       console.error('Simple PDF generation also failed:', simplePdfError);

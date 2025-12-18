@@ -56,9 +56,21 @@ export default function Dashboard() {
       const data = await response.json()
       // API may return either an array or an object { meetings: [...] }
       if (Array.isArray(data)) {
-        setStudioRecordings(data)
+        const filtered = data.filter((r: any) => r?.type === 'recording')
+        const sorted = filtered.slice().sort((a: any, b: any) => {
+          const ta = new Date(a.startTime || a.createdAt || 0).getTime()
+          const tb = new Date(b.startTime || b.createdAt || 0).getTime()
+          return tb - ta
+        })
+        setStudioRecordings(sorted)
       } else if (data && Array.isArray(data.meetings)) {
-        setStudioRecordings(data.meetings)
+        const filtered = data.meetings.filter((r: any) => r?.type === 'recording')
+        const sorted = filtered.slice().sort((a: any, b: any) => {
+          const ta = new Date(a.startTime || a.createdAt || 0).getTime()
+          const tb = new Date(b.startTime || b.createdAt || 0).getTime()
+          return tb - ta
+        })
+        setStudioRecordings(sorted)
       } else {
         console.warn('Unexpected studio recordings response shape', data)
         setStudioRecordings([])
@@ -306,7 +318,9 @@ export default function Dashboard() {
                                   {recording.title || 'Recording ' + (idx + 1)}
                                 </h4>
                                 <p className="text-xs text-pink-300/60 mt-1">
-                                  {new Date(recording.startTime).toLocaleDateString()}
+                                  {recording.startTime || recording.createdAt
+                                    ? new Date(recording.startTime || recording.createdAt).toLocaleString(locale as any, { dateStyle: 'medium', timeStyle: 'short' })
+                                    : ''}
                                 </p>
                               </div>
                             </div>

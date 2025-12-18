@@ -24,8 +24,10 @@ import {
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use_toast'
 import { exportTranscriptToPdf } from '@/lib/transcript-export'
+import { ToastAction } from '@/components/ui/toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-type TabType = 'summary' | 'tasks' | 'topics' | 'transcript' | 'chat' | 'export'
+type TabType = 'summary' | 'tasks' | 'keypoints' | 'transcript' | 'chat' | 'export'
 type Message = {
   id: string
   role: 'user' | 'assistant'
@@ -51,6 +53,8 @@ export default function RecordingDetailPage() {
   const { recordingId, recordingData, loading, error } = useRecordingDetail()
   const { toast } = useToast()
 
+  const isDesktop = typeof window !== 'undefined' && !!(window as any).electron
+
   // Tab state
   const [activeTab, setActiveTab] = useState<TabType>('summary')
 
@@ -73,7 +77,20 @@ export default function RecordingDetailPage() {
   const [editActionItems, setEditActionItems] = useState<string[]>([])
   const [editTranscript, setEditTranscript] = useState('')
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [isGeneratingKeyPoints, setIsGeneratingKeyPoints] = useState(false)
+  const [keyPointsSource, setKeyPointsSource] = useState<'db' | 'ai' | 'user' | null>(null)
   const [editorMode, setEditorMode] = useState<'pdf' | 'save'>('pdf')
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'fr' | 'es' | 'de' | 'pt' | 'it'>((locale as any) || 'fr')
+  const [isTranslating, setIsTranslating] = useState(false)
+  const [translatedTranscript, setTranslatedTranscript] = useState<string | null>(null)
+  const originalSummaryRef = useRef<string | null>(null)
+  const originalKeyPointsRef = useRef<string[] | null>(null)
+  const originalActionItemsRef = useRef<string[] | null>(null)
+  const originalTranscriptRef = useRef<string | null>(null)
+  const originalLanguageRef = useRef<string | null>(null)
+  const displayedLanguageRef = useRef<string | null>(locale as any || 'fr')
+
+  // direct language selection without confirmation (translate keyPoints immediately)
 
   // Export states
   const [exportTitle, setExportTitle] = useState('')
@@ -158,6 +175,27 @@ export default function RecordingDetailPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Listen for desktop save events (from Electron) and show toast
+  useEffect(() => {
+    const handler = (e: any) => {
+      try {
+        const fp = e?.detail?.filePath
+        if (fp) {
+          const action = (
+            <ToastAction altText={t('open_folder')} onClick={() => { try { (window as any).electron?.showItemInFolder(fp) } catch (_) {} }}>
+              {t('open')}
+            </ToastAction>
+          )
+          toast({ title: t('pdf_saved'), description: fp, action })
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
+    window.addEventListener('electron-file-saved', handler as EventListener)
+    return () => window.removeEventListener('electron-file-saved', handler as EventListener)
+  }, [])
+
   // Extract summary from recording
   useEffect(() => {
     if (recordingData && !summary) {
@@ -212,6 +250,13 @@ export default function RecordingDetailPage() {
         tasks: parsedTasks,
         keyPoints: parsedKeyPoints,
       })
+      // Save originals (only set once)
+      if (!originalSummaryRef.current) originalSummaryRef.current = parsedSummary || null
+      if (!originalKeyPointsRef.current) originalKeyPointsRef.current = parsedKeyPoints && parsedKeyPoints.length > 0 ? parsedKeyPoints : null
+      if (!originalActionItemsRef.current) originalActionItemsRef.current = parsedTasks && parsedTasks.length > 0 ? parsedTasks : null
+      // originalLanguageRef: prefer recordingData.language if present
+      if (!originalLanguageRef.current) originalLanguageRef.current = (recordingData && (recordingData.language as string)) || (locale as any) || 'fr'
+      setKeyPointsSource(parsedKeyPoints && parsedKeyPoints.length > 0 ? 'db' : null)
       setTopics(extractedTopics)
       setEditSummary(parsedSummary)
       setEditKeyPoints(parsedKeyPoints)
@@ -224,11 +269,157 @@ export default function RecordingDetailPage() {
           ? recordingData.transcript 
           : JSON.stringify(recordingData.transcript)
         setEditTranscript(transcriptData)
+        if (!originalTranscriptRef.current) originalTranscriptRef.current = transcriptData
+        // reset translated transcript when loading new recording
+        setTranslatedTranscript(null)
       } catch (e) {
         setEditTranscript('')
       }
     }
   }, [recordingData])
+
+  // Auto-generate keyPoints on initial recording load if none exist (use transcript only)
+  useEffect(() => {
+    const autoGenerateOnLoad = async () => {
+      if (!recordingData) return
+      // if we already have keyPoints in summary or edit buffer, don't auto-generate
+      if (Array.isArray(summary?.keyPoints) && summary!.keyPoints.length > 0) return
+      if (Array.isArray(editKeyPoints) && editKeyPoints.length > 0) return
+      if (isGeneratingKeyPoints) return
+
+      try {
+        setIsGeneratingKeyPoints(true)
+        const resp = await fetch('/api/ai/generate-keypoints', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript: recordingData?.transcript, language: originalLanguageRef.current || selectedLanguage || 'fr' }),
+        })
+        if (resp.ok) {
+          const json = await resp.json()
+          const kps = Array.isArray(json.keyPoints) ? json.keyPoints : []
+          if (kps.length > 0) {
+            setSummary((prev) => ({ ...(prev || { summary: '', tasks: [], keyPoints: [] }), keyPoints: kps }))
+            setEditKeyPoints(kps)
+            setKeyPointsSource('ai')
+          }
+        }
+      } catch (err) {
+        console.error('Auto-generate keyPoints on load failed:', err)
+      } finally {
+        setIsGeneratingKeyPoints(false)
+      }
+    }
+
+    autoGenerateOnLoad()
+    // only run when recordingData changes
+  }, [recordingData])
+
+  // When the PDF editor opens, ensure keyPoints are populated by generating from transcript if missing
+  useEffect(() => {
+    const generateForEditor = async () => {
+      if (!showPdfEditor) return
+
+      const hasEditKps = Array.isArray(editKeyPoints) && editKeyPoints.length > 0
+      const hasSummaryKps = Array.isArray(summary?.keyPoints) && summary!.keyPoints.length > 0
+      if (hasEditKps || hasSummaryKps) return
+      if (isGeneratingKeyPoints) return
+
+      try {
+        setIsGeneratingKeyPoints(true)
+        const resp = await fetch('/api/ai/generate-keypoints', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript: originalTranscriptRef.current || recordingData?.transcript, language: selectedLanguage || 'fr' }),
+        })
+        if (resp.ok) {
+          const json = await resp.json()
+          const newKps = Array.isArray(json.keyPoints) ? json.keyPoints : []
+          setEditKeyPoints(newKps)
+          setKeyPointsSource('ai')
+          setSummary((prev) => ({ ...(prev || { summary: '', tasks: [], keyPoints: [] }), keyPoints: newKps }))
+        }
+      } catch (err) {
+        console.error('Failed to auto-generate key points for PDF editor:', err)
+      } finally {
+        setIsGeneratingKeyPoints(false)
+      }
+    }
+
+    generateForEditor()
+  }, [showPdfEditor, selectedLanguage, recordingData, summary, editKeyPoints, isGeneratingKeyPoints])
+
+  // Whenever selectedLanguage changes, translate using originals (do not cascade translations)
+  useEffect(() => {
+    const doTranslate = async () => {
+      // Need original transcript to translate from
+      if (!originalTranscriptRef.current) return
+
+      // If user selected the original language, restore originals
+      const origLang = originalLanguageRef.current || (locale as any) || 'fr'
+      if (selectedLanguage === origLang) {
+        // restore originals
+        if (originalSummaryRef.current !== null) {
+          setSummary((prev) => ({ ...(prev || { summary: '', tasks: [], keyPoints: [] }), summary: originalSummaryRef.current ?? '' }))
+          setEditSummary(originalSummaryRef.current ?? '')
+        }
+        if (originalKeyPointsRef.current !== null) {
+          setSummary((prev) => ({ ...(prev || { summary: '', tasks: [], keyPoints: [] }), keyPoints: originalKeyPointsRef.current || [] }))
+          setEditKeyPoints(originalKeyPointsRef.current || [])
+        }
+        if (originalActionItemsRef.current !== null) setEditActionItems(originalActionItemsRef.current || [])
+        if (originalTranscriptRef.current !== null) {
+          setTranslatedTranscript(null)
+          setEditTranscript(originalTranscriptRef.current)
+        } else {
+          setTranslatedTranscript(null)
+        }
+        displayedLanguageRef.current = origLang
+        return
+      }
+
+      // Avoid re-translating to same language
+      if (displayedLanguageRef.current === selectedLanguage) return
+
+      try {
+        setIsTranslating(true)
+        const resp = await fetch('/api/ai/translate-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            summary: originalSummaryRef.current || '',
+            keyPoints: originalKeyPointsRef.current || [],
+            actionItems: originalActionItemsRef.current || [],
+            transcript: originalTranscriptRef.current || '',
+            language: selectedLanguage,
+          }),
+        })
+        if (resp.ok) {
+          const json = await resp.json()
+          const tSummary = json.translatedSummary || ''
+          const tKeyPoints = Array.isArray(json.translatedKeyPoints) ? json.translatedKeyPoints : []
+          const tActionItems = Array.isArray(json.translatedActionItems) ? json.translatedActionItems : []
+          const tTranscript = typeof json.translatedTranscript === 'string' ? json.translatedTranscript : (json.translatedTranscript ? JSON.stringify(json.translatedTranscript) : '')
+
+          // Update UI with translated content
+          setSummary((prev) => ({ ...(prev || { summary: '', tasks: [], keyPoints: [] }), summary: tSummary, keyPoints: tKeyPoints }))
+          // Update editor buffers immediately so modal shows translated content when language is changed
+          setEditSummary(tSummary)
+          setEditKeyPoints(tKeyPoints)
+          setEditActionItems(tActionItems)
+          setEditTranscript(tTranscript || '')
+          setTranslatedTranscript(tTranscript || null)
+          // mark displayed language
+          displayedLanguageRef.current = selectedLanguage
+        }
+      } catch (err) {
+        console.error('Translation failed:', err)
+      } finally {
+        setIsTranslating(false)
+      }
+    }
+
+    doTranslate()
+  }, [selectedLanguage])
 
   const handleDelete = async () => {
     if (window.confirm(t('confirm_delete'))) {
@@ -259,14 +450,46 @@ export default function RecordingDetailPage() {
     setMessages((prev) => [...prev, userMessage])
     setInputMessage('')
     setIsLoadingChat(true)
-
+    // Use same chat flow as the Studio page: build a system/context prompt
     try {
-      const response = await fetch('/api/rag', {
+      // Build meeting context from the analyzed summary and/or transcript
+      const contextSections: string[] = []
+
+      if (summary) {
+        if (summary.summary) {
+          contextSections.push(`Résumé de la réunion:\n${summary.summary}`)
+        }
+        if (Array.isArray(summary.keyPoints) && summary.keyPoints.length > 0) {
+          contextSections.push(`Points clés:\n- ${summary.keyPoints.join('\n- ')}`)
+        }
+        if (Array.isArray(summary.tasks) && summary.tasks.length > 0) {
+          contextSections.push(`Actions à réaliser:\n- ${summary.tasks.join('\n- ')}`)
+        }
+      }
+
+      if (!summary && recordingData?.transcript) {
+        contextSections.push(`Transcription de la réunion:\n${typeof recordingData.transcript === 'string' ? recordingData.transcript : JSON.stringify(recordingData.transcript)}`)
+      }
+
+      const baseSystemPrompt =
+        'You are a helpful assistant analyzing a meeting recording. Answer questions about the meeting content concisely. If the answer is not covered by the meeting context, say that you do not know instead of inventing. Respond in the same language as the user.'
+
+      const contextPrompt = contextSections.length
+        ? `Here is the meeting context, use it as the only source of truth:\n\n${contextSections.join('\n\n')}`
+        : 'No meeting transcript or summary is available yet. Answer in a generic way and tell the user to run the analysis first if they expect meeting-specific answers.'
+
+      const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: inputMessage,
-          meetingId: recordingId,
+          messages: [
+            {
+              role: 'system',
+              content: `${baseSystemPrompt}\n\n${contextPrompt}`,
+            },
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
+            { role: 'user', content: inputMessage },
+          ],
         }),
       })
 
@@ -274,11 +497,11 @@ export default function RecordingDetailPage() {
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.response || t('error'),
+        content: data.content || t('error'),
       }
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error sending message:', error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -293,16 +516,51 @@ export default function RecordingDetailPage() {
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true)
     try {
+      // If the selected language differs from the original, translate on-the-fly to ensure exported PDF uses requested language
+      let transcriptToUse: any = editTranscript || recordingData?.transcript
+      let summaryToUse = editSummary
+      let keyPointsToUse = editKeyPoints
+      let actionItemsToUse = editActionItems
+
+      const origLang = originalLanguageRef.current || (locale as any) || 'fr'
+      if (selectedLanguage && selectedLanguage !== origLang) {
+        try {
+          setIsTranslating(true)
+          const resp = await fetch('/api/ai/translate-content', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              summary: originalSummaryRef.current || editSummary || summary?.summary || '',
+              keyPoints: originalKeyPointsRef.current || (summary?.keyPoints || []),
+              actionItems: originalActionItemsRef.current || (summary?.tasks || []),
+              transcript: originalTranscriptRef.current || (typeof recordingData?.transcript === 'string' ? recordingData.transcript : JSON.stringify(recordingData?.transcript) || ''),
+              language: selectedLanguage,
+            }),
+          })
+          if (resp.ok) {
+            const json = await resp.json()
+            summaryToUse = json.translatedSummary || summaryToUse
+            keyPointsToUse = Array.isArray(json.translatedKeyPoints) ? json.translatedKeyPoints : keyPointsToUse
+            actionItemsToUse = Array.isArray(json.translatedActionItems) ? json.translatedActionItems : actionItemsToUse
+            transcriptToUse = json.translatedTranscript || transcriptToUse
+          }
+        } catch (err) {
+          console.error('On-the-fly translation failed for export:', err)
+        } finally {
+          setIsTranslating(false)
+        }
+      }
+
       await exportTranscriptToPdf(
-        editTranscript,
+        transcriptToUse,
         exportTitle || recordingData?.title || 'Recording',
         {
-          summary: editSummary,
-          keyPoints: editKeyPoints,
-          actionItems: editActionItems.map((item, idx) => ({ id: idx + 1, text: item })),
+          summary: summaryToUse,
+          keyPoints: keyPointsToUse,
+          actionItems: (actionItemsToUse || []).map((item: any, idx: number) => ({ id: idx + 1, text: typeof item === 'string' ? item : (item.text || JSON.stringify(item)) })),
           date: recordingData?.startTime ? new Date(recordingData.startTime).toLocaleDateString() : undefined,
         },
-        locale as 'en' | 'fr' | 'es' | 'de' | 'pt' | 'it',
+        selectedLanguage,
         false
       )
       toast({ title: t('pdf_generated') })
@@ -345,7 +603,7 @@ export default function RecordingDetailPage() {
           emailRecipients: emailRecipients.map(r => r.email),
           startTime: recordingData?.startTime,
           endTime: recordingData?.endTime,
-          language: locale,
+          language: selectedLanguage,
         }),
       })
 
@@ -399,10 +657,10 @@ export default function RecordingDetailPage() {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <Button variant="outline" size="sm" onClick={() => router.back()} className="mb-6 border-violet-500/30">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            {t('back')}
           </Button>
           <div className="rounded-2xl border border-red-500/20 bg-red-900/10 p-8 text-center">
-            <p className="text-red-300">{error || 'Recording not found'}</p>
+            <p className="text-red-300">{error || t('recording_not_found')}</p>
           </div>
         </div>
       </div>
@@ -423,12 +681,12 @@ export default function RecordingDetailPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={handleDelete} className="border-red-500/30 text-red-400">
               <Trash2 className="w-4 h-4 mr-2" />
-              Delete
+              {t('delete')}
             </Button>
           </div>
 
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
-            {recordingData.title || 'Untitled Recording'}
+            {recordingData.title || t('untitled_recording')}
           </h1>
           <div className="flex items-center gap-4 text-gray-400">
             <span>{new Date(recordingData.startTime).toLocaleDateString()}</span>
@@ -438,8 +696,7 @@ export default function RecordingDetailPage() {
               <>
                 <span>•</span>
                 <span>
-                  Duration:{' '}
-                  {Math.round((new Date(recordingData.endTime).getTime() - new Date(recordingData.startTime).getTime()) / 60000)} min
+                  {t('duration')}: {Math.round((new Date(recordingData.endTime).getTime() - new Date(recordingData.startTime).getTime()) / 60000)} {t('minutes')}
                 </span>
               </>
             )}
@@ -452,22 +709,22 @@ export default function RecordingDetailPage() {
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
-            <p className="text-gray-400 text-sm mb-2">Recording ID</p>
+            <p className="text-gray-400 text-sm mb-2">{t('recording_id')}</p>
             <p className="text-white font-mono text-sm flex items-center justify-between">
               {recordingId.substring(0, 8)}...
-              <button onClick={() => { navigator.clipboard.writeText(recordingId); toast({ title: 'Copied' }) }} className="ml-2 hover:text-violet-300">
+              <button onClick={() => { navigator.clipboard.writeText(recordingId); toast({ title: t('copied') }) }} className="ml-2 hover:text-violet-300">
                 <Copy className="w-4 h-4" />
               </button>
             </p>
           </div>
 
           <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
-            <p className="text-gray-400 text-sm mb-2">Date</p>
+            <p className="text-gray-400 text-sm mb-2">{t('date')}</p>
             <p className="text-white font-semibold">{new Date(recordingData.startTime).toLocaleDateString()}</p>
           </div>
 
           <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
-            <p className="text-gray-400 text-sm mb-2">Duration</p>
+            <p className="text-gray-400 text-sm mb-2">{t('duration')}</p>
             <p className="text-white font-semibold">
               {recordingData.endTime
                 ? `${Math.round((new Date(recordingData.endTime).getTime() - new Date(recordingData.startTime).getTime()) / 60000)} min`
@@ -476,10 +733,10 @@ export default function RecordingDetailPage() {
           </div>
 
           <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
-            <p className="text-gray-400 text-sm mb-2">Status</p>
+            <p className="text-gray-400 text-sm mb-2">{t('status')}</p>
             <div className="flex items-center gap-2">
               <CheckCircle className="w-4 h-4 text-green-400" />
-              <p className="text-white font-semibold">Processed</p>
+              <p className="text-white font-semibold">{t('processed')}</p>
             </div>
           </div>
         </div>
@@ -487,7 +744,7 @@ export default function RecordingDetailPage() {
         {/* Tabs */}
         <div className="mb-6">
           <div className="flex gap-2 border-b border-violet-500/20 overflow-x-auto">
-            {(['summary', 'tasks', 'topics', 'transcript', 'chat', 'export'] as const).map((tab) => (
+            {(['summary', 'tasks', 'keypoints', 'transcript', 'chat', 'export'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -499,11 +756,11 @@ export default function RecordingDetailPage() {
               >
                 {tab === 'summary' && <FileText className="inline w-4 h-4 mr-2" />}
                 {tab === 'tasks' && <ListChecks className="inline w-4 h-4 mr-2" />}
-                {tab === 'topics' && <Brain className="inline w-4 h-4 mr-2" />}
+                {tab === 'keypoints' && <ListChecks className="inline w-4 h-4 mr-2" />}
                 {tab === 'transcript' && <FileText className="inline w-4 h-4 mr-2" />}
                 {tab === 'chat' && <Brain className="inline w-4 h-4 mr-2" />}
                 {tab === 'export' && <Download className="inline w-4 h-4 mr-2" />}
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {t(`tabs.${tab}`)}
               </button>
             ))}
           </div>
@@ -514,8 +771,8 @@ export default function RecordingDetailPage() {
           {activeTab === 'summary' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold mb-3 text-violet-300">Summary</h3>
-                <p className="text-gray-300 leading-relaxed">{summary?.summary || recordingData.summary || 'No summary available'}</p>
+                <h3 className="text-lg font-semibold mb-3 text-violet-300">{t('summary')}</h3>
+                <p className="text-gray-300 leading-relaxed">{summary?.summary || recordingData.summary || t('no_summary')}</p>
               </div>
               {summary?.keyPoints && summary.keyPoints.length > 0 && (
                 <div>
@@ -535,7 +792,7 @@ export default function RecordingDetailPage() {
 
           {activeTab === 'tasks' && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-4 text-violet-300">Action Items</h3>
+              <h3 className="text-lg font-semibold mb-4 text-violet-300">{t('action_items')}</h3>
               {summary?.tasks && summary.tasks.length > 0 ? (
                 <ul className="space-y-3">
                   {summary.tasks.map((task, idx) => (
@@ -546,25 +803,87 @@ export default function RecordingDetailPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-400">No action items identified</p>
+                <p className="text-gray-400">{t('no_action_items')}</p>
               )}
             </div>
           )}
 
-          {activeTab === 'topics' && (
+          {activeTab === 'keypoints' && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-4 text-violet-300">Topics Discussed</h3>
-              {topics && topics.length > 0 ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-semibold mb-4 text-violet-300">{t('key_points')}</h3>
+                  {isGeneratingKeyPoints ? (
+                    <div className="flex items-center text-sm text-gray-300">
+                      <Loader className="w-4 h-4 animate-spin mr-2 text-violet-400" />
+                      {t('generating')}
+                    </div>
+                  ) : keyPointsSource === 'ai' ? (
+                    <span className="text-sm text-emerald-300 bg-emerald-900/20 px-2 py-0.5 rounded">{t('ai_generated')}</span>
+                  ) : null}
+                </div>
+                <Button size="sm" variant="outline" onClick={async () => {
+                  // Open editor prefilled for PDF export so user can edit key points before exporting
+                  setEditSummary(summary?.summary || (typeof recordingData?.summary === 'string' ? recordingData.summary : ''))
+                  const tasks = summary?.tasks || []
+                  setEditActionItems(tasks.map((t: any) => (typeof t === 'string' ? t : JSON.stringify(t))))
+                  const transcriptText = recordingData?.transcript 
+                    ? (typeof recordingData.transcript === 'string' ? recordingData.transcript : JSON.stringify(recordingData.transcript))
+                    : ''
+                  setEditTranscript(transcriptText)
+                  setEditorMode('pdf')
+                  setExportTitle(recordingData?.title || '')
+
+                  // If keyPoints are missing, request AI generation
+                  if (!summary?.keyPoints || (Array.isArray(summary.keyPoints) && summary.keyPoints.length === 0)) {
+                      try {
+                      setIsGeneratingKeyPoints(true)
+                      const resp = await fetch('/api/ai/generate-keypoints', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ transcript: recordingData?.transcript, language: selectedLanguage }),
+                      })
+                      if (resp.ok) {
+                        const json = await resp.json()
+                        const newKps = Array.isArray(json.keyPoints) ? json.keyPoints : []
+                        setEditKeyPoints(newKps)
+                        setKeyPointsSource('ai')
+                      } else {
+                        setEditKeyPoints([])
+                      }
+                    } catch (err) {
+                      console.error('Failed to generate key points:', err)
+                      setEditKeyPoints([])
+                    } finally {
+                      setIsGeneratingKeyPoints(false)
+                    }
+                  } else {
+                    setEditKeyPoints(summary?.keyPoints ? [...summary.keyPoints] : [])
+                    setKeyPointsSource(summary?.keyPoints && summary.keyPoints.length > 0 ? 'db' : null)
+                  }
+
+                  setShowPdfEditor(true)
+                }} className="border-violet-500/30">
+                  {isGeneratingKeyPoints ? t('generating') : t('edit')}
+                </Button>
+              </div>
+
+              {isGeneratingKeyPoints ? (
+                <div className="flex items-center gap-2 text-gray-300">
+                  <Loader className="w-5 h-5 animate-spin text-violet-400" />
+                  <span>{t('generating_keypoints')}</span>
+                </div>
+              ) : summary?.keyPoints && summary.keyPoints.length > 0 ? (
                 <ul className="space-y-3">
-                  {topics.map((topic, idx) => (
-                    <li key={idx} className="flex gap-3 p-3 rounded-lg bg-violet-900/20 border border-violet-500/20">
-                      <Brain className="w-5 h-5 text-violet-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-300">{topic}</span>
+                  {summary.keyPoints.map((point, idx) => (
+                    <li key={idx} className="flex gap-3 p-3 rounded-lg bg-violet-900/20 border border-violet-500/20 text-gray-300">
+                      <span className="text-violet-400">•</span>
+                      <span>{typeof point === 'string' ? point : JSON.stringify(point)}</span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-400">No topics identified yet. Topics are extracted from the summary and transcript.</p>
+                <p className="text-gray-400">{t('no_key_points')}</p>
               )}
             </div>
           )}
@@ -573,14 +892,16 @@ export default function RecordingDetailPage() {
             <div className="space-y-4">
               <div className="flex gap-2 mb-4">
                 <Button variant="outline" size="sm" className="border-violet-500/30"
-                  onClick={() => { navigator.clipboard.writeText(recordingData.transcript || ''); toast({ title: 'Copied' }) }}>
+                  onClick={() => { navigator.clipboard.writeText(translatedTranscript || (typeof recordingData.transcript === 'string' ? recordingData.transcript : JSON.stringify(recordingData.transcript)) || ''); toast({ title: t('copied') }) }}>
                   <Copy className="w-4 h-4 mr-2" />
-                  Copy
+                  {t('copy')}
                 </Button>
               </div>
               <div className="bg-violet-950/20 rounded-lg p-4 max-h-96 overflow-y-auto border border-violet-500/20">
                 <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">
-                  {recordingData.transcript ? (typeof recordingData.transcript === 'string' ? recordingData.transcript : JSON.stringify(recordingData.transcript)) : 'No transcript available'}
+                  {translatedTranscript !== null
+                    ? translatedTranscript
+                    : (recordingData.transcript ? (typeof recordingData.transcript === 'string' ? recordingData.transcript : JSON.stringify(recordingData.transcript)) : 'No transcript available')}
                 </p>
               </div>
             </div>
@@ -604,7 +925,7 @@ export default function RecordingDetailPage() {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Ask about the recording..."
+                  placeholder={t('ask_question')}
                   className="flex-1 bg-violet-950/30 border border-violet-500/20 rounded-lg px-4 py-2 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-violet-500/50"
                 />
                 <Button onClick={handleSendMessage} disabled={isLoadingChat} className="bg-violet-600 hover:bg-violet-500">
@@ -616,7 +937,10 @@ export default function RecordingDetailPage() {
 
           {activeTab === 'export' && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-4 text-violet-300">Export Options</h3>
+                <h3 className="text-lg font-semibold mb-4 text-violet-300">{t('export_options')}</h3>
+                {isDesktop && (
+                  <p className="text-sm text-emerald-300 mb-2">{t('desktop_note')}</p>
+                )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
                   onClick={() => {
@@ -628,32 +952,10 @@ export default function RecordingDetailPage() {
                 >
                   <FileJson className="w-6 h-6 text-violet-400 mb-2" />
                   <p className="font-semibold text-white">{t('generate_pdf')}</p>
-                  <p className="text-xs text-gray-400">Create and download PDF</p>
+                  <p className="text-xs text-gray-400">{t('create_download_pdf')}</p>
                 </button>
 
-                <button
-                  onClick={() => {
-                    // Prefill editor with existing analysis before opening in save mode
-                    setEditSummary(summary?.summary || (typeof recordingData?.summary === 'string' ? recordingData.summary : ''))
-                    setEditKeyPoints(summary?.keyPoints ? [...summary.keyPoints] : [])
-                    const tasks = summary?.tasks || []
-                    setEditActionItems(tasks.map((t: any) => (typeof t === 'string' ? t : (t?.text || t?.name || JSON.stringify(t)))))
-                    const transcriptText = recordingData?.transcript 
-                      ? (typeof recordingData.transcript === 'string' ? recordingData.transcript : JSON.stringify(recordingData.transcript))
-                      : ''
-                    setEditTranscript(transcriptText)
-                    setEditorMode('save')
-                    setExportTitle(recordingData?.title || '')
-                    setEmailRecipients([])
-                    setNewEmailInput('')
-                    setShowPdfEditor(true)
-                  }}
-                  className="p-4 rounded-lg border-2 border-emerald-500/30 hover:border-emerald-500/60 bg-white/5 hover:bg-white/10 transition-all text-left"
-                >
-                  <Mail className="w-6 h-6 text-emerald-400 mb-2" />
-                  <p className="font-semibold text-white">{t('save_recording')}</p>
-                  <p className="text-xs text-gray-400">Save and share with team</p>
-                </button>
+                {/* 'Save Recording' button removed to match Studio export (view-only save removed) */}
               </div>
             </div>
           )}
@@ -665,13 +967,70 @@ export default function RecordingDetailPage() {
         <DialogContent className="bg-gradient-to-br from-[#1a0033] to-[#100020] border-violet-500/20 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-violet-300">
-              {editorMode === 'pdf' ? 'Edit PDF Content' : 'Save Recording'}
+              {editorMode === 'pdf' ? t('edit_pdf_content') : t('save_recording')}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 max-h-96 overflow-y-auto">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Title</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">{t('language')}</label>
+              <div className="flex items-center gap-3">
+                <Select onValueChange={(v: string) => setSelectedLanguage(v as any)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue>{selectedLanguage}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="fr">Français</SelectItem>
+                  <SelectItem value="es">Español</SelectItem>
+                  <SelectItem value="de">Deutsch</SelectItem>
+                  <SelectItem value="pt">Português</SelectItem>
+                  <SelectItem value="it">Italiano</SelectItem>
+                </SelectContent>
+              </Select>
+              {isTranslating && (
+                <div className="flex items-center text-sm text-gray-300 ml-3">
+                  <Loader className="w-4 h-4 animate-spin mr-2 text-violet-400" />
+                  <span>{t('generating') || 'Translating...'}</span>
+                </div>
+              )}
+                <Button size="sm" variant="outline" onClick={async () => {
+                  // Translate current edited content into selected language
+                  try {
+                    setIsGeneratingKeyPoints(true)
+                    const resp = await fetch('/api/ai/translate-content', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        summary: editSummary || summary?.summary,
+                        keyPoints: editKeyPoints.length ? editKeyPoints : summary?.keyPoints,
+                        actionItems: editActionItems.length ? editActionItems : summary?.tasks,
+                        transcript: editTranscript || recordingData?.transcript,
+                        language: selectedLanguage,
+                      }),
+                    })
+                    if (resp.ok) {
+                      const json = await resp.json()
+                      if (json.translatedSummary) setEditSummary(json.translatedSummary)
+                      if (Array.isArray(json.translatedKeyPoints)) setEditKeyPoints(json.translatedKeyPoints)
+                      if (Array.isArray(json.translatedActionItems)) setEditActionItems(json.translatedActionItems)
+                      if (json.translatedTranscript) setEditTranscript(json.translatedTranscript)
+                      setKeyPointsSource('ai')
+                      toast({ title: t('content_translated') })
+                    } else {
+                      toast({ title: t('translation_failed'), variant: 'destructive' })
+                    }
+                  } catch (err) {
+                    console.error('Translate request failed', err)
+                    toast({ title: t('translation_error'), variant: 'destructive' })
+                  } finally {
+                    setIsGeneratingKeyPoints(false)
+                  }
+                }} className="border-violet-500/30">{t('translate')}</Button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">{t('meeting_title')}</label>
               <input
                 type="text"
                 value={exportTitle}
@@ -681,7 +1040,7 @@ export default function RecordingDetailPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Summary</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">{t('summary')}</label>
               <textarea
                 value={editSummary}
                 onChange={(e) => setEditSummary(e.target.value)}
@@ -690,7 +1049,7 @@ export default function RecordingDetailPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Key Points (one per line)</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">{t('key_points_one_per_line')}</label>
               <textarea
                 value={editKeyPoints.join('\n')}
                 onChange={(e) => setEditKeyPoints(e.target.value.split('\n').filter(p => p.trim()))}
@@ -699,7 +1058,7 @@ export default function RecordingDetailPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Action Items (one per line)</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">{t('action_items_one_per_line')}</label>
               <textarea
                 value={editActionItems.join('\n')}
                 onChange={(e) => setEditActionItems(e.target.value.split('\n').filter(i => i.trim()))}
@@ -709,17 +1068,17 @@ export default function RecordingDetailPage() {
 
             {editorMode === 'save' && (
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Email Recipients</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{t('email_recipients')}</label>
                 <div className="flex gap-2 mb-3">
                   <input
                     type="email"
                     value={newEmailInput}
                     onChange={(e) => setNewEmailInput(e.target.value)}
-                    placeholder="Add email"
+                    placeholder={t('add_email')}
                     className="flex-1 bg-violet-950/30 border border-violet-500/20 rounded-lg px-4 py-2 text-gray-300 placeholder-gray-500 focus:outline-none focus:border-violet-500/50"
                   />
                   <Button onClick={addEmailRecipient} className="bg-violet-600 hover:bg-violet-500">
-                    Add
+                    {t('add_recipient')}
                   </Button>
                 </div>
 
@@ -728,7 +1087,7 @@ export default function RecordingDetailPage() {
                     <div key={r.id} className="flex items-center justify-between bg-violet-900/20 border border-violet-500/20 rounded-lg p-3">
                       <span className="text-gray-300">{r.email}</span>
                       <button onClick={() => setEmailRecipients(emailRecipients.filter(x => x.id !== r.id))} className="text-red-400">
-                        Remove
+                        {t('remove')}
                       </button>
                     </div>
                   ))}
@@ -739,7 +1098,7 @@ export default function RecordingDetailPage() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPdfEditor(false)} className="border-violet-500/30">
-              Cancel
+              {t('cancel_button_text')}
             </Button>
             {editorMode === 'pdf' ? (
               <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf} className="bg-violet-600 hover:bg-violet-500">

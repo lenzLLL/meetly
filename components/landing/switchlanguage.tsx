@@ -7,6 +7,10 @@ import ReactCountryFlag from "react-country-flag";
 const languages = [
   { code: "en", label: "English", countryCode: "GB" },
   { code: "fr", label: "Français", countryCode: "FR" },
+  { code: "es", label: "Español", countryCode: "ES" },
+  { code: "de", label: "Deutsch", countryCode: "DE" },
+  { code: "pt", label: "Português", countryCode: "PT" },
+  { code: "it", label: "Italiano", countryCode: "IT" },
 ];
 
 export default function LanguageSwitcher() {
@@ -14,12 +18,27 @@ export default function LanguageSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const currentLang = languages.find(lang => pathname.startsWith(`/${lang.code}`)) || languages[0];
+  const currentLang =
+    languages.find(lang => pathname.startsWith(`/${lang.code}`)) ||
+    languages[0];
 
   const switchLanguage = (locale: string) => {
-    const segments = pathname.split("/");
-    segments[1] = locale;
-    router.push(segments.join("/"));
+    if (locale === currentLang.code) {
+      setOpen(false);
+      return;
+    }
+
+    const segments = pathname.split("/").filter(Boolean);
+
+    // Si le premier segment est une langue connue → on la remplace
+    if (languages.some(l => l.code === segments[0])) {
+      segments[0] = locale;
+    } else {
+      // Sinon on ajoute la langue devant
+      segments.unshift(locale);
+    }
+
+    router.push("/" + segments.join("/"));
     setOpen(false);
   };
 

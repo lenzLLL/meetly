@@ -77,6 +77,43 @@
         "title": "Intégration du Bot Slack",
         "description": "Installez notre bot Slack pour poser des questions et partager des insights."
       }
+      ,
+      "studioRecording": {
+        "title": "Enregistrements Studio",
+        "description": "Enregistrez localement en haute qualité, transcrivez automatiquement et exportez des PDFs professionnels.",
+        "cta": "Voir la démo"
+      }
+    }
+
+    ,
+    "RecordingFeatures": {
+      "part1": "Fonctionnalités",
+      "part2": "Enregistrement Studio",
+      "subtitle": "Capture locale haute fidélité, transcription rapide, points clés éditables et export PDF soigné — conçu pour le partage.",
+      "localCapture": {
+        "title": "Capture locale haute qualité",
+        "description": "Enregistrez directement sur votre machine pour préserver la fidélité audio et éviter les problèmes réseau."
+      },
+      "transcription": {
+        "title": "Transcription automatique",
+        "description": "Recevez des transcriptions précises et alignées dans le temps, prêtes pour la recherche et l'export."
+      },
+      "keyPoints": {
+        "title": "Points clés générés par l'IA",
+        "description": "Extrait automatiquement les points essentiels et modifiez-les avant export."
+      },
+      "pdfExport": {
+        "title": "Export PDF en un clic",
+        "description": "Exportez transcriptions, résumés et points clés dans un PDF professionnel."
+      },
+      "postEdit": {
+        "title": "Édition avant export",
+        "description": "Affinez résumés, points clés et tâches dans un éditeur léger avant la sauvegarde."
+      },
+      "translation": {
+        "title": "Support multilingue",
+        "description": "Traduisez transcriptions et résumés dans la langue de votre choix avant l'export."
+      }
     }
 
  },
@@ -440,6 +477,7 @@
       "summary": "Résumé",
       "tasks": "Tâches",
       "topics": "Points clés",
+      "keypoints": "Points clés",
       "transcript": "Transcription",
       "export": "Exporter"
     },
@@ -497,6 +535,41 @@
     "max_actions": "Actions (max 25)",
     "add_action": "+ Ajouter action",
     "generate_pdf": "Générer PDF",
+    "pdf_generated": "PDF généré",
+    "ai_generated": "Généré par l'IA",
+    "generating": "Génération…",
+    "generating_keypoints": "Génération des points clés...",
+    "export_options": "Options d'export",
+    "desktop_note": "L'application desktop permet d'enregistrer le PDF localement via une boîte de dialogue native.",
+    "create_download_pdf": "Créer et télécharger le PDF",
+    "edit_pdf_content": "Éditer le contenu du PDF",
+    "key_points_one_per_line": "Points clés (un par ligne)",
+    "action_items_one_per_line": "Actions (une par ligne)",
+    "email_recipients": "Destinataires",
+    "content_translated": "Contenu traduit",
+    "translation_failed": "Échec de la traduction",
+    "translation_error": "Erreur de traduction",
+    "translate": "Traduire",
+    "open_folder": "Ouvrir le dossier",
+    "open": "Ouvrir",
+    "pdf_saved": "PDF enregistré",
+    "back": "Retour",
+    "untitled_recording": "Enregistrement sans titre",
+    "duration": "Durée",
+    "minutes": "min",
+    "recording_id": "ID de l'enregistrement",
+    "copied": "Copié",
+    "status": "Statut",
+    "processed": "Traitée",
+    "no_summary": "Aucun résumé disponible",
+    "no_action_items": "Aucune action identifiée",
+    "no_key_points": "Aucun point clé identifié pour le moment.",
+    "copy": "Copier",
+    "remove": "Supprimer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "date": "Date",
+    "recording_not_found": "Enregistrement introuvable",
     "cancel_button_text": "Annuler",
     "duplicate": "Doublon",
     "subaccount": "Sous-compte",
@@ -530,7 +603,6 @@
     "language": "Langue",
     "title_required": "Titre requis",
     "please_enter_meeting_title": "Veuillez entrer le titre de la réunion",
-    "no_summary": "Aucune analyse",
     "no_summary_available": "Aucun résumé disponible. Veuillez d'abord analyser l'audio.",
     "studio_title": "Studio d'enregistrement",
     "studio_subtitle": "Enregistrez, analysez et partagez vos audios",
@@ -551,5 +623,12 @@
     "email_already_added": "Email déjà ajouté",
     "allow_audio_access": "Vous devez autoriser l'accès audio pour enregistrer.",
     "chat_initial_message": "Bonjour! Je suis votre assistant IA. Posez-moi des questions sur la réunion qui vient de se terminer."
+    ,
+    "confirm_language_change": {
+      "title": "Confirmer le changement de langue",
+      "description": "Changer la langue écrasera les modifications effectuées dans l'éditeur PDF. Voulez-vous continuer ?",
+      "cancel": "Annuler",
+      "continue": "Continuer"
+    }
   }
 }

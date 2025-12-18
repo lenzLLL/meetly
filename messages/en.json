@@ -34,6 +34,35 @@
     "FeatureTitle":"Everything you need for",
     "FeatureTitle2":"Smarter Meetings",
     "FeatureDescription":"From AI summaries to seamless integrations, we've got every aspect covered.",
+    "RecordingFeatures": {
+      "part1": "Studio Recording",
+      "part2": "Features",
+      "subtitle": "Local high-fidelity capture, fast transcription, editable key points, and polished PDF exports — built for clarity and sharing.",
+      "localCapture": {
+        "title": "Local high-quality capture",
+        "description": "Record directly on your machine to preserve audio fidelity and avoid network issues."
+      },
+      "transcription": {
+        "title": "Automatic transcription",
+        "description": "Receive accurate, time-aligned transcripts suitable for search and export."
+      },
+      "keyPoints": {
+        "title": "AI-generated key points",
+        "description": "Automatically extract concise highlights and edit them before exporting."
+      },
+      "pdfExport": {
+        "title": "One-click PDF export",
+        "description": "Export transcripts, summaries and key points into a professional PDF."
+      },
+      "postEdit": {
+        "title": "Edit before export",
+        "description": "Refine summaries, key points and action items in a lightweight editor before saving."
+      },
+      "translation": {
+        "title": "Multi-language support",
+        "description": "Translate transcripts and summaries into your preferred language before exporting."
+      }
+    },
     "integrationTitle":"Seamless",
     "integrationTitle2":"Integrations",
     "integrationDescription":"Connect with the tools you aldready use and love",
@@ -105,8 +134,7 @@
         "100 AI chat messages per day",
         "Meeting transcripts and summaries",
         "Action items extraction",
-        "Email notifications",
-        "Priority Support"
+        "Email notifications"
       ]
     },
     "Premium": {
@@ -430,6 +458,7 @@
       "summary": "Summary",
       "tasks": "Tasks",
       "topics": "Key Points",
+      "keypoints": "Key Points",
       "transcript": "Transcript",
       "export": "Export"
     },
@@ -487,6 +516,41 @@
     "max_actions": "Action Items (max 25)",
     "add_action": "+ Add Action Item",
     "generate_pdf": "Generate PDF",
+    "pdf_generated": "PDF generated",
+    "ai_generated": "AI-generated",
+    "generating": "Generating...",
+    "generating_keypoints": "Generating key points...",
+    "export_options": "Export Options",
+    "desktop_note": "Desktop app can save PDF locally using a native dialog.",
+    "create_download_pdf": "Create and download PDF",
+    "edit_pdf_content": "Edit PDF Content",
+    "key_points_one_per_line": "Key Points (one per line)",
+    "action_items_one_per_line": "Action Items (one per line)",
+    "email_recipients": "Email Recipients",
+    "content_translated": "Content translated",
+    "translation_failed": "Translation failed",
+    "translation_error": "Translation error",
+    "translate": "Translate",
+    "open_folder": "Open folder",
+    "open": "Open",
+    "pdf_saved": "PDF saved",
+    "back": "Back",
+    "untitled_recording": "Untitled Recording",
+    "duration": "Duration",
+    "minutes": "min",
+    "recording_id": "Recording ID",
+    "copied": "Copied",
+    "status": "Status",
+    "processed": "Processed",
+    "no_summary": "No summary available",
+    "no_action_items": "No action items identified",
+    "no_key_points": "No key points identified yet.",
+    "copy": "Copy",
+    "remove": "Remove",
+    "edit": "Edit",
+    "delete": "Delete",
+    "date": "Date",
+    "recording_not_found": "Recording not found",
     "cancel_button_text": "Cancel",
     "duplicate": "Duplicate",
     "subaccount": "Subaccount",
@@ -538,5 +602,12 @@
     "email_already_added": "Email already added",
     "allow_audio_access": "You must allow audio access to record.",
     "chat_initial_message": "Hi! I'm your AI assistant. Ask me questions about the meeting you just had."
+    ,
+    "confirm_language_change": {
+      "title": "Confirm language change",
+      "description": "Changing the language will overwrite any edits in the PDF editor. Do you want to continue?",
+      "cancel": "Cancel",
+      "continue": "Continue"
+    }
   }
 }
