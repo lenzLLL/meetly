@@ -1,10 +1,10 @@
-const config = {
-  datasources: {
-    db: {
-      provider: 'postgresql',
-      url: process.env.DATABASE_URL,
-    },
-  },
-};
+// const config = {
+//   datasources: {
+//     db: {
+//       provider: 'postgresql',
+//       url: process.env.DATABASE_URL,
+//     },
+//   },
+// };
 
-module.exports = config;
+// module.exports = config;
