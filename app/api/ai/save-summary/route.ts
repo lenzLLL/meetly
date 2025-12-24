@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendMeetingSummaryEmail } from '@/lib/email-service'
-import { sendMeetingSummaryEmailFr } from '@/lib/email-service-french'
 import { processTranscript } from '@/lib/rag'
 
 export async function POST(req: NextRequest) {
@@ -20,27 +19,16 @@ export async function POST(req: NextRequest) {
     try {
       if (userEmail) {
         const titleToUse = meetingTitle || `Meeting ${new Date().toISOString()}`
-        if (language === 'en' || !language) {
-          await sendMeetingSummaryEmail({
-            userEmail,
-            userName: '',
-            meetingTitle: titleToUse,
-            summary: summary || '',
-            actionItems: tasks || [],
-            meetingId: '',
-            meetingDate: new Date().toISOString(),
-          })
-        } else {
-          await sendMeetingSummaryEmailFr({
-            userEmail,
-            userName: '',
-            meetingTitle: titleToUse,
-            summary: summary || '',
-            actionItems: tasks || [],
-            meetingId: '',
-            meetingDate: new Date().toISOString(),
-          })
-        }
+        await sendMeetingSummaryEmail({
+          userEmail,
+          userName: '',
+          meetingTitle: titleToUse,
+          summary: summary || '',
+          actionItems: tasks || [],
+          meetingId: '',
+          meetingDate: new Date().toISOString(),
+          language: language || 'en'
+        })
       }
     } catch (emailErr) {
       console.error('Failed to send summary email during analysis (no persistence):', emailErr)

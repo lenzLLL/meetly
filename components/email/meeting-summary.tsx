@@ -12,6 +12,88 @@ interface MeetingSummaryEmailProps {
     }>
     meetingId: string
     meetingDate: string
+    language?: 'en' | 'fr' | 'es' | 'de' | 'pt' | 'it'
+}
+
+const translations: Record<string, any> = {
+    en: {
+        preview: 'Your meeting summary is ready',
+        title: '📝 Meeting Summary Ready',
+        greeting: 'Hi',
+        dateText: 'Your meeting from',
+        hasBeenProcessed: 'has been processed and is ready for review.',
+        summary: '📋 Summary',
+        actionItems: '✅ Action Items',
+        noActionItems: 'No action items recorded',
+        viewDetails: 'View Full Meeting Details',
+        sentBy: 'Sent by Meeting Bot • Automated meeting summary service',
+        needHelp: 'Need help? Contact support'
+    },
+    fr: {
+        preview: 'Le résumé de votre réunion est prêt',
+        title: '📝 Résumé de la réunion prêt',
+        greeting: 'Bonjour',
+        dateText: 'Votre réunion du',
+        hasBeenProcessed: 'a été traitée et le résumé est maintenant disponible.',
+        summary: '📋 Résumé',
+        actionItems: '✅ Points d’action',
+        noActionItems: 'Aucun point d’action enregistré',
+        viewDetails: 'Voir les détails complets de la réunion',
+        sentBy: 'Envoyé par Meeting Bot • Service automatique de résumé de réunions',
+        needHelp: 'Besoin d’aide ? Contactez le support'
+    },
+    es: {
+        preview: 'Su resumen de la reunión está listo',
+        title: '📝 Resumen de la reunión listo',
+        greeting: 'Hola',
+        dateText: 'Su reunión del',
+        hasBeenProcessed: 'ha sido procesada y está lista para revisión.',
+        summary: '📋 Resumen',
+        actionItems: '✅ Elementos de acción',
+        noActionItems: 'Sin elementos de acción registrados',
+        viewDetails: 'Ver detalles completos de la reunión',
+        sentBy: 'Enviado por Meeting Bot • Servicio automático de resumen de reuniones',
+        needHelp: '¿Necesita ayuda? Contacte con soporte'
+    },
+    de: {
+        preview: 'Ihre Meeting-Zusammenfassung ist bereit',
+        title: '📝 Meeting-Zusammenfassung bereit',
+        greeting: 'Hallo',
+        dateText: 'Ihr Meeting vom',
+        hasBeenProcessed: 'wurde verarbeitet und steht zur Überprüfung bereit.',
+        summary: '📋 Zusammenfassung',
+        actionItems: '✅ Aktionselemente',
+        noActionItems: 'Keine Aktionselemente erfasst',
+        viewDetails: 'Alle Meeting-Details anzeigen',
+        sentBy: 'Gesendet von Meeting Bot • Automatischer Meeting-Zusammenfassungsdienst',
+        needHelp: 'Brauchen Sie Hilfe? Kontaktieren Sie den Support'
+    },
+    pt: {
+        preview: 'Seu resumo da reunião está pronto',
+        title: '📝 Resumo da reunião pronto',
+        greeting: 'Olá',
+        dateText: 'Sua reunião de',
+        hasBeenProcessed: 'foi processada e está pronta para revisão.',
+        summary: '📋 Resumo',
+        actionItems: '✅ Itens de ação',
+        noActionItems: 'Nenhum item de ação registrado',
+        viewDetails: 'Ver detalhes completos da reunião',
+        sentBy: 'Enviado por Meeting Bot • Serviço automático de resumo de reuniões',
+        needHelp: 'Precisa de ajuda? Entre em contato com o suporte'
+    },
+    it: {
+        preview: 'Il riepilogo della riunione è pronto',
+        title: '📝 Riepilogo della riunione pronto',
+        greeting: 'Ciao',
+        dateText: 'La tua riunione del',
+        hasBeenProcessed: 'è stata elaborata ed è pronta per la revisione.',
+        summary: '📋 Riepilogo',
+        actionItems: '✅ Elementi di azione',
+        noActionItems: 'Nessun elemento d’azione registrato',
+        viewDetails: 'Visualizza i dettagli completi della riunione',
+        sentBy: 'Inviato da Meeting Bot • Servizio automatico di riepilogo riunioni',
+        needHelp: 'Hai bisogno di aiuto? Contatta il supporto'
+    }
 }
 
 export function MeetingSummaryEmailNew({
@@ -20,81 +102,56 @@ export function MeetingSummaryEmailNew({
     summary,
     actionItems,
     meetingId,
-    meetingDate
+    meetingDate,
+    language = 'en'
 }: MeetingSummaryEmailProps) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    const t = translations[language] || translations.en
 
     return (
         <Html>
             <Head />
-            <Preview>Your meeting summary is ready</Preview>
+            <Preview>{t.preview}</Preview>
             <Body style={bodyStyle}>
                 <Container style={containerStyle}>
 
                     <Section style={headerStyle}>
-                        <Text style={headerTitleStyle}>
-                            📝 Meeting Summary Ready
-                        </Text>
-                        <Text style={headerSubtitleStyle}>
-                            {meetingTitle}
-                        </Text>
+                        <Text style={headerTitleStyle}>{t.title}</Text>
+                        <Text style={headerSubtitleStyle}>{meetingTitle}</Text>
                     </Section>
 
                     <Section style={contentStyle}>
 
-                        <Text style={greetingStyle}>
-                            Hi {userName},
-                        </Text>
+                        <Text style={greetingStyle}>{t.greeting} {userName},</Text>
 
-                        <Text style={dateStyle}>
-                            Your meeting from {meetingDate} has been processed and is ready for review.
-                        </Text>
+                        <Text style={dateStyle}>{t.dateText} {meetingDate} {t.hasBeenProcessed}</Text>
 
                         <Section style={summaryContainerStyle}>
-                            <Text style={sectionTitleStyle}>
-                                📋 Summary
-                            </Text>
-                            <Text style={summaryTextStyle}>
-                                {summary}
-                            </Text>
+                            <Text style={sectionTitleStyle}>{t.summary}</Text>
+                            <Text style={summaryTextStyle}>{summary}</Text>
                         </Section>
 
                         <Section style={actionItemsContainerStyle}>
-                            <Text style={sectionTitleStyle}>
-                                ✅ Action Items
-                            </Text>
+                            <Text style={sectionTitleStyle}>{t.actionItems}</Text>
                             {actionItems.length > 0 ? (
                                 actionItems.map((item) => (
-                                    <Text key={item.id} style={actionItemStyle}>
-                                        • {item.text}
-                                    </Text>
+                                    <Text key={item.id} style={actionItemStyle}>• {item.text}</Text>
                                 ))
                             ) : (
-                                <Text style={noActionItemsStyle}>
-                                    No action items recorded
-                                </Text>
+                                <Text style={noActionItemsStyle}>{t.noActionItems}</Text>
                             )}
                         </Section>
 
                         <Section style={buttonContainerStyle}>
-                            <Button
-                                href={`${baseUrl}/meeting/${meetingId}`}
-                                style={buttonStyle}
-                            >
-                                View Full Meeting Details
-                            </Button>
+                            <Button href={`${baseUrl}/meeting/${meetingId}`} style={buttonStyle}>{t.viewDetails}</Button>
                         </Section>
 
                     </Section>
 
                     <Hr style={hrStyle} />
                     <Section style={footerStyle}>
-                        <Text style={footerTextStyle}>
-                            Sent by Meeting Bot • Automated meeting summary service
-                        </Text>
-                        <Text style={footerTextStyle}>
-                            Need help? Contact support
-                        </Text>
+                        <Text style={footerTextStyle}>{t.sentBy}</Text>
+                        <Text style={footerTextStyle}>{t.needHelp}</Text>
                     </Section>
 
                 </Container>

@@ -1,6 +1,17 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Check, Eye, Share2, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
@@ -28,6 +39,10 @@ function MeetingHeader({
   const [isPosting, setIsPosting] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareEmail, setShareEmail] = useState('')
+  const [shareLang, setShareLang] = useState<'en'|'fr'|'es'|'de'|'pt'|'it'>('en')
+  const [isSharing, setIsSharing] = useState(false)
   const router = useRouter()
 
   const handlePostToSlack = async () => {
@@ -59,19 +74,35 @@ function MeetingHeader({
   }
 
   const handleShare = async () => {
-    if (!meetingId) return
+    // open share modal for email entry
+    setShowShareModal(true)
+  }
+
+  const submitShare = async () => {
+    if (!meetingId || !shareEmail.includes('@')) {
+      toast('Invalid email')
+      return
+    }
     try {
-      const shareUrl = `${window.location.origin}/meeting/${meetingId}`
-      await navigator.clipboard.writeText(shareUrl)
-
-      setCopied(true)
-      toast(`✅ ${t('linkCopied')}`, {
-        action: { label: 'OK', onClick: () => {} },
+      setIsSharing(true)
+      const res = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meetingId, email: shareEmail, language: shareLang }),
       })
-
-      setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      console.error('failed to copy:', error)
+      const j = await res.json()
+      if (res.ok) {
+        toast(`✅ ${t('share_sent') || 'Shared'}`)
+        setShowShareModal(false)
+        setShareEmail('')
+      } else {
+        toast(j.error || 'Failed to share')
+      }
+    } catch (err) {
+      console.error('share error', err)
+      toast('Failed to share')
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -118,23 +149,64 @@ function MeetingHeader({
             {isPosting ? t('posting') : t('postToSlack')}
           </Button>
 
-          <Button
-            onClick={handleShare}
-            variant="outline"
-            className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-foreground text-sm cursor-pointer"
-          >
-            {copied ? (
-              <>
-                <Check className="h-4 w-4" />
-                {t('copied')}
-              </>
-            ) : (
-              <>
-                <Share2 className="h-4 w-4" />
-                {t('share')}
-              </>
-            )}
-          </Button>
+          <>
+            <Button
+              onClick={handleShare}
+              variant="outline"
+              className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors text-foreground text-sm cursor-pointer"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  {t('copied')}
+                </>
+              ) : (
+                <>
+                  <Share2 className="h-4 w-4" />
+                  {t('share')}
+                </>
+              )}
+            </Button>
+
+            <Dialog open={showShareModal} onOpenChange={(o) => setShowShareModal(o)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('share')}</DialogTitle>
+                  <DialogDescription>Enter email and choose language for the shared summary</DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Email</label>
+                    <Input value={shareEmail} onChange={(e:any) => setShareEmail(e.target.value)} placeholder="friend@example.com" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Language</label>
+                    <Select onValueChange={(v) => setShareLang(v as any)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={shareLang} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="fr">Français</SelectItem>
+                        <SelectItem value="es">Español</SelectItem>
+                        <SelectItem value="de">Deutsch</SelectItem>
+                        <SelectItem value="pt">Português</SelectItem>
+                        <SelectItem value="it">Italiano</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button onClick={submitShare} disabled={isSharing}>{isSharing ? 'Sending...' : t('share')}</Button>
+                  <DialogClose asChild>
+                    <Button variant="ghost">Cancel</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
 
           <Button
             onClick={handleDelete}

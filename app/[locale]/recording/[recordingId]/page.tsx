@@ -679,10 +679,13 @@ export default function RecordingDetailPage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <Button variant="outline" size="sm" onClick={handleDelete} className="border-red-500/30 text-red-400">
-              <Trash2 className="w-4 h-4 mr-2" />
-              {t('delete')}
-            </Button>
+            <div className="flex gap-2">
+              <ShareButton />
+              <Button variant="outline" size="sm" onClick={handleDelete} className="border-red-500/30 text-red-400">
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t('delete')}
+              </Button>
+            </div>
           </div>
 
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
@@ -1117,5 +1120,73 @@ export default function RecordingDetailPage() {
 
       
     </div>
+  )
+}
+
+function ShareButton() {
+  const [open, setOpen] = React.useState(false)
+  const [email, setEmail] = React.useState('')
+  const [lang, setLang] = React.useState<'en'|'fr'|'es'|'de'|'pt'|'it'>('en')
+  const [loading, setLoading] = React.useState(false)
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const doShare = async () => {
+    // recordingId is available via URL params in parent scope, but keep simple: extract from location
+    const parts = window.location.pathname.split('/')
+    const recordingId = parts[parts.length - 1]
+    if (!email.includes('@')) { toast({ title: 'Invalid email', variant: 'destructive' }); return }
+    try {
+      setLoading(true)
+      const res = await fetch('/api/share', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ meetingId: recordingId, email, language: lang }) })
+      const j = await res.json()
+      if (res.ok) {
+        toast({ title: 'Shared' })
+        setOpen(false)
+        setEmail('')
+      } else {
+        toast({ title: j.error || 'Failed to share', variant: 'destructive' })
+      }
+    } catch (err) {
+      console.error(err)
+      toast({ title: 'Failed to share', variant: 'destructive' })
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="border-violet-500/30">
+        <Mail className="w-4 h-4 mr-2" />
+        Share
+      </Button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share recording</DialogTitle>
+            <DialogDescription>Enter recipient email and language</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="friend@example.com" className="w-full p-2 rounded bg-black/20 border border-border" />
+            <select value={lang} onChange={(e:any) => setLang(e.target.value)} className="w-full p-2 rounded bg-black/20 border border-border">
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+              <option value="es">Español</option>
+              <option value="de">Deutsch</option>
+              <option value="pt">Português</option>
+              <option value="it">Italiano</option>
+            </select>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={doShare} disabled={loading}>{loading ? 'Sending...' : 'Send'}</Button>
+            <DialogClose asChild>
+              <Button variant="ghost">Cancel</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

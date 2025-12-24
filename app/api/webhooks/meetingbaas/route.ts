@@ -1,7 +1,6 @@
 import { processMeetingTranscript } from "@/lib/ai-processor";
 import { prisma } from "@/lib/db";
 import { sendMeetingSummaryEmail } from "@/lib/email-service";
-import { sendMeetingSummaryEmailFr } from "@/lib/email-service-french";
 import { processTranscript } from "@/lib/rag";
 import { incrementMeetingUsage } from "@/lib/usage";
 import { NextRequest, NextResponse } from "next/server";
@@ -67,7 +66,6 @@ export async function POST(request: NextRequest) {
                     }
 
                     try {
-                        if(lang === "en"){
                         await sendMeetingSummaryEmail({
                             userEmail: meeting.user.email,
                             userName: meeting.user.name || 'User',
@@ -75,41 +73,21 @@ export async function POST(request: NextRequest) {
                             summary: processed.summary,
                             actionItems: processed.actionItems,
                             meetingId: meeting.id,
-                            meetingDate: meeting.startTime.toLocaleDateString()
-                        })}
-                        else {
-                            await sendMeetingSummaryEmailFr({
-                            userEmail: meeting.user.email,
-                            userName: meeting.user.name || 'User',
-                            meetingTitle: meeting.title,
-                            summary: processed.summary,
-                            actionItems: processed.actionItems,
-                            meetingId: meeting.id,
-                            meetingDate: meeting.startTime.toLocaleDateString()
-                        })  
-                        }
-                        for(let i =0;i<meeting.user.subaccounts.length;i++){
-                        if(lang === "en"){
-                        await sendMeetingSummaryEmail({
-                            userEmail: meeting.user.subaccounts[i].email,
-                            userName: meeting.user.subaccounts[i].name || 'User',
-                            meetingTitle: meeting.title,
-                            summary: processed.summary,
-                            actionItems: processed.actionItems,
-                            meetingId: meeting.id,
-                            meetingDate: meeting.startTime.toLocaleDateString()
-                        })}
-                        else {
-                            await sendMeetingSummaryEmailFr({
-                            userEmail: meeting.user.email,
-                            userName: meeting.user.subaccounts[i].name || 'User',
-                            meetingTitle: meeting.title,
-                            summary: processed.summary,
-                            actionItems: processed.actionItems,
-                            meetingId: meeting.id,
-                            meetingDate: meeting.startTime.toLocaleDateString()
-                        })  
-                        }
+                            meetingDate: meeting.startTime.toLocaleDateString(),
+                            language: (lang as any) || 'en'
+                        })
+
+                        for (let i = 0; i < meeting.user.subaccounts.length; i++) {
+                            await sendMeetingSummaryEmail({
+                                userEmail: meeting.user.subaccounts[i].email,
+                                userName: meeting.user.subaccounts[i].name || 'User',
+                                meetingTitle: meeting.title,
+                                summary: processed.summary,
+                                actionItems: processed.actionItems,
+                                meetingId: meeting.id,
+                                meetingDate: meeting.startTime.toLocaleDateString(),
+                                language: (lang as any) || 'en'
+                            })
                         }
                         await prisma.meeting.update({
                             where: {

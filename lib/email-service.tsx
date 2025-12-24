@@ -16,6 +16,7 @@ interface EmailData {
     }>
     meetingId: string
     meetingDate: string
+    language?: 'en' | 'fr' | 'es' | 'de' | 'pt' | 'it'
 }
 
 export async function sendMeetingSummaryEmail(data: EmailData) {
@@ -28,14 +29,26 @@ export async function sendMeetingSummaryEmail(data: EmailData) {
                 actionItems={data.actionItems}
                 meetingId={data.meetingId}
                 meetingDate={data.meetingDate}
+                language={data.language || 'en'}
             />
         )
 
+        const subjects: Record<string, string> = {
+            en: `Meeting Summary Ready - ${data.meetingTitle}`,
+            fr: `Résumé de la réunion prêt - ${data.meetingTitle}`,
+            es: `Resumen de la reunión listo - ${data.meetingTitle}`,
+            de: `Meeting-Zusammenfassung bereit - ${data.meetingTitle}`,
+            pt: `Resumo da reunião pronto - ${data.meetingTitle}`,
+            it: `Riepilogo della riunione pronto - ${data.meetingTitle}`,
+        }
+
+        const lang = data.language || 'en'
+
         const result = await resend.emails.send({
-            from: 'Meetly <onboarding@resend.dev>',
+            from: 'Conia <onboarding@resend.dev>',
             to: [data.userEmail],
             replyTo: 'lenzyounda@gmail.com',
-            subject: `Meeting Summary Ready - ${data.meetingTitle}`,
+            subject: subjects[lang] || subjects.en,
             html: emailHtml,
             tags: [
                 {

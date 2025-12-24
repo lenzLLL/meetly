@@ -211,11 +211,11 @@ export default function Dashboard() {
                   {t('QuickActions.ExploreIntegrations')}
                 </Button>
                 <Button 
-                  onClick={() => router.push(`/${locale}/meetings`)}
+                  onClick={() => router.push('/recording?conference=true')}
                   className="bg-gradient-to-r from-violet-600/40 to-purple-600/40 border border-violet-500/40 hover:border-violet-500/70 text-white rounded-xl py-6 font-semibold transition-all hover:scale-105 cursor-pointer"
                 >
-                  <Clock className="w-5 h-5 mr-2" />
-                  {t('QuickActions.MeetingHistory')}
+                  <Play className="w-5 h-5 mr-2" />
+                  {t('QuickActions.RecordConference')}
                 </Button>
               </div>
             </div>
