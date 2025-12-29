@@ -254,6 +254,7 @@
       "ActivitySummary": "meetings recorded • upcoming"
     },
     "Loading": "Loading...",
+    "SharedByLabel": "Shared by {name}",
       "NoPastMeetings": "No past meetings",
   "NoPastMeetingsDescription": "Your completed meetings will appear here",
   "Zoom": "Zoom",
@@ -277,6 +278,8 @@
       "NoUpcomingMeetingsMessage": "Your calendar is clear!",
       "Refresh": "Refresh",
       "LoadingEvents": "Loading…",
+      "BotEnabledNotice": "AI bot enabled — it will join this meeting to record and transcribe.",
+      "BotDisabledNotice": "AI bot disabled — it will not join this meeting.",
       "Connecting": "Connecting…",
       "JoinMeeting": "Join Meeting",
       "NoTitle": "No Title",
@@ -285,7 +288,13 @@
     }
   },
     "Meetings":{
-        "suggestion1": "What deadlines were discussed in this meeting?",
+      "SharedBy": "Shared by",
+      "SharedByLabel": "Shared by {name}",
+      "ShareDialogIntro": "Enter recipient email and choose language for the shared summary.",
+      "ShareNotice": "The recipient will gain access to this meeting's details and recordings in their workspace.",
+      "share_sent": "Shared",
+      "AlreadyShared": "This email already has access",
+      "suggestion1": "What deadlines were discussed in this meeting?",
     "suggestion2": "Write a follow-up email for the team",
     "suggestion3": "What suggestions were I given during the discussion?",
     "suggestion4": "Summarize the key action items from this meeting",

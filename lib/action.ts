@@ -124,17 +124,31 @@ export const upsertSubAccount = async (data: SubAccountInput) => {
 
 export const getUserMeetings = async (id:string) => {
     try{
+        const user = await prisma.user.findUnique({ where: { id } })
+        const emailNorm = (user?.email || '').trim().toLowerCase()
+
         const meeting = await prisma.meeting.findMany({
-            where:{
-                user:{
-                    id
-                }
+            where: {
+                OR: [
+                    { user: { id } },
+                    emailNorm ? { sharing: { has: emailNorm } } : undefined,
+                ].filter(Boolean) as any[],
             },
-            include:{
-                permissions:true,
-            }
+            include: {
+                permissions: true,
+                user: true,
+            },
+            orderBy: { startTime: 'desc' },
         })
-        return meeting
+
+        // annotate returned meetings with shared metadata
+        const annotated = meeting.map(m => ({
+            ...m,
+            shared: (m.sharing || []).map((s: string) => (s||'').toLowerCase()).includes(emailNorm),
+            sharedBy: ((m.sharing || []).map((s: string) => (s||'').toLowerCase()).includes(emailNorm)) ? (m.user?.name || m.user?.email || null) : null,
+        }))
+
+        return annotated
     }
     catch(error:any){
         return null

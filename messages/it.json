@@ -257,6 +257,7 @@
     "ActivitySummary": "riunioni registrate • in arrivo"
   },
   "Loading": "Caricamento...",
+  "SharedByLabel": "Condiviso da {name}",
   "NoPastMeetings": "Nessuna riunione passata",
   "NoPastMeetingsDescription": "Le riunioni completate appariranno qui",
   "Zoom": "Zoom",
@@ -289,6 +290,12 @@
 }
 ,
   "Meetings": {
+    "SharedBy": "Condiviso da",
+    "SharedByLabel": "Condiviso da {name}",
+    "ShareDialogIntro": "Inserisci l'email del destinatario e scegli la lingua.",
+    "ShareNotice": "Il destinatario avrà accesso ai dettagli e alle registrazioni di questa riunione nel proprio spazio di lavoro.",
+    "share_sent": "Condiviso",
+  "AlreadyShared": "Questa email ha già accesso",
   "suggestion1": "Quali scadenze sono state discusse in questa riunione?",
   "suggestion2": "Scrivi un'email di follow-up per il team",
   "suggestion3": "Quali suggerimenti mi sono stati dati durante la discussione?",

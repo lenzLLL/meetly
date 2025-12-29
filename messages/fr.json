@@ -268,8 +268,9 @@
     "Welcome": "Bienvenue",
     "ActivitySummary": "réunions enregistrées • à venir"
   },
-  "Loading": "Chargement...",
-  "NoPastMeetings": "Aucune réunion passée",
+    "Loading": "Chargement...",
+    "SharedByLabel": "Partagé par {name}",
+      "NoPastMeetings": "Aucune réunion passée",
   "NoPastMeetingsDescription": "Vos réunions terminées apparaîtront ici",
   "Zoom": "Zoom",
   "GoogleMeet": "Google Meet",
@@ -292,6 +293,8 @@
       "NoUpcomingMeetingsMessage": "Votre calendrier est vide !",
       "Refresh": "Rafraîchir",
       "LoadingEvents": "Chargement…",
+      "BotEnabledNotice": "Bot IA activé — il rejoindra cette réunion pour enregistrer et transcrire.",
+      "BotDisabledNotice": "Bot IA désactivé — il ne rejoindra pas cette réunion.",
       "Connecting": "Connexion…",
       "JoinMeeting": "Rejoindre la réunion",
       "NoTitle": "Sans titre",
@@ -300,7 +303,13 @@
     }
  
   },
-   "Meetings":{
+  "Meetings":{
+    "SharedBy": "Partagé par",
+    "SharedByLabel": "Partagé par {name}",
+    "ShareDialogIntro": "Entrez l'adresse e-mail du destinataire et choisissez la langue.",
+    "ShareNotice": "Le destinataire aura accès aux détails et aux enregistrements de cette réunion dans son espace de travail.",
+    "share_sent": "Partagé",
+    "AlreadyShared": "Cet e-mail a déjà accès",
     "suggestion1": "Quels délais ont été discutés lors de cette réunion ?",
     "suggestion2": "Rédige un e-mail de suivi pour l'équipe",
     "suggestion3": "Quelles suggestions m'ont été faites pendant la discussion ?",

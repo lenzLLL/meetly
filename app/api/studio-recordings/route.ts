@@ -13,17 +13,30 @@ export async function GET() {
       )
     }
 
+    const userRecord = await prisma.user.findUnique({ where: { id: userId } })
+    const emailNorm = (userRecord?.email || '').trim().toLowerCase()
+
     const studioRecordings = await prisma.meeting.findMany({
       where: {
-        userId: userId,
+        OR: [
+          { userId: userId },
+          emailNorm ? { sharing: { has: emailNorm } } : undefined,
+        ].filter(Boolean) as any[],
       },
       orderBy: {
         startTime: 'desc'
       },
+      include: { user: true },
       take: 50,
     })
 
-    return NextResponse.json(studioRecordings)
+    const out = studioRecordings.map(r => ({
+      ...r,
+      shared: (r.sharing || []).map((s: string) => (s||'').toLowerCase()).includes(emailNorm),
+      sharedBy: ((r.sharing || []).map((s: string) => (s||'').toLowerCase()).includes(emailNorm)) ? (r.user?.name || r.user?.email || null) : null,
+    }))
+
+    return NextResponse.json(out)
   } catch (error) {
     console.error('Error fetching studio recordings:', error)
     return NextResponse.json(

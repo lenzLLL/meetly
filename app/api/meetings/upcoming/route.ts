@@ -19,18 +19,26 @@ export async function GET() {
             return NextResponse.json({ error: "User not found" }, { status: 404 })
         }
         const now = new Date()
-        const upcomingMeetings = await prisma.meeting.findMany({
-            where: {
-                userId: userId,
-                startTime: { gte: now },
-                isFromCalendar: true,
-            },
-            orderBy: { startTime: 'asc' },
-            include:{
-               permissions:true
-            },
-            take: 10
-        })
+                const emailNorm = (user.email || '').trim().toLowerCase()
+
+                const upcomingMeetings = await prisma.meeting.findMany({
+                        where: {
+                                AND: [
+                                    { startTime: { gte: now } },
+                                    { isFromCalendar: true }
+                                ],
+                                OR: [
+                                    { userId: userId },
+                                    emailNorm ? { sharing: { has: emailNorm } } : undefined,
+                                ].filter(Boolean) as any[],
+                        },
+                        orderBy: { startTime: 'asc' },
+                        include:{
+                             permissions:true,
+                             user: true
+                        },
+                        take: 10
+                })
 
         const events = upcomingMeetings.map(meeting => ({
             id: meeting.calendarEventId || meeting.id,
@@ -45,6 +53,8 @@ export async function GET() {
             meetingId: meeting.id,
             type:meeting.type,
             permissions:meeting.permissions,
+            shared: (meeting.sharing || []).map((s: string) => (s||'').toLowerCase()).includes((user.email||'').toLowerCase()),
+            sharedBy: ((meeting.sharing || []).map((s: string) => (s||'').toLowerCase()).includes((user.email||'').toLowerCase())) ? (meeting.user?.name || meeting.user?.email || null) : null,
         }))
         
         return NextResponse.json({

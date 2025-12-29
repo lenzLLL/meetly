@@ -11,6 +11,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'meetingId and email required' }, { status: 400 })
     }
 
+    const normalize = (s?: string) => (s || '').trim().toLowerCase()
+    const recipient = normalize(email)
+
+    // basic email validation
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRe.test(recipient)) {
+      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
+    }
+
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -25,36 +34,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    // update sharing array if not present
-    const existing = meeting.sharing || []
-    if (!existing.includes(email)) {
-      await prisma.meeting.update({ where: { id: meetingId }, data: { sharing: { push: email } } })
+    // Avoid adding owner's email
+    const ownerEmail = (meeting.user?.email || '').trim().toLowerCase()
+    if (ownerEmail && ownerEmail === recipient) {
+      return NextResponse.json({ error: 'Cannot share to owner email' }, { status: 400 })
     }
+
+    // update sharing array if not present (normalize existing entries)
+    const existing = (meeting.sharing || []).map((e: string) => (e || '').trim().toLowerCase())
+    if (existing.includes(recipient)) {
+      return NextResponse.json({ error: 'Already shared' }, { status: 409 })
+    }
+
+    await prisma.meeting.update({ where: { id: meetingId }, data: { sharing: { push: recipient } } })
 
     // send email with summary (if recording use recording template)
     try {
       const lang = (language as any) || 'en'
+
+      // normalize actionItems (stored as Json in prisma) and coerce to expected shape
+      const rawActionItems = (meeting.actionItems || []) as any
+      const actionItems: { id: number; text: string }[] = Array.isArray(rawActionItems)
+        ? rawActionItems.map((it: any) => ({ id: Number(it?.id || 0), text: String(it?.text || '') }))
+        : []
+
+      // derive a safe date string
+      const meetingDate = meeting.startTime ? new Date(meeting.startTime).toLocaleString() : new Date().toLocaleString()
+
       if (meeting.type === 'recording') {
+        // keyPoints may not exist in schema; try to read if present
+        // @ts-ignore
+        const keyPoints = Array.isArray((meeting as any).keyPoints) ? (meeting as any).keyPoints : []
+
         await sendRecordingSummaryEmail({
           email,
-          userName: meeting.user.name || 'User',
+          userName: meeting.user?.name || 'User',
           meetingTitle: meeting.title,
           summary: meeting.summary || '',
-          keyPoints: Array.isArray(meeting.actionItems) ? [] : [],
-          actionItems: Array.isArray(meeting.actionItems) ? meeting.actionItems : [],
+          keyPoints,
+          actionItems,
           recordingId: meeting.id,
-          recordingDate: meeting.startTime ? meeting.startTime.toLocaleDateString() : new Date().toLocaleDateString(),
+          recordingDate: meetingDate,
           language: lang,
         })
       } else {
         await sendMeetingSummaryEmail({
           userEmail: email,
-          userName: meeting.user.name || 'User',
+          userName: meeting.user?.name || 'User',
           meetingTitle: meeting.title,
           summary: meeting.summary || '',
-          actionItems: Array.isArray(meeting.actionItems) ? meeting.actionItems : [],
+          actionItems,
           meetingId: meeting.id,
-          meetingDate: meeting.startTime ? meeting.startTime.toLocaleDateString() : new Date().toLocaleDateString(),
+          meetingDate,
           language: lang,
         })
       }

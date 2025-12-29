@@ -21,6 +21,7 @@ interface ChatSidebarProps {
     onInputChange: (value: string) => void
     onSendMessage: () => void
     onSuggestionClick: (suggestion: string) => void
+    hasAudio?: boolean
 }
 
 import { useTranslations } from 'next-intl'
@@ -31,7 +32,8 @@ function ChatSidebar({
     showSuggestions,
     onInputChange,
     onSendMessage,
-    onSuggestionClick
+    onSuggestionClick,
+    hasAudio = false,
 }: ChatSidebarProps) {
     const { canChat } = useUsage()
     const t = useTranslations('Meetings')
@@ -44,7 +46,7 @@ function ChatSidebar({
     ]
 
     return (
-        <div className='w-96 border-l border-gray-800 bg-black/30 backdrop-blur-xl flex flex-col'>
+        <div className={`w-full lg:w-80 border-l border-gray-800 bg-black/30 backdrop-blur-xl flex flex-col ${hasAudio ? 'sm:pb-24' : ''}`}>
 
             {/* Header */}
             <div className='p-4 border-b border-border'>

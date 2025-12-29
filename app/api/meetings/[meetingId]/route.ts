@@ -42,10 +42,18 @@ export async function GET(
         if (!meeting) {
             return NextResponse.json({ error: 'meeting not found' }, { status: 404 })
         }
+        // determine if requester is a recipient in the sharing list
+        const requester = await prisma.user.findUnique({ where: { id: userId || '' } })
+        const requesterEmail = (requester?.email || '').trim().toLowerCase()
+        const sharingList = (meeting?.sharing || []).map((s: string) => (s || '').trim().toLowerCase())
+        const isShared = requesterEmail ? sharingList.includes(requesterEmail) : false
+
         const responseData = {
             ...meeting,
             subaccounts,
-            isOwner: userId === meeting.user?.id
+            isOwner: userId === meeting.user?.id,
+            shared: isShared,
+            sharedBy: isShared ? (meeting?.user?.name || meeting?.user?.email || null) : null,
         }
 
         return NextResponse.json(responseData)

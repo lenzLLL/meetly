@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { SUPPORTED_LOCALES } from '@/lib/buildLocalizedPath'
 import { useUsers } from '@/hooks/use-user'
 import { useToast } from '@/components/ui/use_toast'
 
@@ -40,10 +41,11 @@ function Settings() {
     try {
       const response = await fetch('/api/user/bot-settings')
       if (response.ok) {
-        const data = await response.json()
-        setBotName(data.botName || t('defaultBotName'))
-        setBotImageUrl(data.botImageUrl || null)
-        setUserPlan(data.plan || 'free')
+          const data = await response.json()
+          setBotName(data.botName || t('defaultBotName'))
+          setBotImageUrl(data.botImageUrl || null)
+          setUserPlan(data.plan || 'free')
+          if (data.lang) setValue(data.lang)
       }
     } catch (error) {
       console.error('error fetching bot settings:', error)
@@ -174,15 +176,29 @@ function Settings() {
               <Input id='bot-name' type='text' value={botName} onChange={handleBotNameChange} placeholder={t('botNamePlaceholder')} />
             </div>
               <Label htmlFor='bot-name' className='block text-sm font-medium text-foreground mb-2'>{t('botLang')}</Label>
-                <Select defaultValue={lang} onValueChange={(v) => onChangeValue(v)}>
-               <SelectTrigger className="w-full">
-               <SelectValue placeholder={t('botL')} />
-               </SelectTrigger>
-              <SelectContent>
-               <SelectItem value="fr">{t('botFr')}</SelectItem>
-               <SelectItem value="en">{t('botEn')}</SelectItem>
-              </SelectContent>
-             </Select>
+                <Select value={value || lang} onValueChange={(v) => onChangeValue(v)}>
+                 <SelectTrigger className="w-full">
+                   <SelectValue placeholder={t('botL')} />
+                 </SelectTrigger>
+                 <SelectContent>
+                   {SUPPORTED_LOCALES.map((lc) => {
+                     const labelMap: Record<string, string> = {
+                       en: t('botEn'),
+                       fr: t('botFr'),
+                       es: 'Español',
+                       de: 'Deutsch',
+                       it: 'Italiano',
+                       pt: 'Português',
+                     }
+                     const label = (labelMap as any)[lc] || lc
+                     return (
+                       <SelectItem key={lc} value={lc}>
+                         {label}
+                       </SelectItem>
+                     )
+                   })}
+                 </SelectContent>
+               </Select>
           
             <div className='mb-6 mt-6'>
               <Label htmlFor='bot-image-upload' className='block text-sm font-medium text-foreground mb-2'>{t('botAvatar')}</Label>

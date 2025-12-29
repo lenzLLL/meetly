@@ -128,13 +128,7 @@ function CustomAudioPlayer({
 
 
     return (
-        <div
-            className={`fixed bottom-0 bg-[#1a0b2e]/70 border-t border-border p-5 ${!isOwner
-                ? 'left-0 right-0'
-                : ''
-                }`}
-            style={isOwner ? { left: 'var(--sidebar-width, 16rem)', right: '24rem' } : {}}
-        >
+        <div className={`w-full bg-[#1a0b2e]/70 border-t border-border p-4 sm:p-5 ${isOwner ? 'sm:fixed sm:left-[var(--sidebar-width)] sm:right-24' : 'sm:fixed sm:left-0 sm:right-0'} sm:bottom-0 sm:z-50`}>
             <div style={{ display: 'none' }}>
                 <AudioPlayer
                     ref={playerRef}
@@ -165,97 +159,83 @@ function CustomAudioPlayer({
                 />
             </div>
 
-            <div className={!isOwner ? 'max-w-4xl mx-auto' : ''}>
-                <div className='flex items-center gap-4'>
-                    <div className='flex items-center gap-3'>
-                        <Button
-                            variant='ghost'
-                            size='icon'
-                            onClick={handleSkipBack}
-                            className='hover:bg-muted rounded-lg transition-colors cursor-pointer'
-                        >
+            <div className={!isOwner ? 'max-w-full sm:max-w-4xl mx-auto relative sm:pr-80' : 'w-full relative sm:pr-80'}>
+                {/* Desktop / large: single row with controls, progress, and right-side actions */}
+                <div className='hidden sm:flex items-center justify-between gap-4'>
+                    <div className='flex items-center gap-3 flex-shrink-0'>
+                        <Button variant='ghost' size='icon' onClick={handleSkipBack} className='hover:bg-muted rounded-lg transition-colors cursor-pointer flex-shrink-0'>
                             <SkipBack className='h-4 w-4 text-foreground' />
                         </Button>
-
-                        <Button
-                            variant='default'
-                            size='icon'
-                            onClick={handlePlayPause}
-                            className='bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors cursor-pointer'
-                        >
+                        <Button variant='default' size='icon' onClick={handlePlayPause} className='bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors cursor-pointer flex-shrink-0'>
                             {isPlaying ? <Pause className='h-5 w-5' /> : <Play className='h-5 w-5' />}
-
                         </Button>
-
-                        <Button
-                            variant='ghost'
-                            size='icon'
-                            onClick={handleSkipForward}
-                            className='hover:bg-muted rounded-lg transition-colors cursor-pointer'
-                        >
+                        <Button variant='ghost' size='icon' onClick={handleSkipForward} className='hover:bg-muted rounded-lg transition-colors cursor-pointer flex-shrink-0'>
                             <SkipForward className='h-4 w-4' />
                         </Button>
-
                     </div>
 
-                    <div className='flex-1 flex items-center gap-3'>
-                        <span className='text-sm text-muted-foreground min-w-[40px]'>
-                            {formatTime(currentTime)}
-                        </span>
-
-                        <div
-                            className='flex-1 bg-muted rounded-full h-2 cursor-pointer'
-                            onClick={handleProgressClick}
-                        >
-                            <div
-                                className='bg-primary h-2 rounded-full transition-all duration-300'
-                                style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                            />
+                    <div className='flex-1 mx-2 min-w-0 pr-56 relative z-0' style={{ maxWidth: '640px' }}>
+                        <div className='flex items-center gap-3 min-w-0 overflow-hidden'>
+                            <span className='text-sm text-muted-foreground w-12 text-center flex-shrink-0'>{formatTime(currentTime)}</span>
+                            <div className='flex-1 bg-muted rounded-full h-2 min-w-0' onClick={handleProgressClick}>
+                                <div className='bg-primary h-2 rounded-full transition-all duration-300' style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
+                            </div>
+                            <span className='text-sm text-muted-foreground w-12 text-center flex-shrink-0'>{formatTime(duration)}</span>
                         </div>
-
-                        <span className='text-sm text-muted-foreground min-w-[40px]'>
-                            {formatTime(duration)}
-                        </span>
-
-
                     </div>
 
-                    <div className='flex items-center gap-2'>
-                        <Volume2 className='h-4 w-4 text-muted-foreground' />
-                        <div
-                            className='w-20 bg-muted rounded-full h-2 cursor-pointer'
-                            onClick={handleVolumeChange}
-                        >
-                            <div
-                                className='bg-primary h-2 rounded-full'
-                                style={{ width: `${volume * 100}%` }}
-                            />
-
+                    <div className='flex items-center gap-3 w-56 flex-none justify-end z-30'>
+                        <div className='flex items-center gap-2 flex-none mr-3'>
+                            <Volume2 className='h-4 w-4 text-muted-foreground' />
+                            <div className='w-20 bg-muted rounded-full h-2' onClick={handleVolumeChange}>
+                                <div className='bg-primary h-2 rounded-full' style={{ width: `${volume * 100}%` }} />
+                            </div>
                         </div>
-
+                        <div className='text-sm text-muted-foreground hidden md:block flex-none mr-2'>{t('recording')}</div>
+                        <div className='flex-none hidden sm:block'>
+                            <Button variant='outline' size='sm' onClick={handleDownloadAudio} className='flex gap-2 items-center cursor-pointer text-foreground border border-border px-2 py-1 rounded sm:ml-2 whitespace-nowrap' title={t('downloadAudio')} aria-label={String(t('downloadAudio'))}>
+                                <Download className='h-4 w-4 text-foreground' />
+                                <span className='inline'>{t('downloadAudio')}</span>
+                            </Button>
+                        </div>
+                        <div className='sm:hidden'>
+                            <Button variant='outline' size='sm' onClick={handleDownloadAudio} className='flex gap-2 items-center cursor-pointer text-foreground border border-border px-2 py-1 rounded flex-shrink-0' title={t('downloadAudio')} aria-label={String(t('downloadAudio'))}>
+                                <Download className='h-4 w-4 text-foreground' />
+                            </Button>
+                        </div>
                     </div>
+                </div>
 
-                    <div className='text-sm text-muted-foreground'>
-                        {t('recording')}
+                {/* Mobile: compact controls with full-width progress bar below */}
+                <div className='sm:hidden'>
+                    <div className='flex items-center gap-3 justify-between'>
+                        <div className='flex items-center gap-2'>
+                            <Button variant='ghost' size='icon' onClick={handleSkipBack} className='hover:bg-muted rounded-lg transition-colors cursor-pointer flex-shrink-0'>
+                                <SkipBack className='h-4 w-4 text-foreground' />
+                            </Button>
+                            <Button variant='default' size='icon' onClick={handlePlayPause} className='bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors cursor-pointer flex-shrink-0'>
+                                {isPlaying ? <Pause className='h-5 w-5' /> : <Play className='h-5 w-5' />}
+                            </Button>
+                            <Button variant='ghost' size='icon' onClick={handleSkipForward} className='hover:bg-muted rounded-lg transition-colors cursor-pointer flex-shrink-0'>
+                                <SkipForward className='h-4 w-4' />
+                            </Button>
+                        </div>
+                        <Button variant='outline' size='sm' onClick={handleDownloadAudio} className='flex gap-2 items-center cursor-pointer text-foreground border border-border px-2 py-1 rounded flex-shrink-0' title={t('downloadAudio')} aria-label={String(t('downloadAudio'))}>
+                            <Download className='h-4 w-4 text-foreground' />
+                        </Button>
                     </div>
-
-                    <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={handleDownloadAudio}
-                        className='flex gap-2 cursor-pointer'
-                        title={t('downloadAudio')}
-                    >
-                        <Download className='h-4 w-4' />
-                        <span className='hidden sm:inline'>{t('downloadAudio')}</span>
-                    </Button>
-
+                    <div className='mt-3'>
+                        <div className='flex items-center gap-3'>
+                            <span className='text-sm text-muted-foreground w-12 text-center'>{formatTime(currentTime)}</span>
+                            <div className='flex-1 bg-muted rounded-full h-2' onClick={handleProgressClick}>
+                                <div className='bg-primary h-2 rounded-full transition-all duration-300' style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }} />
+                            </div>
+                            <span className='text-sm text-muted-foreground w-12 text-center'>{formatTime(duration)}</span>
+                        </div>
+                    </div>
                 </div>
 
             </div>
-
-
-
 
         </div>
     )

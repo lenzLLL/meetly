@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { CalendarEvent } from "../hooks/useMeetings";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Video, UserPlus } from "lucide-react";
+import { Clock, Video, RotateCw } from "lucide-react";
+import { useToast } from '@/components/ui/use_toast'
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -42,6 +43,7 @@ export default function UpcomingMeetings({
   o,
 }: UpcomingMeetingsProps) {
   const t = useTranslations("Dashboard.Upcoming");
+  const { toast } = useToast()
 
   const [filter, setFilter] = useState<"all" | "z" | "g" | "o">("all");
 
@@ -55,14 +57,8 @@ export default function UpcomingMeetings({
 
   return (
     <div>
-      {/* Title */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-foreground">{t("UpcomingMeetings")}</h2>
-        <span className="text-sm text-muted-foreground">({filteredEvents.length})</span>
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-2 mb-5">
+      {/* Filters + Refresh */}
+      <div className="flex items-center gap-2 mb-5">
         {[
           { key: "all", label: t("All") },
           { key: "g", label: t("GoogleMeet") },
@@ -83,6 +79,18 @@ export default function UpcomingMeetings({
             {f.label}
           </Button>
         ))}
+        <div className="ml-auto">
+          <Button
+            variant="outline"
+            onClick={onRefresh}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-2 py-1 text-xs rounded-md cursor-pointer"
+            aria-label={t("Refresh")}
+          >
+            <RotateCw className="w-4 h-4" />
+            <span className="hidden sm:inline">{loading ? t("LoadingEvents") : t("Refresh")}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Error */}
@@ -139,20 +147,24 @@ export default function UpcomingMeetings({
         </div>
       ) : filteredEvents.length === 0 ? (
         /* No upcoming meetings */
-        <div className="bg-[#1a0b2e]/70 rounded-lg backdrop-blur-md border border-[#3b186b]/40 p-6 text-center">
+        <div className="bg-[#1a0b2e]/70 rounded-lg backdrop-blur-md border border-[#3b186b]/40 p-6 text-center space-y-4">
           <h3 className="font-medium mb-2 text-foreground text-sm">{t("NoUpcomingMeetings")}</h3>
           <p className="text-muted-foreground text-xs">{t("NoUpcomingMeetingsMessage")}</p>
+
+          <div>
+            <Button
+              onClick={onRefresh}
+              disabled={loading}
+              className="mt-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 hover:scale-[0.98] px-3 py-2 rounded-lg text-sm cursor-pointer"
+            >
+              {loading ? t("LoadingEvents") : t("Refresh")}
+            </Button>
+          </div>
         </div>
       ) : (
         /* Events list */
         <div className="space-y-3">
-          <Button
-            className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:opacity-90 hover:scale-[0.98] px-3 py-2 rounded-lg text-sm mb-4 cursor-pointer transition"
-            onClick={onRefresh}
-            disabled={loading}
-          >
-            {loading ? t("LoadingEvents") : t("Refresh")}
-          </Button>
+          
 
           {filteredEvents.map((event) => {
             const startDate = event.start?.dateTime || event.start?.date || "";
@@ -166,13 +178,26 @@ export default function UpcomingMeetings({
                 <div className="absolute top-3 right-3">
                   <Switch
                     checked={!!botToggles[event.id]}
-                    onCheckedChange={() => onToggleBot(event.id)}
+                    onCheckedChange={(checked) => {
+                      // call parent handler and show user notice
+                      onToggleBot(event.id)
+                      if (checked) {
+                        toast({ title: t('BotEnabledNotice') })
+                      } else {
+                        toast({ title: t('BotDisabledNotice') })
+                      }
+                    }}
                     aria-label={t("ToggleBot")}
                     className="cursor-pointer"
                   />
                 </div>
 
-                <h4 className="font-medium text-sm text-foreground mb-2 pr-12">{event.summary || t("NoTitle")}</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-sm text-foreground mb-2 pr-12">{event.summary || t("NoTitle")}</h4>
+                  {event.shared && event.sharedBy ? (
+                    <span className="text-xs bg-indigo-700/30 text-indigo-200 px-2 py-1 rounded-full">{t('SharedByLabel', { name: event.sharedBy })}</span>
+                  ) : null}
+                </div>
 
                 <div className="space-y-1 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1">
@@ -191,10 +216,6 @@ export default function UpcomingMeetings({
                         {t("JoinMeeting")}
                       </Button>
                     </a>
-
-                    <Button className="flex items-center gap-1 text-xs h-7 cursor-pointer">
-                      <UserPlus className="w-3 h-3" />
-                    </Button>
                   </div>
                 )}
               </div>

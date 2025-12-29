@@ -251,6 +251,7 @@
     "ExploreIntegrations": "Explorar integraciones",
     "RecordConference": "Grabar una conferencia"
   },
+  "SharedByLabel": "Compartido por {name}",
   "StudioRecordings": {
     "Title": "Grabaciones del estudio",
     "NoRecordings": "No hay grabaciones",
@@ -292,7 +293,13 @@
     "AttendeesCount": "👥 {count} participantes"
   }
 },
-"Meetings": {
+  "Meetings": {
+    "SharedBy": "Compartido por",
+    "SharedByLabel": "Compartido por {name}",
+    "ShareDialogIntro": "Introduce el correo electrónico del destinatario y elige el idioma.",
+    "ShareNotice": "El destinatario tendrá acceso a los detalles y grabaciones de esta reunión en su espacio de trabajo.",
+    "share_sent": "Compartido",
+  "AlreadyShared": "Este correo ya tiene acceso",
   "suggestion1": "¿Qué plazos se discutieron en esta reunión?",
   "suggestion2": "Redacta un correo de seguimiento para el equipo",
   "suggestion3": "¿Qué sugerencias me hicieron durante la reunión?",
@@ -325,6 +332,7 @@
   "loading": "Cargando...",
   "posting": "Publicando...",
   "postToSlack": "Publicar en Slack",
+    "SharedByLabel": "Compartido por {name}",
   "copied": "¡Copiado!",
   "share": "Compartir",
   "deleting": "Eliminando...",

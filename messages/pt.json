@@ -258,6 +258,7 @@
     "ActivitySummary": "reuniões gravadas • futuras"
   },
   "Loading": "Carregando...",
+  "SharedByLabel": "Compartilhado por {name}",
   "NoPastMeetings": "Nenhuma reunião passada",
   "NoPastMeetingsDescription": "Suas reuniões concluídas aparecerão aqui",
   "Zoom": "Zoom",
@@ -290,8 +291,14 @@
 }
 
 ,
-   "Meetings": {
-  "suggestion1": "Quais prazos foram discutidos nesta reunião?",
+  "Meetings": {
+    "SharedBy": "Compartilhado por",
+    "SharedByLabel": "Compartilhado por {name}",
+    "ShareDialogIntro": "Insira o e-mail do destinatário e escolha o idioma.",
+    "ShareNotice": "O destinatário terá acesso aos detalhes e gravações desta reunião em seu espaço de trabalho.",
+    "share_sent": "Compartilhado",
+    "AlreadyShared": "Este e-mail já tem acesso",
+    "suggestion1": "Quais prazos foram discutidos nesta reunião?",
   "suggestion2": "Escreva um e-mail de acompanhamento para a equipe",
   "suggestion3": "Quais sugestões me foram dadas durante a discussão?",
   "suggestion4": "Resuma os principais itens de ação desta reunião",

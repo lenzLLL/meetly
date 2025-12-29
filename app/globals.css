@@ -126,3 +126,38 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom thin scrollbar for modern browsers (stronger selectors) */
+:root {
+  --scrollbar-thumb: rgba(0,0,0,0.14);
+  --scrollbar-thumb-dark: rgba(255,255,255,0.12);
+}
+
+html, body, #__next, * {
+  scrollbar-width: thin !important; /* Firefox */
+  -ms-overflow-style: auto !important;
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar, #__next::-webkit-scrollbar, *::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, #__next::-webkit-scrollbar-track, *::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, #__next::-webkit-scrollbar-thumb, *::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb) !important;
+  border-radius: 9999px !important;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+}
+
+.dark html::-webkit-scrollbar-thumb, .dark body::-webkit-scrollbar-thumb, .dark #__next::-webkit-scrollbar-thumb, .dark *::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-dark) !important;
+}
+
+.dark html, .dark body, .dark #__next, .dark * {
+  scrollbar-color: var(--scrollbar-thumb-dark) transparent !important;
+}

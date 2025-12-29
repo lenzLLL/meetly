@@ -63,7 +63,7 @@ function MeetingDetail() {
         isLoading={!userChecked}
       />
 
-      <div className='flex lg:flex-row h-[calc(100vh-73px)]'>
+      <div className='flex flex-col lg:flex-row min-h-[calc(100vh-73px)]'>
         <div
           className={`flex-1 p-6 overflow-auto pb-24 ${
             !userChecked ? '' : !isOwner ? 'max-w-4xl mx-auto' : ''
@@ -73,7 +73,7 @@ function MeetingDetail() {
 
           <div className='mb-8'>
             {/* Onglets */}
-            <div className='flex border-b border-border'>
+            <div className='flex border-b border-border overflow-x-auto'>
               <Button
                 variant='ghost'
                 onClick={() => setActiveTab('summary')}
@@ -248,7 +248,7 @@ function MeetingDetail() {
 
         {/* Chat */}
         {!userChecked ? (
-          <div className='w-90 border-l border-border p-4 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
+          <div className='w-full lg:w-80 border-l border-border p-4 bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020]'>
             <div className='animate-pulse'>
               <div className='h-4 bg-[#1a0b2e]/70 rounded w-1/2 mb-4'></div>
               <div className='space-y-3'>
@@ -259,7 +259,7 @@ function MeetingDetail() {
             </div>
           </div>
         ) : (
-          isOwner && (
+            isOwner && (
             <ChatSidebar
               messages={messages}
               chatInput={chatInput}
@@ -267,6 +267,7 @@ function MeetingDetail() {
               onInputChange={handleInputChange}
               onSendMessage={handleSendMessage}
               onSuggestionClick={handleSuggestionClick}
+              hasAudio={Boolean(meetingData?.recordingUrl)}
             />
           )
         )}

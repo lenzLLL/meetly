@@ -88,6 +88,9 @@ function PastMeetings({
 
                                 <h3 className="font-semibold text-xl text-foreground">
                                     {meeting.title}
+                                    {meeting.shared && meeting.sharedBy ? (
+                                        <span className="ml-3 text-xs bg-indigo-700/20 text-indigo-200 px-2 py-1 rounded-full">{t('SharedByLabel', { name: meeting.sharedBy })}</span>
+                                    ) : null}
                                 </h3>
 
                                 {meeting.attendees && (

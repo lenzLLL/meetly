@@ -256,6 +256,7 @@
     "ActivitySummary": "aufgezeichnete Meetings • bevorstehend"
   },
   "Loading": "Wird geladen...",
+  "SharedByLabel": "Geteilt von {name}",
   "NoPastMeetings": "Keine vergangenen Meetings",
   "NoPastMeetingsDescription": "Deine abgeschlossenen Meetings werden hier angezeigt",
   "Zoom": "Zoom",
@@ -287,6 +288,12 @@
   }
 },
 "Meetings": {
+    "SharedBy": "Geteilt von",
+    "SharedByLabel": "Geteilt von {name}",
+    "ShareDialogIntro": "Geben Sie die E-Mail des Empfängers ein und wählen Sie die Sprache.",
+    "ShareNotice": "Der Empfänger erhält Zugriff auf die Details und Aufnahmen dieses Meetings in seinem Arbeitsbereich.",
+    "share_sent": "Geteilt",
+  "AlreadyShared": "Diese E-Mail hat bereits Zugriff",
   "suggestion1": "Welche Fristen wurden in diesem Meeting besprochen?",
   "suggestion2": "Schreibe eine Follow-up-E-Mail für das Team",
   "suggestion3": "Welche Vorschläge wurden während der Diskussion gemacht?",

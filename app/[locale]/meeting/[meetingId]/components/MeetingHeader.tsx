@@ -25,6 +25,8 @@ interface MeetingHeaderProps {
   actionItems?: string
   isOwner: boolean
   isLoading?: boolean
+  shared?: boolean
+  sharedBy?: string | null
 }
 
 function MeetingHeader({
@@ -34,6 +36,8 @@ function MeetingHeader({
   actionItems,
   isOwner,
   isLoading = false,
+  shared,
+  sharedBy,
 }: MeetingHeaderProps) {
   const t = useTranslations('Meetings')
   const [isPosting, setIsPosting] = useState(false)
@@ -95,6 +99,8 @@ function MeetingHeader({
         toast(`✅ ${t('share_sent') || 'Shared'}`)
         setShowShareModal(false)
         setShareEmail('')
+      } else if (res.status === 409) {
+        toast(t('AlreadyShared') || 'This email already has access', { duration: 4000 })
       } else {
         toast(j.error || 'Failed to share')
       }
@@ -129,8 +135,8 @@ function MeetingHeader({
   }
 
   return (
-    <div className="border-b border-gray-800 bg-black/30 backdrop-blur-xl px-6 py-3.5 flex justify-between items-center">
-      <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+    <div className="border-b border-gray-800 bg-black/30 backdrop-blur-xl px-6 py-3.5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+      <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground truncate">{title}</h1>
 
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -138,7 +144,7 @@ function MeetingHeader({
           {t('loading')}
         </div>
       ) : isOwner ? (
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button
             onClick={handlePostToSlack}
             disabled={isPosting || !meetingId}
@@ -172,13 +178,16 @@ function MeetingHeader({
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{t('share')}</DialogTitle>
-                  <DialogDescription>Enter email and choose language for the shared summary</DialogDescription>
+                  <DialogDescription>{t('ShareDialogIntro')}</DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-muted-foreground">Email</label>
                     <Input value={shareEmail} onChange={(e:any) => setShareEmail(e.target.value)} placeholder="friend@example.com" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('ShareNotice')}</p>
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground">Language</label>
@@ -219,8 +228,16 @@ function MeetingHeader({
         </div>
       ) : (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Eye className="w-4 h-4" />
-          {t('viewingShared')}
+          {shared && sharedBy ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-indigo-700/30 text-indigo-200 px-2 py-1 rounded-full">{t('SharedByLabel', { name: sharedBy })}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Eye className="w-4 h-4" />
+              {t('viewingShared')}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { Bot, DollarSign, Home, Layers3, Settings, Users, Video } from "lucide-react"
+import { Bot, DollarSign, Home, Layers3, Settings, Users, Video, Mic } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useUsage } from "../context/UsageContext"
 import {
@@ -26,7 +26,7 @@ export function AppSidebar() {
 
   const items = [
     { title: t("Home"), url: "/home", icon: Home },
-    { title: t("Recording"), url: "/recording", icon: Home },
+    { title: t("Recording"), url: "/recording", icon: Mic },
     { title: t("Integrations"), url: "/integrations", icon: Layers3 },
     { title: t("Settings"), url: "/settings", icon: Settings },
     { title: t("ChatWithAI"), url: "/chat", icon: Bot },

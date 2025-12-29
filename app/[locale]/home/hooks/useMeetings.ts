@@ -18,8 +18,10 @@ export interface CalendarEvent {
     conferenceData?: any
     botScheduled?: boolean
     meetingId?: string
-    type:String
+    type?: string
     permissions:Subaccount[]
+    shared?: boolean
+    sharedBy?: string | null
     
 }
 
@@ -35,6 +37,8 @@ export interface PastMeeting {
     recordingUrl?: string | null
     speakers?: any
     type?:string
+    shared?: boolean
+    sharedBy?: string | null
 }
 
 export function useMeetings() {

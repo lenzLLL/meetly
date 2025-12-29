@@ -230,8 +230,9 @@ export default function Dashboard() {
                     <div className="p-2 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-lg border border-violet-500/30">
                       <CalendarDays className="w-5 h-5 text-violet-300" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                       {t('Sections.UpcomingMeetings')}
+                      <span className="text-sm text-violet-300/80">({upcomingEvents?.length || 0})</span>
                     </h2>
                   </div>
                   <UpcomingMeetings
@@ -303,7 +304,7 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
-                        {studioRecordings.map((recording: any, idx: number) => (
+                                        {studioRecordings.map((recording: any, idx: number) => (
                           <div
                             key={idx}
                             onClick={() => router.push(`/${locale}/recording/${recording.id}`)}
@@ -317,11 +318,16 @@ export default function Dashboard() {
                                 <h4 className="font-semibold text-pink-200 group-hover:text-white transition-colors">
                                   {recording.title || 'Recording ' + (idx + 1)}
                                 </h4>
-                                <p className="text-xs text-pink-300/60 mt-1">
+                                                <p className="text-xs text-pink-300/60 mt-1">
                                   {recording.startTime || recording.createdAt
                                     ? new Date(recording.startTime || recording.createdAt).toLocaleString(locale as any, { dateStyle: 'medium', timeStyle: 'short' })
                                     : ''}
                                 </p>
+                                                {recording.shared && recording.sharedBy ? (
+                                                  <div className="mt-2">
+                                                    <span className="text-xs bg-pink-500/20 text-pink-200 px-2 py-1 rounded-full">{t('SharedByLabel', { name: recording.sharedBy })}</span>
+                                                  </div>
+                                                ) : null}
                               </div>
                             </div>
                           </div>

@@ -7,7 +7,7 @@ import { useLocale } from 'next-intl'
 import { useRecordingDetail } from './hooks/useRecordingDetail'
 import AppHeader from '@/components/Header'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
 import {
   ArrowLeft,
   Download,
@@ -695,14 +695,7 @@ export default function RecordingDetailPage() {
             <span>{new Date(recordingData.startTime).toLocaleDateString()}</span>
             <span>•</span>
             <span>{new Date(recordingData.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            {recordingData.endTime && (
-              <>
-                <span>•</span>
-                <span>
-                  {t('duration')}: {Math.round((new Date(recordingData.endTime).getTime() - new Date(recordingData.startTime).getTime()) / 60000)} {t('minutes')}
-                </span>
-              </>
-            )}
+            {/* duration removed per request */}
           </div>
         </div>
       </div>
@@ -726,14 +719,7 @@ export default function RecordingDetailPage() {
             <p className="text-white font-semibold">{new Date(recordingData.startTime).toLocaleDateString()}</p>
           </div>
 
-          <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
-            <p className="text-gray-400 text-sm mb-2">{t('duration')}</p>
-            <p className="text-white font-semibold">
-              {recordingData.endTime
-                ? `${Math.round((new Date(recordingData.endTime).getTime() - new Date(recordingData.startTime).getTime()) / 60000)} min`
-                : 'N/A'}
-            </p>
-          </div>
+          {/* duration card removed per request */}
 
           <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
             <p className="text-gray-400 text-sm mb-2">{t('status')}</p>
@@ -1144,6 +1130,8 @@ function ShareButton() {
         toast({ title: 'Shared' })
         setOpen(false)
         setEmail('')
+      } else if (res.status === 409) {
+        toast({ title: 'This email already has access', variant: 'destructive' })
       } else {
         toast({ title: j.error || 'Failed to share', variant: 'destructive' })
       }
