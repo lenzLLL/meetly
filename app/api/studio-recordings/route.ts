@@ -30,7 +30,7 @@ export async function GET() {
       take: 50,
     })
 
-    const out = studioRecordings.map(r => ({
+    const out = studioRecordings.map((r:any) => ({
       ...r,
       shared: (r.sharing || []).map((s: string) => (s||'').toLowerCase()).includes(emailNorm),
       sharedBy: ((r.sharing || []).map((s: string) => (s||'').toLowerCase()).includes(emailNorm)) ? (r.user?.name || r.user?.email || null) : null,

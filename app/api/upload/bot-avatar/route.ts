@@ -2,7 +2,6 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma as db } from '@/lib/db'
 
 function getEnv(name: string) {
     const raw = (process.env as any)[name]
@@ -79,13 +78,6 @@ export async function POST(request: NextRequest) {
             presignedUrl = await getSignedUrl(s3, getCmd, { expiresIn: 3600*5 })
         } catch (err) {
             console.warn('failed to generate presigned url', err)
-        }
-        // Sauvegarde la clé dans la DB pour que `get-avatar` puisse générer
-        // des URLs présignées plus tard.
-        try {
-            await db.user.update({ where: { id: userId }, data: { botImageUrl: fileName } })
-        } catch (dbErr) {
-            console.warn('failed to persist botImageUrl to DB', dbErr)
         }
 
         return NextResponse.json({
