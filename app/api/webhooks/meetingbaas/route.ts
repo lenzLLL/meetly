@@ -77,18 +77,7 @@ export async function POST(request: NextRequest) {
                             language: (lang as any) || 'en'
                         })
 
-                        for (let i = 0; i < meeting.user.subaccounts.length; i++) {
-                            await sendMeetingSummaryEmail({
-                                userEmail: meeting.user.subaccounts[i].email,
-                                userName: meeting.user.subaccounts[i].name || 'User',
-                                meetingTitle: meeting.title,
-                                summary: processed.summary,
-                                actionItems: processed.actionItems,
-                                meetingId: meeting.id,
-                                meetingDate: meeting.startTime.toLocaleDateString(),
-                                language: (lang as any) || 'en'
-                            })
-                        }
+                 
                         await prisma.meeting.update({
                             where: {
                                 id: meeting.id
@@ -111,6 +100,7 @@ export async function POST(request: NextRequest) {
                         data: {
                             summary: processed.summary,
                             actionItems: processed.actionItems,
+                            keypoints: processed.keyPoints,
                             processed: true,
                             processedAt: new Date(),
                             ragProcessed: true,

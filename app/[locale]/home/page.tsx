@@ -8,7 +8,7 @@ import AppHeader from '@/components/Header'
 import PastMeetings from './components/PastMeetings'
 import UpcomingMeetings from './components/UpcomingMeetings'
 import FloatingRecordButton from '@/components/floating-record-button'
-import { Video, Clock, CalendarDays, Users, Mic, Play, Zap } from 'lucide-react'
+import { Video, Clock, CalendarDays, Mic, Play, Zap } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useLocale } from 'next-intl'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,7 @@ export default function Dashboard() {
     directOAuth,
     getAttendeeList,
     getInitials,
-    subaccounts
+    
   } = useMeetings()
 
   // Studio recordings - meetings with type == 'recording'
@@ -49,6 +49,22 @@ export default function Dashboard() {
       fetchStudioRecordings()
     }
   }, [userId])
+
+  // Count of meetings in the last 30 days (past meetings only)
+  const getLast30DaysCount = () => {
+    try {
+      const now = new Date()
+      const cutoff = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      return (pastMeetings || []).filter((m: any) => {
+        const st = new Date(m.startTime)
+        return !isNaN(st.getTime()) && st >= cutoff && st <= now
+      }).length
+    } catch {
+      return 0
+    }
+  }
+
+  const last30Count = getLast30DaysCount()
 
   const fetchStudioRecordings = async () => {
     try {
@@ -86,7 +102,7 @@ export default function Dashboard() {
       value: (pastMeetings?.length || 0) + (upcomingEvents?.length || 0),
       icon: <Video className="h-6 w-6 text-white/90" />,
       color: 'from-violet-600 to-purple-600',
-      trend: '+12%'
+      trend: t('Metrics.InLast30Days', { count: last30Count })
     },
     {
       title: t('Metrics.UpcomingMeetings'),
@@ -103,12 +119,12 @@ export default function Dashboard() {
       trend: 'All time'
     },
     {
-      title: t('Metrics.Subaccounts'),
-      value: subaccounts?.length || 0,
-      icon: <Users className="h-6 w-6 text-white/90" />,
-      color: 'from-violet-600 to-purple-600',
-      trend: 'Active'
-    },
+      title: t('Metrics.Recordings'),
+      value: studioRecordings?.length || 0,
+      icon: <Play className="h-6 w-6 text-white/90" />,
+      color: 'from-pink-600 to-rose-600',
+      trend: 'Studio'
+    }
   ]
 
   const handleMeetingClick = (meetingId: string) => {
@@ -239,7 +255,6 @@ export default function Dashboard() {
                     upcomingEvents={upcomingEvents}
                     connected={connected}
                     error={error}
-                    subaccounts={subaccounts}
                     z={z}
                     g={g}
                     o={o}

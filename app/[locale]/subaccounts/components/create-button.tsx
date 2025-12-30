@@ -40,4 +40,6 @@ const CreateSubaccountButton = ({ className, id, user }: Props) => {
   )
 }
 
-export default CreateSubaccountButton
+export default function CreateSubaccountButton(){
+  return null
+}

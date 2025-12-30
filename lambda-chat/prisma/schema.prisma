@@ -22,7 +22,6 @@ model User {
   googleRefreshToken String?
   googleTokenExpiry  DateTime?
   calendarConnected  Boolean   @default(false)
-  subaccounts Subaccount[]
   
   slackUserId          String?
   slackTeamId          String?
@@ -41,17 +40,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-model Subaccount {
-  id       String    @id
-  clerkId  String    @unique
-  email    String?
-  name     String?
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chatMessagesToday    Int       @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// Subaccount model removed
 model SlackInstallation {
   id            String   @id @default(cuid())
   teamId        String   @unique

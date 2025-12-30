@@ -82,6 +82,7 @@ model Meeting {
   botJoinedAt  DateTime?
   permissions Subaccount[]
   sharing String[]
+  keypoints String[]
   meetingEnded    Boolean @default(false)
   transcriptReady Boolean @default(false)
   transcript      Json?

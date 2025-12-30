@@ -1,8 +1,7 @@
 "use client"
 import { useAuth } from "@clerk/nextjs"
 import { useEffect, useState } from "react"
-import Loading from "../../subaccounts/components/loading"
-import { Subaccount } from "@prisma/client"
+// subaccounts feature removed
 
 export interface CalendarEvent {
     id: string
@@ -19,7 +18,7 @@ export interface CalendarEvent {
     botScheduled?: boolean
     meetingId?: string
     type?: string
-    permissions:Subaccount[]
+ 
     shared?: boolean
     sharedBy?: string | null
     
@@ -46,7 +45,7 @@ export function useMeetings() {
     const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([])
     const [pastMeetings, setPastMeetings] = useState<PastMeeting[]>([])
     const [loading, setLoading] = useState(false)
-    const [subaccounts,setSubaccounts] = useState<Subaccount[]>([])
+    
     const [pastLoading, setPastLoading] = useState(false)
     const [connected, setConnected] = useState(false)
     const [g,setG] = useState(false)
@@ -95,7 +94,6 @@ export function useMeetings() {
             }
 
             setUpcomingEvents(result.events as CalendarEvent[])
-            setSubaccounts(result.subaccounts as Subaccount[])
             const toggles: { [key: string]: boolean } = {}
             result.events.forEach((event: CalendarEvent) => {
                 toggles[event.id] = event.botScheduled ?? true
@@ -246,7 +244,7 @@ export function useMeetings() {
         directOAuth,
         getAttendeeList,
         getInitials,
-        subaccounts,
+        
         z,
         g,
         o

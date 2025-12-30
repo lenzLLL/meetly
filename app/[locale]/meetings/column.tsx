@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Users, Trash, Video } from "lucide-react"
-import { useModal } from "../subaccounts/components/modal_provider"
+import { useRouter } from 'next/navigation'
 import AttendeeList from "./attendees"
 import { useToast } from "@/components/ui/use_toast"
 import CustomModal from "../subaccounts/components/custom_modal"
@@ -12,7 +12,7 @@ import { useTranslations } from "next-intl"
 import React from "react"
 
 function AttendeesCell({ row, t }: { row: any; t: any }) {
-  const { setOpen } = useModal()
+  const router = useRouter()
   const attendees: string[] = Array.isArray(row.original.attendees)
     ? row.original.attendees
     : row.original.attendees
@@ -28,16 +28,7 @@ function AttendeesCell({ row, t }: { row: any; t: any }) {
   return (
     <Button
       className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white border-0 rounded-lg shadow-lg hover:shadow-violet-500/40 transition-all duration-300"
-      onClick={() =>
-        setOpen(
-          <CustomModal
-            title={`${t("AttendeesFor")} "${meetingData.title}"`}
-            subheading={t("ParticipantsList")}
-          >
-            <AttendeeList attendees={attendees} meeting={meetingData} />
-          </CustomModal>
-        )
-      }
+      onClick={() => router.push(`/meeting/${meetingData.id}`)}
     >
       <Users size={16} className="mr-2" />
       {t("View")}

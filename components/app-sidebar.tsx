@@ -30,7 +30,7 @@ export function AppSidebar() {
     { title: t("Integrations"), url: "/integrations", icon: Layers3 },
     { title: t("Settings"), url: "/settings", icon: Settings },
     { title: t("ChatWithAI"), url: "/chat", icon: Bot },
-    { title: t("Subaccounts"), url: "/subaccounts", icon: Users },
+    // Subaccounts removed
     { title: t("Meetings"), url: "/meetings", icon: Video },
     { title: t("Pricing"), url: "/pricing", icon: DollarSign },
   ]

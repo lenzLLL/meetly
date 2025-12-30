@@ -278,75 +278,10 @@ export default function RecordingDetailPage() {
     }
   }, [recordingData])
 
-  // Auto-generate keyPoints on initial recording load if none exist (use transcript only)
-  useEffect(() => {
-    const autoGenerateOnLoad = async () => {
-      if (!recordingData) return
-      // if we already have keyPoints in summary or edit buffer, don't auto-generate
-      if (Array.isArray(summary?.keyPoints) && summary!.keyPoints.length > 0) return
-      if (Array.isArray(editKeyPoints) && editKeyPoints.length > 0) return
-      if (isGeneratingKeyPoints) return
+  // Automatic keyPoints generation on load is disabled.
+  // Key points should be persisted at processing time and read from the DB.
 
-      try {
-        setIsGeneratingKeyPoints(true)
-        const resp = await fetch('/api/ai/generate-keypoints', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcript: recordingData?.transcript, language: originalLanguageRef.current || selectedLanguage || 'fr' }),
-        })
-        if (resp.ok) {
-          const json = await resp.json()
-          const kps = Array.isArray(json.keyPoints) ? json.keyPoints : []
-          if (kps.length > 0) {
-            setSummary((prev) => ({ ...(prev || { summary: '', tasks: [], keyPoints: [] }), keyPoints: kps }))
-            setEditKeyPoints(kps)
-            setKeyPointsSource('ai')
-          }
-        }
-      } catch (err) {
-        console.error('Auto-generate keyPoints on load failed:', err)
-      } finally {
-        setIsGeneratingKeyPoints(false)
-      }
-    }
-
-    autoGenerateOnLoad()
-    // only run when recordingData changes
-  }, [recordingData])
-
-  // When the PDF editor opens, ensure keyPoints are populated by generating from transcript if missing
-  useEffect(() => {
-    const generateForEditor = async () => {
-      if (!showPdfEditor) return
-
-      const hasEditKps = Array.isArray(editKeyPoints) && editKeyPoints.length > 0
-      const hasSummaryKps = Array.isArray(summary?.keyPoints) && summary!.keyPoints.length > 0
-      if (hasEditKps || hasSummaryKps) return
-      if (isGeneratingKeyPoints) return
-
-      try {
-        setIsGeneratingKeyPoints(true)
-        const resp = await fetch('/api/ai/generate-keypoints', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcript: originalTranscriptRef.current || recordingData?.transcript, language: selectedLanguage || 'fr' }),
-        })
-        if (resp.ok) {
-          const json = await resp.json()
-          const newKps = Array.isArray(json.keyPoints) ? json.keyPoints : []
-          setEditKeyPoints(newKps)
-          setKeyPointsSource('ai')
-          setSummary((prev) => ({ ...(prev || { summary: '', tasks: [], keyPoints: [] }), keyPoints: newKps }))
-        }
-      } catch (err) {
-        console.error('Failed to auto-generate key points for PDF editor:', err)
-      } finally {
-        setIsGeneratingKeyPoints(false)
-      }
-    }
-
-    generateForEditor()
-  }, [showPdfEditor, selectedLanguage, recordingData, summary, editKeyPoints, isGeneratingKeyPoints])
+  // Auto-generation for the PDF editor is disabled. The UI will rely on persisted keyPoints.
 
   // Whenever selectedLanguage changes, translate using originals (do not cascade translations)
   useEffect(() => {
@@ -717,6 +652,29 @@ export default function RecordingDetailPage() {
           <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
             <p className="text-gray-400 text-sm mb-2">{t('date')}</p>
             <p className="text-white font-semibold">{new Date(recordingData.startTime).toLocaleDateString()}</p>
+          </div>
+
+          <div className="rounded-lg bg-gradient-to-br from-violet-900/30 to-purple-900/30 border border-violet-500/20 p-4">
+            <p className="text-gray-400 text-sm mb-2">{t('tasks') || 'Tasks'}</p>
+            {
+              (() => {
+                let count = 0
+                try {
+                  if (summary && Array.isArray((summary as any).tasks)) {
+                    count = (summary as any).tasks.length
+                  } else if (Array.isArray((recordingData as any).actionItems)) {
+                    count = (recordingData as any).actionItems.length
+                  } else if (typeof (recordingData as any).actionItems === 'string') {
+                    const parsed = JSON.parse((recordingData as any).actionItems || '[]')
+                    if (Array.isArray(parsed)) count = parsed.length
+                  }
+                } catch (e) {
+                  // ignore parse errors
+                }
+
+                return <p className="text-white font-semibold">{count}</p>
+              })()
+            }
           </div>
 
           {/* duration card removed per request */}

@@ -10,7 +10,6 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
-import { Subaccount } from "@prisma/client";
 import { useTranslations } from "next-intl";
 
 interface UpcomingMeetingsProps {
@@ -21,7 +20,6 @@ interface UpcomingMeetingsProps {
   initialLoading: boolean;
   botToggles: { [key: string]: boolean };
   onRefresh: () => void;
-  subaccounts: Subaccount[];
   onToggleBot: (eventId: string) => void;
   onConnectCalendar: () => void;
   g: boolean;

@@ -1,7 +1,6 @@
 "use server"
 import { prisma } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
-import { Subaccount } from "@prisma/client";
 import { redirect } from "next/navigation";
 type SubAccountInput = {
   id: string
@@ -53,9 +52,6 @@ try{
         where:{
             id:user?.id||""
         },
-        include:{
-            subaccounts:true
-        }
     })
     if(!isUserExist){
         return null
@@ -70,18 +66,7 @@ catch(error:any){
  
 }
 
-export const deleteSubAccount = async ({id}:{id:string}) =>{
-    try{
-        await prisma.subaccount.delete({
-            where:{
-                id
-            }
-        })
-    }
-    catch(error:any){
-        return null
-    }
-}
+// subaccount deletion removed
 
 
 
@@ -106,21 +91,7 @@ export const saveUserLang = async (lang:string) =>{
 
 
 
-export const upsertSubAccount = async (data: SubAccountInput) => {
-  return prisma.subaccount.upsert({
-    where: { id: data.id },
-    update: {
-      name: data.name,
-      email: data.email,
-    },
-    create: {
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      userId: data.userId,
-    },
-  })
-}
+// subaccount upsert removed
 
 export const getUserMeetings = async (id:string) => {
     try{
@@ -135,7 +106,6 @@ export const getUserMeetings = async (id:string) => {
                 ].filter(Boolean) as any[],
             },
             include: {
-                permissions: true,
                 user: true,
             },
             orderBy: { startTime: 'desc' },

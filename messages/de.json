@@ -231,6 +231,8 @@
     "TotalMeetings": "Gesamtzahl der Meetings",
     "UpcomingMeetings": "Bevorstehende Meetings",
     "PastMeetings": "Vergangene Meetings",
+    "Recordings": "Aufnahmen",
+    "InLast30Days": "{count} in den letzten 30 Tagen",
     "Subaccounts": "Unterkonten"
   },
   "Sections": {
@@ -471,6 +473,7 @@
     "transcript": "Transkript",
     "export": "Export"
   },
+  "tasks": "Aufgaben",
   "timer": "Aufnahmezeit",
   "recording_indicator": "Aufnahme läuft...",
   "record_button": "Aufnehmen",

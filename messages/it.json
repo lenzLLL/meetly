@@ -232,6 +232,8 @@
     "TotalMeetings": "Riunioni totali",
     "UpcomingMeetings": "Riunioni in arrivo",
     "PastMeetings": "Riunioni passate",
+    "Recordings": "Registrazioni",
+    "InLast30Days": "{count} negli ultimi 30 giorni",
     "Subaccounts": "Sottoconti"
   },
   "Sections": {
@@ -475,6 +477,7 @@
     "transcript": "Trascrizione",
     "export": "Esporta"
   },
+  "tasks": "Attività",
   "timer": "Tempo di registrazione",
   "recording_indicator": "Registrazione in corso...",
   "record_button": "Registra",
