@@ -145,36 +145,10 @@ export async function exportTranscriptToPdf(
     const html2canvasModule = await import('html2canvas');
     const html2canvas = html2canvasModule.default;
 
-    // If keyPoints not provided, auto-generate up to 25 key points
-    const generateKeyPoints = () => {
-      const maxItems = 25;
-      // Gather source text: prefer summary, else transcript
-      let sourceText = '';
-      if (metadata?.summary) {
-        sourceText = String(metadata.summary);
-      } else if (Array.isArray(transcript)) {
-        sourceText = transcript
-          .map((s: any) => (s.content ? s.content : Array.isArray(s.words) ? s.words.map((w: any) => w.word || w).join(' ') : String(s.words || '')))
-          .join('. ');
-      } else if (typeof transcript === 'string') {
-        sourceText = transcript;
-      }
-
-      // Simple sentence splitter
-      const sentences = sourceText
-        .split(/(?<=[.!?])\s+|\n+/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 20); // avoid tiny fragments
-
-      const uniqueSentences = Array.from(new Set(sentences));
-      const keyPoints = uniqueSentences.slice(0, maxItems);
-
-      return { keyPoints };
-    };
-
-    if ((!metadata?.keyPoints || metadata.keyPoints.length === 0)) {
-      const generated = generateKeyPoints();
-      metadata = Object.assign({}, metadata, { keyPoints: generated.keyPoints });
+    // Do NOT auto-generate keyPoints here to avoid on-demand AI costs.
+    // Prefer using keyPoints provided in metadata (stored in DB). If absent, leave empty.
+    if (!metadata?.keyPoints) {
+      metadata = Object.assign({}, metadata, { keyPoints: [] });
     }
 
     // Create HTML content with professional styling

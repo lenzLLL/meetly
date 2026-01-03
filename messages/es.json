@@ -297,7 +297,6 @@
 },
   "Meetings": {
     "SharedBy": "Compartido por",
-    "SharedByLabel": "Compartido por {name}",
     "ShareDialogIntro": "Introduce el correo electrónico del destinatario y elige el idioma.",
     "ShareNotice": "El destinatario tendrá acceso a los detalles y grabaciones de esta reunión en su espacio de trabajo.",
     "share_sent": "Compartido",

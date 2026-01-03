@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
                         data: {
                             summary: processed.summary,
                             actionItems: processed.actionItems,
-                            keypoints: processed.keyPoints,
+                            keypoints: processed.keyPoints || [],
                             processed: true,
                             processedAt: new Date(),
                             ragProcessed: true,

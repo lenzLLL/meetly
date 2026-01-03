@@ -217,6 +217,15 @@ export default function RecordingDetailPage() {
         parsedSummary = recordingData.summary || ''
       }
 
+      // If keyPoints not present in summary JSON, try reading top-level recordingData.keypoints (DB field)
+      try {
+        if ((!parsedKeyPoints || parsedKeyPoints.length === 0) && Array.isArray((recordingData as any).keypoints)) {
+          parsedKeyPoints = (recordingData as any).keypoints || []
+        }
+      } catch (e) {
+        // ignore
+      }
+
       // Parse action items from Json field
       if (recordingData.actionItems) {
         try {
@@ -278,10 +287,23 @@ export default function RecordingDetailPage() {
     }
   }, [recordingData])
 
-  // Automatic keyPoints generation on load is disabled.
-  // Key points should be persisted at processing time and read from the DB.
+  // Auto-generate keyPoints on initial recording load if none exist (use transcript only)
+  useEffect(() => {
+    // Do not auto-generate keyPoints client-side to avoid runtime AI costs.
+    // Prefer keyPoints stored in the DB (set by processing or on save).
+    if (Array.isArray(summary?.keyPoints) && summary.keyPoints.length > 0) {
+      setKeyPointsSource('db')
+    }
+  }, [recordingData, summary])
 
-  // Auto-generation for the PDF editor is disabled. The UI will rely on persisted keyPoints.
+  // When the PDF editor opens, ensure keyPoints are populated by generating from transcript if missing
+  useEffect(() => {
+    // No client-side generation when opening editor; editor will show DB keyPoints or user edits.
+    if (showPdfEditor && Array.isArray(summary?.keyPoints) && summary.keyPoints.length > 0) {
+      setEditKeyPoints(summary.keyPoints)
+      setKeyPointsSource('db')
+    }
+  }, [showPdfEditor, summary])
 
   // Whenever selectedLanguage changes, translate using originals (do not cascade translations)
   useEffect(() => {
@@ -781,33 +803,9 @@ export default function RecordingDetailPage() {
                   setEditorMode('pdf')
                   setExportTitle(recordingData?.title || '')
 
-                  // If keyPoints are missing, request AI generation
-                  if (!summary?.keyPoints || (Array.isArray(summary.keyPoints) && summary.keyPoints.length === 0)) {
-                      try {
-                      setIsGeneratingKeyPoints(true)
-                      const resp = await fetch('/api/ai/generate-keypoints', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ transcript: recordingData?.transcript, language: selectedLanguage }),
-                      })
-                      if (resp.ok) {
-                        const json = await resp.json()
-                        const newKps = Array.isArray(json.keyPoints) ? json.keyPoints : []
-                        setEditKeyPoints(newKps)
-                        setKeyPointsSource('ai')
-                      } else {
-                        setEditKeyPoints([])
-                      }
-                    } catch (err) {
-                      console.error('Failed to generate key points:', err)
-                      setEditKeyPoints([])
-                    } finally {
-                      setIsGeneratingKeyPoints(false)
-                    }
-                  } else {
-                    setEditKeyPoints(summary?.keyPoints ? [...summary.keyPoints] : [])
-                    setKeyPointsSource(summary?.keyPoints && summary.keyPoints.length > 0 ? 'db' : null)
-                  }
+                  // Populate editor with DB-stored keyPoints (no on-demand AI generation)
+                  setEditKeyPoints(summary?.keyPoints ? [...summary.keyPoints] : [])
+                  setKeyPointsSource(summary?.keyPoints && summary.keyPoints.length > 0 ? 'db' : null)
 
                   setShowPdfEditor(true)
                 }} className="border-violet-500/30">

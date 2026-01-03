@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
         transcript: body.transcript,
         summary: body.summary,
         actionItems: body.actionItems,
+        keypoints: body.keyPoints || [],
         processed: true,
         processedAt: new Date(),
         type: 'recording'
