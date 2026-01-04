@@ -11,7 +11,6 @@ import TranscriptDisplay from './components/TranscriptDisplay'
 import ChatSidebar from './components/ChatSidebar'
 import CustomAudioPlayer from './components/AudioPlayer'
 // Subaccounts UI removed
-import PermissionsModal from '../../meetings/permission.modal'
 import TranscriptControls from './components/TranscriptControls'
 import TranscriptInfo from './components/TranscriptInfo'
 
