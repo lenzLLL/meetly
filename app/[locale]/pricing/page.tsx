@@ -134,7 +134,7 @@ function Pricing() {
           `}</style>
 
           {/* Header */}
-          <div className="max-w-4xl mx-auto text-center mb-20">
+          <div className="max-w-4xl mx-auto text-center mb-32 md:mb-36">
             <h1 
               className="text-5xl md:text-6xl font-bold tracking-tight mb-4 text-glow"
               style={{ animationDelay: '0s' }}
@@ -166,7 +166,7 @@ function Pricing() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-6 items-stretch max-w-6xl mx-auto">
+          <div className="mt-32 md:mt-36 grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-10 items-stretch max-w-6xl mx-auto">
             {plans.map((plan, index) => {
               const isLoading = loading === plan.priceId
               return (
@@ -267,29 +267,7 @@ function Pricing() {
             })}
           </div>
 
-          {/* Bottom CTA */}
-          <div className="mt-24 text-center animate-fade-in" style={{ animationDelay: '1.4s' }}>
-            <p className="text-gray-300 mb-6 text-lg">Still unsure? We'd love to help! 💬</p>
-            <Button className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white border-0 rounded-xl px-8 py-3 text-base font-semibold shadow-lg hover:shadow-violet-500/40 transition-all hover:scale-105">
-              Schedule a Demo
-            </Button>
-          </div>
-
-          {/* Trust indicators */}
-          <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto text-center animate-fade-in" style={{ animationDelay: '1.6s' }}>
-            <div className="p-4 rounded-xl bg-violet-900/20 border border-violet-500/30">
-              <p className="text-2xl font-bold text-violet-300">10K+</p>
-              <p className="text-xs text-gray-400 mt-1">Happy Users</p>
-            </div>
-            <div className="p-4 rounded-xl bg-violet-900/20 border border-violet-500/30">
-              <p className="text-2xl font-bold text-violet-300">4.9⭐</p>
-              <p className="text-xs text-gray-400 mt-1">Rating</p>
-            </div>
-            <div className="p-4 rounded-xl bg-violet-900/20 border border-violet-500/30">
-              <p className="text-2xl font-bold text-violet-300">24/7</p>
-              <p className="text-xs text-gray-400 mt-1">Support</p>
-            </div>
-          </div>
+          {/* Bottom CTA and trust indicators removed for landing parity */}
         </div>
       </div>
     </>

@@ -9,6 +9,7 @@ import IntegrationSection from "@/components/landing/integrationSection";
 import MoreFeaturesSection from "@/components/landing/MoreFeaturesSection";
 import StatsSection from "@/components/landing/StatsSection";
 import StudioFeatures from "@/components/landing/studioFeatures";
+import PricingEmbed from "@/components/landing/PricingEmbed";
 import Image from "next/image";
 import { useAuth } from "@clerk/nextjs";
 import InstallButton from "@/components/install_button";
@@ -34,6 +35,7 @@ export default function Home() {
           <HowItWorksSection/>
           <StatsSection/>
           <MoreFeaturesSection/>
+          <PricingEmbed />
           <CTASection/>
           <Footer/>
           <InstallButton/>
