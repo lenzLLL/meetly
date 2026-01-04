@@ -6,9 +6,9 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { UsageProvider } from "@/context/UsageContext";
 import { ConditionalLayout } from "@/components/conditional-layout";
-import ModalProvider from "./subaccounts/components/modal_provider";
 import { Toaster } from "@/components/ui/toaster";
 import { LocaleHtmlWrapper } from "./locale-html-wrapper";
+import ModalProvider from "@/components/modal_provider";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
