@@ -30,6 +30,7 @@ import {
   CheckCircle,
   FileJson,
   Volume2,
+  Video,
   Settings,
   Upload,
   Upload as UploadIcon,
@@ -1282,6 +1283,70 @@ export default function RecordingPage() {
     }
   }
 
+  // Import video file (extract audio for analysis)
+  const handleVideoImport = async (file: File) => {
+    console.log('handleVideoImport called with:', file.name)
+    try {
+      setIsImportingAudio(true)
+      setAudioImportProgress(10)
+
+      // Try to decode audio directly from the container
+      const arrayBuffer = await file.arrayBuffer()
+      setAudioImportProgress(40)
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      let audioBuffer: AudioBuffer | null = null
+      try {
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      } catch (err) {
+        console.warn('decodeAudioData failed on video container, will fallback to server-side handling', err)
+      }
+
+      if (audioBuffer) {
+        setAudioImportProgress(60)
+        // Render via OfflineAudioContext to get a clean WAV blob
+        const offlineContext = new OfflineAudioContext(
+          audioBuffer.numberOfChannels,
+          audioBuffer.length,
+          audioBuffer.sampleRate,
+        )
+        const source = offlineContext.createBufferSource()
+        source.buffer = audioBuffer
+        source.connect(offlineContext.destination)
+        source.start(0)
+
+        const renderedBuffer = await offlineContext.startRendering()
+        const wavBlob = audioBufferToWav(renderedBuffer)
+        setAudioChunks([wavBlob])
+        setImportedAudioFileName(file.name)
+        setSummary(null)
+        setTasks([])
+        setImportedTranscript('')
+        setAudioImportProgress(100)
+        setTimeout(() => {
+          setIsImportingAudio(false)
+          setAudioImportProgress(0)
+        }, 1000)
+      } else {
+        // Fallback: send the raw video file as a blob to the server and let backend extract audio
+        setAudioChunks([file])
+        setImportedAudioFileName(file.name)
+        setSummary(null)
+        setTasks([])
+        setImportedTranscript('')
+        setAudioImportProgress(100)
+        setTimeout(() => {
+          setIsImportingAudio(false)
+          setAudioImportProgress(0)
+        }, 1000)
+      }
+    } catch (error) {
+      console.error('Error importing video:', error)
+      toast({ title: t('error'), description: t('could_not_import_audio'), variant: 'destructive' })
+      setIsImportingAudio(false)
+      setAudioImportProgress(0)
+    }
+  }
+
   // Import PDF file
   const handlePdfImport = async (file: File) => {
     try {
@@ -1738,7 +1803,7 @@ export default function RecordingPage() {
               )}
 
               {/* Controls */}
-              <div className="flex gap-4 justify-center flex-wrap">
+              <div className="flex gap-4 justify-center flex-wrap items-center">
                 {!isRecording ? (
                   <button
                     onClick={promptAudioSource}
@@ -1788,7 +1853,7 @@ export default function RecordingPage() {
                   <>
                     <button
                       onClick={downloadRecording}
-                      className="px-6 py-3 rounded-full bg-gradient-to-r from-green-700 to-emerald-700 hover:from-green-600 hover:to-emerald-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg"
+                      className="min-w-[180px] h-12 px-4 rounded-full bg-gradient-to-r from-green-700 to-emerald-700 hover:from-green-600 hover:to-emerald-600 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                     >
                       <Download className="h-5 w-5" />
                       {t('download_audio')}
@@ -1796,7 +1861,7 @@ export default function RecordingPage() {
 
                     <button
                       onClick={resetRecording}
-                      className="px-6 py-3 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg"
+                      className="min-w-[180px] h-12 px-4 rounded-full bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                     >
                       <RotateCcw className="h-5 w-5" />
                       {t('reset_button')}
@@ -1808,7 +1873,7 @@ export default function RecordingPage() {
                   <button
                     onClick={analyzeRecording}
                     disabled={isAnalyzing}
-                    className="px-6 py-3 rounded-full bg-gradient-to-r from-blue-700 to-cyan-700 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg"
+                    className="min-w-[180px] h-12 px-4 rounded-full bg-gradient-to-r from-blue-700 to-cyan-700 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                   >
                     {isAnalyzing ? (
                       <>
@@ -1825,29 +1890,101 @@ export default function RecordingPage() {
                 )}
 
                 {!isRecording && audioChunks.length === 0 && !importedTranscript && (
-                  <label className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
-                    <Upload className="h-5 w-5" />
-                    {t('import_audio_pdf')}
-                    <input
-                      type="file"
-                      accept="audio/*,.pdf"
-                      onChange={handleFileImport}
-                      className="hidden"
-                    />
-                  </label>
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    <label className="px-5 py-3 rounded-full bg-gradient-to-r from-sky-700 to-sky-600 hover:from-sky-600 hover:to-sky-500 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
+                      <Volume2 className="h-5 w-5" />
+                      {t('import_audio')}
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleAudioImport(file)
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <label className="px-5 py-3 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
+                      <Video className="h-5 w-5" />
+                      {t('import_video')}
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleVideoImport(file)
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <label className="px-5 py-3 rounded-full bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
+                      <FileText className="h-5 w-5" />
+                      {t('import_pdf')}
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0]
+                          if (file) handlePdfImport(file)
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 )}
 
                 {!isRecording && (audioChunks.length > 0 || importedTranscript) && (
-                  <label className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
-                    <Upload className="h-5 w-5" />
-                    {t('import_file')}
-                    <input
-                      type="file"
-                      accept="audio/*,.pdf"
-                      onChange={handleFileImport}
-                      className="hidden"
-                    />
-                  </label>
+                  <div className="flex flex-wrap gap-3 justify-center">
+                    <label className="px-5 py-3 rounded-full bg-gradient-to-r from-sky-700 to-sky-600 hover:from-sky-600 hover:to-sky-500 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
+                      <Volume2 className="h-5 w-5" />
+                      {t('import_audio')}
+                      <input
+                        type="file"
+                        accept="audio/*"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleAudioImport(file)
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <label className="px-5 py-3 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
+                      <Video className="h-5 w-5" />
+                      {t('import_video')}
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0]
+                          if (file) handleVideoImport(file)
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <label className="px-5 py-3 rounded-full bg-gradient-to-r from-indigo-700 to-purple-700 hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-lg">
+                      <FileText className="h-5 w-5" />
+                      {t('import_pdf')}
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0]
+                          if (file) handlePdfImport(file)
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                 )}
               </div>
             </div>

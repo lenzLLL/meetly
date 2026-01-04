@@ -721,9 +721,18 @@ export default function RecordingDetailPage() {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs: desktop shows horizontal bar; mobile uses compact pills with hidden scrollbar */}
         <div className="mb-6">
-          <div className="flex gap-2 border-b border-violet-500/20 overflow-x-auto">
+          {/* inline styles for pills (kept local to this component) */}
+          <style>{`
+            .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            .hide-scrollbar::-webkit-scrollbar { display: none; }
+            .mobile-pill { white-space: nowrap; display: inline-flex; align-items: center; gap:6px; padding:6px 10px; border-radius:9999px; background: rgba(255,255,255,0.03); color: #d6bcfa; border: 1px solid rgba(124,58,237,0.12); font-size: .9rem; }
+            .mobile-pill.active { background: linear-gradient(90deg,#7c3aed,#a78bfa); color: white; border-color: transparent; }
+          `}</style>
+
+          {/* Desktop / tablet */}
+          <div className="hidden sm:flex gap-2 mb-0 border-b border-violet-500/20 pb-2">
             {(['summary', 'tasks', 'keypoints', 'transcript', 'chat', 'export'] as const).map((tab) => (
               <button
                 key={tab}
@@ -743,6 +752,27 @@ export default function RecordingDetailPage() {
                 {t(`tabs.${tab}`)}
               </button>
             ))}
+          </div>
+
+          {/* Mobile pills */}
+          <div className="flex sm:hidden items-center gap-2 py-2">
+            <div className="flex overflow-x-auto hide-scrollbar gap-2 px-1">
+              {(['summary', 'tasks', 'keypoints', 'transcript', 'chat', 'export'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`mobile-pill ${activeTab === tab ? 'active' : ''}`}
+                >
+                  {tab === 'summary' && <FileText className="inline w-4 h-4" />}
+                  {tab === 'tasks' && <ListChecks className="inline w-4 h-4" />}
+                  {tab === 'keypoints' && <ListChecks className="inline w-4 h-4" />}
+                  {tab === 'transcript' && <FileText className="inline w-4 h-4" />}
+                  {tab === 'chat' && <Brain className="inline w-4 h-4" />}
+                  {tab === 'export' && <Download className="inline w-4 h-4" />}
+                  <span className="ml-2">{t(`tabs.${tab}`)}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
