@@ -1505,12 +1505,33 @@ export default function RecordingPage() {
           background: linear-gradient(90deg, #8B5CF6, #A855F7);
           border-radius: 1px;
         }
+        /* Mobile: hide native scrollbar and add compact pills style */
+        .hide-scrollbar {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        .mobile-pills { -webkit-overflow-scrolling: touch; }
+        .mobile-pill {
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 10px;
+          border-radius: 9999px;
+          background: rgba(255,255,255,0.03);
+          color: #d6bcfa;
+          border: 1px solid rgba(124,58,237,0.12);
+          font-size: 0.9rem;
+        }
+        .mobile-pill.active { background: linear-gradient(90deg,#7c3aed,#a78bfa); color: white; border-color: transparent; }
       `}</style>
 
       <div className="recording-container max-w-5xl w-full mx-auto">
         {/* Title and Settings */}
         <div className="text-center mb-8 pt-6 relative">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent mb-2">
             {t('studio_title')}
           </h1>
           <p className="text-gray-500">{t('studio_subtitle')}</p>
@@ -1579,67 +1600,70 @@ export default function RecordingPage() {
           )}
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-8 border-b border-violet-700/20 overflow-x-auto pb-4">
-          {[
-            { id: 'recording' as TabType, label: t('tabs.recording'), icon: Mic },
-            {
-              id: 'chat' as TabType,
-              label: t('tabs.chat'),
-              icon: Brain,
-              disabled: audioChunks.length === 0 && !importedTranscript,
-            },
-            {
-              id: 'summary' as TabType,
-              label: t('tabs.summary'),
-              icon: FileText,
-              disabled: !summary,
-            },
-            {
-              id: 'tasks' as TabType,
-              label: t('tabs.tasks'),
-              icon: ListChecks,
-              disabled: effectiveTasks.length === 0,
-            },
-            {
-              id: 'topics' as TabType,
-              label: t('tabs.topics'),
-              icon: ListChecks,
-              disabled: !summary,
-            },
-            {
-              id: 'transcript' as TabType,
-              label: t('tabs.transcript'),
-              icon: Brain,
-              disabled: !summary,
-            },
-            {
-              id: 'export' as TabType,
-              label: t('tabs.export'),
-              icon: UploadIcon,
-              disabled: !summary,
-            },
-          ].map((tab) => {
-            const Icon = tab.icon
-            const isDisabled = tab.disabled
-            return (
-              <button
-                key={tab.id}
-                onClick={() => !isDisabled && setActiveTab(tab.id)}
-                disabled={isDisabled}
-                className={`tab-button relative px-4 py-3 flex items-center gap-2 whitespace-nowrap font-semibold transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? 'text-violet-300'
-                    : isDisabled
-                      ? 'text-gray-700 cursor-not-allowed'
-                      : 'text-gray-500 hover:text-gray-400'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                {tab.label}
-              </button>
-            )
-          })}
+        {/* Tabs: desktop uses existing horizontal bar; mobile shows compact pills with hidden scrollbar */}
+        <div className="mb-8">
+          {/* Desktop / tablet */}
+          <div className="hidden sm:flex gap-2 mb-0 border-b border-violet-700/20 pb-4">
+            {[
+              { id: 'recording' as TabType, label: t('tabs.recording'), icon: Mic },
+              { id: 'chat' as TabType, label: t('tabs.chat'), icon: Brain, disabled: audioChunks.length === 0 && !importedTranscript },
+              { id: 'summary' as TabType, label: t('tabs.summary'), icon: FileText, disabled: !summary },
+              { id: 'tasks' as TabType, label: t('tabs.tasks'), icon: ListChecks, disabled: effectiveTasks.length === 0 },
+              { id: 'topics' as TabType, label: t('tabs.topics'), icon: ListChecks, disabled: !summary },
+              { id: 'transcript' as TabType, label: t('tabs.transcript'), icon: Brain, disabled: !summary },
+              { id: 'export' as TabType, label: t('tabs.export'), icon: UploadIcon, disabled: !summary },
+            ].map((tab) => {
+              const Icon = tab.icon
+              const isDisabled = tab.disabled
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => !isDisabled && setActiveTab(tab.id)}
+                  disabled={isDisabled}
+                  className={`tab-button relative px-4 py-3 flex items-center gap-2 whitespace-nowrap font-semibold transition-all duration-300 ${
+                    activeTab === tab.id
+                      ? 'text-violet-300'
+                      : isDisabled
+                        ? 'text-gray-700 cursor-not-allowed'
+                        : 'text-gray-500 hover:text-gray-400'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Mobile pills */}
+          <div className="flex sm:hidden items-center gap-2 py-2">
+            <div className="flex overflow-x-auto hide-scrollbar mobile-pills gap-2 px-1">
+              {[
+                { id: 'recording' as TabType, label: t('tabs.recording'), icon: Mic },
+                { id: 'chat' as TabType, label: t('tabs.chat'), icon: Brain, disabled: audioChunks.length === 0 && !importedTranscript },
+                { id: 'summary' as TabType, label: t('tabs.summary'), icon: FileText, disabled: !summary },
+                { id: 'tasks' as TabType, label: t('tabs.tasks'), icon: ListChecks, disabled: effectiveTasks.length === 0 },
+                { id: 'topics' as TabType, label: t('tabs.topics'), icon: ListChecks, disabled: !summary },
+                { id: 'transcript' as TabType, label: t('tabs.transcript'), icon: Brain, disabled: !summary },
+                { id: 'export' as TabType, label: t('tabs.export'), icon: UploadIcon, disabled: !summary },
+              ].map((tab) => {
+                const Icon = tab.icon
+                const isDisabled = tab.disabled
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => !isDisabled && setActiveTab(tab.id)}
+                    disabled={isDisabled}
+                    className={`mobile-pill ${activeTab === tab.id ? 'active' : ''} ${isDisabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    aria-label={String(tab.label)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="truncate">{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Tab Content */}
@@ -1700,7 +1724,7 @@ export default function RecordingPage() {
               <div className="text-center">
                 <div className="inline-block bg-gradient-to-r from-violet-800/20 to-purple-800/20 border border-violet-700/25 rounded-xl px-8 py-4 backdrop-blur-md">
                   <p className="text-gray-500 text-sm mb-1">{t('timer')}</p>
-                  <p className="text-4xl font-bold font-mono text-violet-200">{formatTime(recordedTime)}</p>
+                  <p className="text-2xl sm:text-4xl font-bold font-mono text-violet-200">{formatTime(recordedTime)}</p>
                 </div>
               </div>
 

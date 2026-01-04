@@ -167,14 +167,14 @@ export default function Dashboard() {
         <div className="p-6 sm:p-8 border-b border-violet-500/20 animate-fade-in">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
                 {t('Hero.Welcome')}
               </h1>
               <div className="p-2 bg-gradient-to-br from-violet-600/30 to-purple-600/30 rounded-lg border border-violet-500/30 cursor-pointer hover:scale-110 transition-transform">
                 <Mic className="w-8 h-8 text-violet-300" />
               </div>
             </div>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-base sm:text-lg">
               {pastMeetings?.length || 0} {t('Hero.ActivitySummary').split('•')[0].trim()} • {upcomingEvents?.length || 0} {t('Hero.ActivitySummary').split('•')[1].trim()}
             </p>
           </div>
@@ -199,7 +199,7 @@ export default function Dashboard() {
                       </div>
                       <div>
                         <p className="text-sm text-violet-300/80">{metric.title}</p>
-                        <p className="text-3xl font-bold">{metric.value}</p>
+                        <p className="text-2xl sm:text-3xl font-bold">{metric.value}</p>
                         <p className="text-xs text-violet-300/50 mt-1">{metric.trend}</p>
                       </div>
                     </div>

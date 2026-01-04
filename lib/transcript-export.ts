@@ -139,6 +139,13 @@ export async function exportTranscriptToPdf(
   };
 
   const l = labels[language] || labels.en;
+  // Log invocation for debugging intermittent export issues
+  try {
+    // eslint-disable-next-line no-console
+    console.log('[exportTranscriptToPdf] called', { meetingTitle, language, skipTranscript, metadata });
+  } catch (e) {
+    // ignore
+  }
 
   try {
     const { jsPDF } = await import('jspdf');
@@ -341,7 +348,8 @@ export async function exportTranscriptToPdf(
           // Display text
           const textEl = document.createElement('p');
           textEl.textContent = displayText;
-          textEl.style.margin = '0';
+          // ensure paragraphs keep a bottom margin so lines aren't cut between PDF pages
+          textEl.style.margin = '0 0 12px 0';
           textEl.style.marginLeft = '15px';
           textEl.style.color = '#555';
           textEl.style.whiteSpace = 'pre-wrap';
@@ -354,6 +362,8 @@ export async function exportTranscriptToPdf(
         para.textContent = transcript;
         para.style.whiteSpace = 'pre-wrap';
         para.style.wordWrap = 'break-word';
+        // ensure paragraph bottom spacing for consistent PDF output
+        para.style.margin = '0 0 12px 0';
         transcriptEl.appendChild(para);
       }
 
@@ -391,7 +401,8 @@ export async function exportTranscriptToPdf(
   ul { margin: 0 0 30px 40px; padding: 0; }
   li { margin-bottom: 10px; font-size: 18px; }
   strong { color: #7c3aed; display: block; margin-bottom: 4px; }
-  p { margin: 0; color: #555; white-space: pre-wrap; word-wrap: break-word; font-size: 16px; }
+  /* ensure paragraphs have vertical spacing so PDF pages don't collapse lines */
+  p { margin: 0 0 12px 0; color: #555; white-space: pre-wrap; word-wrap: break-word; font-size: 16px; }
 </style>
 </head>
 <body></body>
@@ -402,19 +413,25 @@ export async function exportTranscriptToPdf(
     const clone = idoc.importNode(htmlContent, true);
     idoc.body.appendChild(clone);
 
-    // Wait for iframe to render
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for iframe to render (slightly longer to avoid races on slow environments)
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     // Convert iframe to canvas
-    const canvas = await html2canvas(clone as any, {
-      backgroundColor: 'white',
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      windowHeight: (clone as HTMLElement).scrollHeight,
-      windowWidth: (clone as HTMLElement).scrollWidth,
-    });
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await html2canvas(clone as any, {
+        backgroundColor: 'white',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        windowHeight: (clone as HTMLElement).scrollHeight,
+        windowWidth: (clone as HTMLElement).scrollWidth,
+      });
+    } catch (err) {
+      try { console.error('[exportTranscriptToPdf] html2canvas failed', err); } catch (e) {}
+      throw err;
+    }
 
     // Remove iframe
     document.body.removeChild(iframe);
@@ -430,22 +447,86 @@ export async function exportTranscriptToPdf(
 
     const pageWidth = 210; // A4 width in mm
     const pageHeight = 297; // A4 height in mm
-    const pageMargin = 15; // bottom/top/left/right margin in mm
-    const contentWidth = pageWidth - 2 * pageMargin;
+    const pageLeftRightMargin = 15; // left/right margin in mm
+    const pageTopMargin = 15; // top margin in mm
+    // make bottom padding equal to top margin for consistent spacing on every page
+    const pageBottomPadding = pageTopMargin;
+    const contentWidth = pageWidth - 2 * pageLeftRightMargin;
     const imgWidth = contentWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width; // height in mm
 
-    const usablePageHeight = pageHeight - 2 * pageMargin;
-    const totalPages = Math.max(1, Math.ceil(imgHeight / usablePageHeight));
+    // add a small overlap when slicing the large canvas into PDF pages to avoid cutting lines
+    const usablePageHeight = pageHeight - pageTopMargin - pageBottomPadding;
+    const overlap = 8; // mm overlap to prevent text cutoff between pages
+    const sliceHeight = Math.max(usablePageHeight - overlap, usablePageHeight * 0.9);
+    const totalPages = Math.max(1, Math.ceil((imgHeight + overlap) / sliceHeight));
 
-    for (let i = 0; i < totalPages; i++) {
-      // y offset moves the large image up by one "page" each iteration
-      const yOffset = pageMargin - i * usablePageHeight;
-      pdf.addImage(imgData, 'PNG', pageMargin, yOffset, imgWidth, imgHeight);
+    try {
+      // Slice the large canvas into page-sized images so margins are enforced on every page
+      let position = 0; // position in mm down the content
+      for (let i = 0; i < totalPages; i++) {
+        // convert mm position to source pixel Y on the canvas
+        const pxPerMm = canvas.width / imgWidth;
+        const sourceY = Math.round(position * pxPerMm);
+        const sourceHeight = Math.min(
+          canvas.height - sourceY,
+          Math.round(usablePageHeight * pxPerMm)
+        );
 
-      // footer intentionally left blank (no page annotation)
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
 
-      if (i < totalPages - 1) pdf.addPage();
+        const ctx = pageCanvas.getContext('2d');
+        if (!ctx) break;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+
+        ctx.drawImage(
+          canvas,
+          0,
+          sourceY,
+          canvas.width,
+          sourceHeight,
+          0,
+          0,
+          canvas.width,
+          sourceHeight
+        );
+
+        const pageImg = pageCanvas.toDataURL('image/png');
+
+        pdf.addImage(
+          pageImg,
+          'PNG',
+          pageLeftRightMargin,
+          pageTopMargin,
+          imgWidth,
+          (sourceHeight * imgWidth) / canvas.width
+        );
+
+        position += usablePageHeight;
+
+        if (i < totalPages - 1) pdf.addPage();
+      }
+
+      // add page numbers in footer
+      try {
+        const pageCount = pdf.getNumberOfPages();
+        pdf.setFontSize(9);
+        pdf.setTextColor(150);
+        for (let p = 1; p <= pageCount; p++) {
+          pdf.setPage(p);
+          pdf.text(`${p} / ${pageCount}`, pageWidth / 2, pageHeight - 8, { align: 'center' } as any);
+        }
+      } catch (e) {
+        // non-fatal if footer fails
+        try { console.warn('[exportTranscriptToPdf] footer numbering failed', e); } catch (er) {}
+      }
+    } catch (err) {
+      try { console.error('[exportTranscriptToPdf] pdf.addImage/page-slice failed', { totalPages, imgWidth, imgHeight, pageLeftRightMargin, pageTopMargin, sliceHeight }, err); } catch (e) {}
+      throw err;
     }
 
     // Save PDF
@@ -485,9 +566,12 @@ export async function exportTranscriptToPdf(
 
       const pageHeight = 297;
       const pageWidth = 210;
-      const margin = 15;
-      const contentWidth = pageWidth - 2 * margin;
-      let yPos = margin;
+      const pageLeftRightMargin = 15;
+      const pageTopMargin = 15;
+      // make bottom padding equal to top margin for consistent spacing on every page
+      const pageBottomPadding = pageTopMargin;
+      const contentWidth = pageWidth - 2 * pageLeftRightMargin;
+      let yPos = pageTopMargin;
       const lineHeight = 7;
       const fontSize = 11;
 
@@ -496,49 +580,49 @@ export async function exportTranscriptToPdf(
       pdf.setTextColor(124, 58, 237); // violet
       const titleLines = pdf.splitTextToSize(meetingTitle, contentWidth);
       titleLines.forEach((line: string) => {
-        pdf.text(line, margin, yPos);
+        pdf.text(line, pageLeftRightMargin, yPos);
         yPos += lineHeight + 2;
       });
       yPos += 5;
 
       // Separator
       pdf.setDrawColor(124, 58, 237);
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
+      pdf.line(pageLeftRightMargin, yPos, pageWidth - pageLeftRightMargin, yPos);
       yPos += 5;
 
       // Metadata
       pdf.setFontSize(10);
       pdf.setTextColor(100, 100, 100);
       if (metadata?.date) {
-        pdf.text(`${l.date}: ${metadata.date}`, margin, yPos);
+        pdf.text(`${l.date}: ${metadata.date}`, pageLeftRightMargin, yPos);
         yPos += lineHeight;
       }
       if (metadata?.speakers && metadata.speakers.length > 0) {
         const speakersLine = `${l.participants}: ${metadata.speakers.join(', ')}`;
         const speakersLines = pdf.splitTextToSize(speakersLine, contentWidth);
         speakersLines.forEach((line: string) => {
-          pdf.text(line, margin, yPos);
+          pdf.text(line, pageLeftRightMargin, yPos);
           yPos += lineHeight;
         });
       }
       yPos += 5;
 
       // Summary
-      if (metadata?.summary) {
+        if (metadata?.summary) {
         pdf.setFontSize(14);
         pdf.setTextColor(124, 58, 237);
-        pdf.text(l.summary, margin, yPos);
+        pdf.text(l.summary, pageLeftRightMargin, yPos);
         yPos += lineHeight + 2;
 
         pdf.setFontSize(10);
         pdf.setTextColor(0, 0, 0);
         const summaryLines = pdf.splitTextToSize(metadata.summary, contentWidth);
         summaryLines.forEach((line: string) => {
-          if (yPos > pageHeight - margin) {
+          if (yPos > pageHeight - pageBottomPadding) {
             pdf.addPage();
-            yPos = margin;
+            yPos = pageTopMargin;
           }
-          pdf.text(line, margin, yPos);
+          pdf.text(line, pageLeftRightMargin, yPos);
           yPos += lineHeight;
         });
         yPos += 5;
@@ -547,11 +631,11 @@ export async function exportTranscriptToPdf(
       // Transcript
       pdf.setFontSize(14);
       pdf.setTextColor(124, 58, 237);
-      if (yPos > pageHeight - margin) {
+      if (yPos > pageHeight - pageBottomPadding) {
         pdf.addPage();
-        yPos = margin;
+        yPos = pageTopMargin;
       }
-      pdf.text(l.transcript, margin, yPos);
+      pdf.text(l.transcript, pageLeftRightMargin, yPos);
       yPos += lineHeight + 2;
 
       pdf.setFontSize(10);
@@ -560,11 +644,11 @@ export async function exportTranscriptToPdf(
       if (typeof transcript === 'string') {
         const lines = pdf.splitTextToSize(transcript, contentWidth);
         lines.forEach((line: string) => {
-          if (yPos > pageHeight - margin) {
+          if (yPos > pageHeight - pageBottomPadding) {
             pdf.addPage();
-            yPos = margin;
+            yPos = pageTopMargin;
           }
-          pdf.text(line, margin, yPos);
+          pdf.text(line, pageLeftRightMargin, yPos);
           yPos += lineHeight;
         });
       } else if (Array.isArray(transcript)) {
@@ -572,23 +656,23 @@ export async function exportTranscriptToPdf(
           const speaker = seg.speaker || 'Speaker';
           const text = seg.content || (Array.isArray(seg.words) ? seg.words.map((w: any) => w.word || w).join(' ') : seg.words || '');
 
-          if (yPos > pageHeight - margin) {
+          if (yPos > pageHeight - pageBottomPadding) {
             pdf.addPage();
-            yPos = margin;
+            yPos = pageTopMargin;
           }
 
           pdf.setTextColor(124, 58, 237);
-          pdf.text(`${speaker}:`, margin, yPos);
+          pdf.text(`${speaker}:`, pageLeftRightMargin, yPos);
           yPos += lineHeight;
 
           pdf.setTextColor(0, 0, 0);
           const textLines = pdf.splitTextToSize(text, contentWidth - 5);
           textLines.forEach((line: string) => {
-            if (yPos > pageHeight - margin) {
+            if (yPos > pageHeight - pageBottomPadding) {
               pdf.addPage();
-              yPos = margin;
+              yPos = pageTopMargin;
             }
-            pdf.text(line, margin + 5, yPos);
+            pdf.text(line, pageLeftRightMargin + 5, yPos);
             yPos += lineHeight;
           });
           yPos += 2;
@@ -860,21 +944,38 @@ export async function exportTranscriptToPdfBilingual(
     }
 
     htmlContent.appendChild(tableEl);
+    // add minimal styles to ensure paragraph and cell spacing is preserved
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = `p { margin: 0 0 12px 0; } table { border-collapse: collapse; } th, td { padding: 10px; }`;
+    htmlContent.insertBefore(styleEl, htmlContent.firstChild);
     document.body.appendChild(htmlContent);
 
-    // Wait for rendering
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Wait for rendering (slightly longer to avoid races on slow environments)
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    try {
+      // eslint-disable-next-line no-console
+      console.log('[exportTranscriptToPdfBilingual] called', { meetingTitle, originalLanguage, targetLanguage });
+    } catch (e) {
+      // ignore
+    }
 
     // Convert to canvas
-    const canvas = await html2canvas(htmlContent, {
-      backgroundColor: 'white',
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      windowHeight: htmlContent.scrollHeight,
-      windowWidth: htmlContent.scrollWidth,
-    });
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await html2canvas(htmlContent, {
+        backgroundColor: 'white',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        windowHeight: htmlContent.scrollHeight,
+        windowWidth: htmlContent.scrollWidth,
+      });
+    } catch (err) {
+      try { console.error('[exportTranscriptToPdfBilingual] html2canvas failed', err); } catch (e) {}
+      throw err;
+    }
 
     document.body.removeChild(htmlContent);
 
@@ -887,20 +988,85 @@ export async function exportTranscriptToPdfBilingual(
       compress: true,
     });
 
-    const imgWidth = 210;
+    const pageWidth = 210;
     const pageHeight = 297;
+    const pageLeftRightMargin = 15;
+    const pageTopMargin = 15;
+    // make bottom padding equal to top margin for consistent spacing on every page
+    const pageBottomPadding = pageTopMargin;
+    const contentWidth = pageWidth - 2 * pageLeftRightMargin;
+    const imgWidth = contentWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    const usablePageHeight = pageHeight - pageTopMargin - pageBottomPadding;
+    const overlap = 8; // mm
+    const sliceHeight = Math.max(usablePageHeight - overlap, usablePageHeight * 0.9);
+    const totalPages = Math.max(1, Math.ceil((imgHeight + overlap) / sliceHeight));
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    try {
+      // Slice the large canvas into page-sized images so margins are enforced on every page
+      let position = 0; // position in mm down the content
+      for (let i = 0; i < totalPages; i++) {
+        const pxPerMm = canvas.width / imgWidth;
+        const sourceY = Math.round(position * pxPerMm);
+        const sourceHeight = Math.min(
+          canvas.height - sourceY,
+          Math.round(usablePageHeight * pxPerMm)
+        );
+
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+
+        const ctx = pageCanvas.getContext('2d');
+        if (!ctx) break;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+
+        ctx.drawImage(
+          canvas,
+          0,
+          sourceY,
+          canvas.width,
+          sourceHeight,
+          0,
+          0,
+          canvas.width,
+          sourceHeight
+        );
+
+        const pageImg = pageCanvas.toDataURL('image/png');
+
+        pdf.addImage(
+          pageImg,
+          'PNG',
+          pageLeftRightMargin,
+          pageTopMargin,
+          imgWidth,
+          (sourceHeight * imgWidth) / canvas.width
+        );
+
+        position += usablePageHeight;
+
+        if (i < totalPages - 1) pdf.addPage();
+      }
+
+      // add page numbers in footer
+      try {
+        const pageCount = pdf.getNumberOfPages();
+        pdf.setFontSize(9);
+        pdf.setTextColor(150);
+        for (let p = 1; p <= pageCount; p++) {
+          pdf.setPage(p);
+          pdf.text(`${p} / ${pageCount}`, pageWidth / 2, pageHeight - 8, { align: 'center' } as any);
+        }
+      } catch (e) {
+        try { console.warn('[exportTranscriptToPdfBilingual] footer numbering failed', e); } catch (er) {}
+      }
+    } catch (err) {
+      try { console.error('[exportTranscriptToPdfBilingual] pdf.addImage/page-slice failed', { totalPages, imgWidth, imgHeight, pageLeftRightMargin, pageTopMargin, sliceHeight }, err); } catch (e) {}
+      throw err;
     }
 
     const filename = `Conia-${meetingTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-bilingual-${new Date().toISOString().split('T')[0]}.pdf`;

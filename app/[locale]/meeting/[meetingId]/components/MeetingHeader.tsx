@@ -10,6 +10,17 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Check, Eye, Share2, Trash2 } from 'lucide-react'
@@ -217,14 +228,29 @@ function MeetingHeader({
             </Dialog>
           </>
 
-          <Button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-white hover:bg-destructive/90 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <Trash2 className="h-4 w-4" />
-            {isDeleting ? t('deleting') : t('delete')}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                disabled={isDeleting}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-white hover:bg-destructive/90 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? t('deleting') : t('delete')}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('ConfirmDeleteTitle') || 'Confirm deletion'}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t('ConfirmDeleteDescription') || 'Are you sure you want to delete this meeting? This action cannot be undone.'}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t('Cancel') || 'Cancel'}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       ) : (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

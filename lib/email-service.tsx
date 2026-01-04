@@ -126,6 +126,17 @@ export async function sendRecordingSummaryEmail(data: RecordingEmailData) {
     }
 }
 
+interface DeletionPendingEmailData {
+    email: string
+    userName: string
+    meetingTitle: string
+    meetingId: string
+    meetingDate: string
+    language?: 'en' | 'fr' | 'es' | 'de' | 'pt' | 'it'
+}
+
+
+
 // Send recording summary to multiple recipients in one call
 export async function sendRecordingSummaryEmailToMany(params: {
     emails: string[]

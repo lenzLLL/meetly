@@ -149,26 +149,25 @@ export default function RecordingDetailPage() {
   }
 
   // Load subaccounts when user opens Export tab (match studio behavior)
+  // subaccounts feature removed from Recording Studio exports — avoid loading suggestions
   useEffect(() => {
-    const loadSubaccounts = async () => {
-      setIsLoadingSubaccounts(true)
-      try {
-        const response = await fetch('/api/recording/suggest-emails')
-        if (response.ok) {
-          const data = await response.json()
-          setSubaccounts(data.subaccounts)
-        }
-      } catch (error) {
-        console.error('Failed to load subaccounts:', error)
-      } finally {
-        setIsLoadingSubaccounts(false)
-      }
-    }
+    // keep state but do not fetch subaccounts to ensure no UI or hints appear
+  }, [])
 
-    if (activeTab === 'export') {
-      loadSubaccounts()
-    }
-  }, [activeTab])
+  // Utility to remove quick-add subaccount hints from action items
+  const cleanQuickAddHints = (items: any[] | undefined) => {
+    if (!items || !Array.isArray(items)) return []
+    const quickAddLabel = t('quick_add_subaccounts') || ''
+    return items
+      .map((it) => (typeof it === 'string' ? it : (it.text || JSON.stringify(it))))
+      .filter((text) => {
+        if (!text) return false
+        const lower = text.toLowerCase()
+        if (quickAddLabel && lower.includes(String(quickAddLabel).toLowerCase())) return false
+        if (/^\+\s*\S+/.test(text.trim())) return false
+        return true
+      })
+  }
 
   // Auto-scroll chat
   useEffect(() => {
@@ -269,7 +268,7 @@ export default function RecordingDetailPage() {
       setTopics(extractedTopics)
       setEditSummary(parsedSummary)
       setEditKeyPoints(parsedKeyPoints)
-      setEditActionItems(parsedTasks)
+      setEditActionItems(cleanQuickAddHints(parsedTasks))
     }
     
     if (recordingData?.transcript) {
@@ -508,13 +507,25 @@ export default function RecordingDetailPage() {
         }
       }
 
+      // Filter out any quick-add subaccounts hints that may have been injected into action items
+      const quickAddLabel = t('quick_add_subaccounts') || 'subaccounts';
+      const cleanedActionItems = (actionItemsToUse || []).filter((item: any) => {
+        const text = typeof item === 'string' ? item : (item.text || JSON.stringify(item));
+        if (!text) return false;
+        const lower = text.toLowerCase();
+        if (quickAddLabel && lower.includes(String(quickAddLabel).toLowerCase())) return false;
+        // remove lines that look like quick-added subaccount entries (e.g. "+ lenz youndauu")
+        if (/^\+\s*\S+/.test(text.trim())) return false;
+        return true;
+      }).map((item: any, idx: number) => ({ id: idx + 1, text: typeof item === 'string' ? item : (item.text || JSON.stringify(item)) }));
+
       await exportTranscriptToPdf(
         transcriptToUse,
         exportTitle || recordingData?.title || 'Recording',
         {
           summary: summaryToUse,
           keyPoints: keyPointsToUse,
-          actionItems: (actionItemsToUse || []).map((item: any, idx: number) => ({ id: idx + 1, text: typeof item === 'string' ? item : (item.text || JSON.stringify(item)) })),
+          actionItems: cleanedActionItems,
           date: recordingData?.startTime ? new Date(recordingData.startTime).toLocaleDateString() : undefined,
         },
         selectedLanguage,
@@ -645,7 +656,7 @@ export default function RecordingDetailPage() {
             </div>
           </div>
 
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-violet-300 to-purple-300 bg-clip-text text-transparent">
             {recordingData.title || t('untitled_recording')}
           </h1>
           <div className="flex items-center gap-4 text-gray-400">
@@ -804,8 +815,11 @@ export default function RecordingDetailPage() {
                   setExportTitle(recordingData?.title || '')
 
                   // Populate editor with DB-stored keyPoints (no on-demand AI generation)
+
                   setEditKeyPoints(summary?.keyPoints ? [...summary.keyPoints] : [])
                   setKeyPointsSource(summary?.keyPoints && summary.keyPoints.length > 0 ? 'db' : null)
+                  // Clean any quick-add subaccount hints from action items before showing editor
+                  setEditActionItems(cleanQuickAddHints(tasks))
 
                   setShowPdfEditor(true)
                 }} className="border-violet-500/30">

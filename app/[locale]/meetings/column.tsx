@@ -2,11 +2,20 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog"
 import { Users, Trash, Video } from "lucide-react"
 import { useRouter } from 'next/navigation'
-import AttendeeList from "./attendees"
 import { useToast } from "@/components/ui/use_toast"
-import CustomModal from "../subaccounts/components/custom_modal"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import React from "react"
@@ -58,10 +67,26 @@ function ActionsCell({ row, t }: { row: any; t: any }) {
           {t("View")}
         </Button>
       </Link>
-      <Button size="sm" className="ml-2" onClick={deleteMeeting}>
-        <Trash size={15} />
-        {t("Delete")}
-      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button size="sm" className="ml-2">
+            <Trash size={15} />
+            {t("Delete")}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("ConfirmDeleteTitle") || "Confirm deletion"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("ConfirmDeleteDescription") || "Are you sure you want to delete this meeting? This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("Cancel") || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteMeeting}>{t("Delete")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
