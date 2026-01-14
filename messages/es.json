@@ -528,6 +528,7 @@
   "quick_add_subaccounts": "Agregar rápidamente desde las subcuentas:",
   "duplicate_email": "Correo ya agregado",
   "confirm_delete": "¿Está seguro de que desea eliminar esta grabación? Esta acción no se puede deshacer.",
+  "deleting": "Eliminando...",
   "deleted": "Grabación eliminada",
   "error": "Error",
   "invalid_email": "Correo inválido",

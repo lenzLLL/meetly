@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/db'
 import { sendRecordingSummaryEmail, sendRecordingSummaryEmailToMany } from '@/lib/email-service'
+import { processTranscript } from '@/lib/rag'
 
 interface SaveRecordingRequest {
   title: string
@@ -92,6 +93,15 @@ export async function POST(request: NextRequest) {
         type: 'recording'
       }
     })
+
+    // Process transcript with Pinecone for semantic search and RAG capabilities
+    try {
+      await processTranscript(recording.id, user.id, body.transcript, body.title)
+      console.log(`Processed transcript for recording ${recording.id} with Pinecone`)
+    } catch (err) {
+      console.error(`Error processing transcript with Pinecone for recording ${recording.id}:`, err)
+      // Don't fail the request if Pinecone processing fails
+    }
 
     // Cache the response for idempotency
     if (idempotencyKey) {

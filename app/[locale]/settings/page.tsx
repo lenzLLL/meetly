@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SignOutButton, useAuth, useUser } from '@clerk/nextjs'
-import { Bot, LogOut, Save, Upload, User } from 'lucide-react'
+import { Bot, LogOut, Save, Upload, User, Bell, Lock, Zap, Database, Slack, Check, X, ChevronDown } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import {
@@ -18,6 +18,7 @@ import {
 import { SUPPORTED_LOCALES } from '@/lib/buildLocalizedPath'
 import { useUsers } from '@/hooks/use-user'
 import { useToast } from '@/components/ui/use_toast'
+import { Checkbox } from '@/components/ui/checkbox'
 
 function Settings() {
   const t = useTranslations('Settings')
@@ -32,6 +33,20 @@ function Settings() {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    notifications: true,
+    integrations: false,
+    storage: false,
+    privacy: false,
+  })
+  const [notifications, setNotifications] = useState({
+    emailAfterTranscription: true,
+    emailWeeklySummary: true,
+    emailMeetingReminders: false,
+  })
+  const [integrations, setIntegrations] = useState({
+    slack: false,
+  })
   
   useEffect(() => {
     if (userId) fetchBotSettings()
@@ -118,6 +133,118 @@ function Settings() {
       : 'bg-green-500/20 text-green-400'
   }
 
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
+
+  const handleNotificationChange = (key: keyof typeof notifications) => {
+    setNotifications(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }))
+  }
+
+  const SettingSection = ({ title, icon: Icon, section }: { title: string; icon: React.ReactNode; section: string }) => {
+    const isExpanded = expandedSections[section]
+    return (
+      <div className='mb-4'>
+        <button
+          onClick={() => toggleSection(section)}
+          className='w-full flex items-center justify-between p-4 bg-[#1a0b2e]/70 rounded-lg border border-border/50 hover:border-border transition-colors'
+        >
+          <div className='flex items-center gap-3'>
+            <div className='text-primary'>{Icon}</div>
+            <h3 className='text-lg font-semibold text-foreground'>{title}</h3>
+          </div>
+          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </button>
+        {isExpanded && (
+          <div className='mt-2 p-4 bg-[#1a0b2e]/50 rounded-lg border border-border/30'>
+            {section === 'notifications' && (
+              <div className='space-y-4'>
+                <label className='flex items-center gap-3 cursor-pointer'>
+                  <Checkbox checked={notifications.emailAfterTranscription} onChange={() => handleNotificationChange('emailAfterTranscription')} />
+                  <span className='text-sm text-foreground'>Email après transcription</span>
+                </label>
+                <label className='flex items-center gap-3 cursor-pointer'>
+                  <Checkbox checked={notifications.emailWeeklySummary} onChange={() => handleNotificationChange('emailWeeklySummary')} />
+                  <span className='text-sm text-foreground'>Résumé hebdomadaire</span>
+                </label>
+                <label className='flex items-center gap-3 cursor-pointer'>
+                  <Checkbox checked={notifications.emailMeetingReminders} onChange={() => handleNotificationChange('emailMeetingReminders')} />
+                  <span className='text-sm text-foreground'>Rappels de réunion</span>
+                </label>
+              </div>
+            )}
+            {section === 'integrations' && (
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between p-3 bg-[#0e001a]/50 rounded-lg border border-border/20'>
+                  <div className='flex items-center gap-3'>
+                    <Slack className='h-5 w-5 text-blue-400' />
+                    <div>
+                      <p className='font-medium text-foreground'>Slack</p>
+                      <p className='text-xs text-muted-foreground'>Notifications et partage</p>
+                    </div>
+                  </div>
+                  <Button size='sm' variant={integrations.slack ? 'default' : 'outline'}>
+                    {integrations.slack ? 'Connecté' : 'Connecter'}
+                  </Button>
+                </div>
+              </div>
+            )}
+            {section === 'storage' && (
+              <div className='space-y-4'>
+                <div className='bg-[#0e001a]/50 rounded-lg p-4 border border-border/20'>
+                  <p className='text-sm text-muted-foreground mb-3'>Utilisation du stockage</p>
+                  <div className='w-full bg-[#1a0b2e] rounded-full h-2 overflow-hidden'>
+                    <div className='bg-gradient-to-r from-[#6a0dad] to-[#5f24e7] h-full' style={{width: '65%'}} />
+                  </div>
+                  <p className='text-xs text-foreground mt-2'>650 MB / 1 GB utilisé</p>
+                </div>
+                <div className='grid grid-cols-3 gap-3'>
+                  <div className='bg-[#0e001a]/50 rounded-lg p-3 border border-border/20'>
+                    <p className='text-xs text-muted-foreground'>Réunions</p>
+                    <p className='text-lg font-bold text-foreground'>24</p>
+                  </div>
+                  <div className='bg-[#0e001a]/50 rounded-lg p-3 border border-border/20'>
+                    <p className='text-xs text-muted-foreground'>Enregistrements</p>
+                    <p className='text-lg font-bold text-foreground'>12</p>
+                  </div>
+                  <div className='bg-[#0e001a]/50 rounded-lg p-3 border border-border/20'>
+                    <p className='text-xs text-muted-foreground'>Stockage utilisé</p>
+                    <p className='text-lg font-bold text-foreground'>650 MB</p>
+                  </div>
+                </div>
+                <Button variant='outline' size='sm' className='w-full'>Exporter les données</Button>
+              </div>
+            )}
+            {section === 'privacy' && (
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between p-3 bg-[#0e001a]/50 rounded-lg border border-border/20'>
+                  <div>
+                    <p className='font-medium text-foreground'>Sessions actives</p>
+                    <p className='text-xs text-muted-foreground'>1 session en cours</p>
+                  </div>
+                  <Button size='sm' variant='outline'>Voir</Button>
+                </div>
+                <div className='flex items-center justify-between p-3 bg-[#0e001a]/50 rounded-lg border border-border/20'>
+                  <div>
+                    <p className='font-medium text-foreground'>Historique d\'activité</p>
+                    <p className='text-xs text-muted-foreground'>Voir votre historique</p>
+                  </div>
+                  <Button size='sm' variant='outline'>Afficher</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className='bg-gradient-to-br from-[#0e001a] via-[#1a0033] to-[#100020] min-h-screen flex items-center justify-center p-6'>
@@ -168,8 +295,10 @@ function Settings() {
           </div>
 
           {/* Bot Customization */}
-          <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border'>
-            <h3 className='text-lg font-semibold text-foreground mb-4'>{t('botCustomization')}</h3>
+          <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border mb-6'>
+            <h3 className='text-lg font-semibold text-foreground mb-4 flex items-center gap-2'>
+              <Bot className='h-5 w-5 text-primary' /> {t('botCustomization')}
+            </h3>
 
             <div className='mb-6'>
               <Label htmlFor='bot-name' className='block text-sm font-medium text-foreground mb-2'>{t('botName')}</Label>
@@ -199,34 +328,16 @@ function Settings() {
                    })}
                  </SelectContent>
                </Select>
-          
-            <div className='mb-6 mt-6'>
-              <Label htmlFor='bot-image-upload' className='block text-sm font-medium text-foreground mb-2'>{t('botAvatar')}</Label>
-              <div className='flex items-center gap-4'>
-                <div className='w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden'>
-                  {botImageUrl ? (
-                    <img src={botImageUrl} alt='Bot Avatar' className='w-20 h-20 rounded-full object-cover' />
-                  ) : (
-                    <Bot className='h-10 w-10 text-primary' />
-                  )}
-                </div>
-
-                <div>
-                  <Input type='file' id='bot-image-upload' accept='image/*' onChange={handleImageUpload} disabled={isUploading} className='hidden' />
-                  <Label htmlFor='bot-image-upload' className={`inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#6a0dad] to-[#5f24e7] text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <Upload className='h-4 w-4' /> {isUploading ? t('uploading') : t('uploadImage')}
-                  </Label>
-                  <p className='text-xs text-muted-foreground mt-1'>{t('imageFormat')}</p>
-                </div>
-              </div>
-            </div>
 
             {hasChanges && (
               <Button onClick={saveBotSettings} disabled={isSaving} className='inline-flex items-center gap-2 mb-6 cursor-pointer'>
                 <Save className='h-4 w-4' /> {isSaving ? t('saving') : t('saveChanges')}
               </Button>
             )}
+          </div>
 
+          {/* Sign Out */}
+          <div className='bg-[#1a0b2e]/70 rounded-lg p-6 border border-border/50'>
             <div className='pt-4 border-t border-border'>
               <SignOutButton>
                 <Button variant='destructive' className='inline-flex items-center gap-2 cursor-pointer'>

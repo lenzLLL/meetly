@@ -232,22 +232,33 @@ function MeetingHeader({
             <AlertDialogTrigger asChild>
               <Button
                 disabled={isDeleting}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-white hover:bg-destructive/90 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 hover:border-red-500/50 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <Trash2 className="h-4 w-4" />
                 {isDeleting ? t('deleting') : t('delete')}
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="bg-[#1a0b2e] border-red-500/20">
               <AlertDialogHeader>
-                <AlertDialogTitle>{t('ConfirmDeleteTitle') || 'Confirm deletion'}</AlertDialogTitle>
-                <AlertDialogDescription>
+                <AlertDialogTitle className="text-red-400 flex items-center gap-2">
+                  <Trash2 className="h-5 w-5" />
+                  {t('ConfirmDeleteTitle') || 'Confirm deletion'}
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-300">
                   {t('ConfirmDeleteDescription') || 'Are you sure you want to delete this meeting? This action cannot be undone.'}
                 </AlertDialogDescription>
               </AlertDialogHeader>
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+                <p className="text-sm text-red-300 font-medium">⚠️ This action is permanent and cannot be reversed.</p>
+              </div>
               <AlertDialogFooter>
-                <AlertDialogCancel>{t('Cancel') || 'Cancel'}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>{t('delete')}</AlertDialogAction>
+                <AlertDialogCancel className="border-gray-700 hover:bg-gray-800">{t('Cancel') || 'Cancel'}</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+                >
+                  {t('delete')}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

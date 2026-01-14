@@ -26,6 +26,17 @@ import { useToast } from '@/components/ui/use_toast'
 import { exportTranscriptToPdf } from '@/lib/transcript-export'
 import { ToastAction } from '@/components/ui/toast'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog'
 
 type TabType = 'summary' | 'tasks' | 'keypoints' | 'transcript' | 'chat' | 'export'
 type Message = {
@@ -99,6 +110,9 @@ export default function RecordingDetailPage() {
   const [subaccounts, setSubaccounts] = useState<Subaccount[]>([])
   const [isLoadingSubaccounts, setIsLoadingSubaccounts] = useState(false)
   const [isSavingRecording, setIsSavingRecording] = useState(false)
+
+  // Delete state
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Parse data
   const [summary, setSummary] = useState<{ summary: string; tasks: string[]; keyPoints: string[] } | null>(null)
@@ -378,19 +392,22 @@ export default function RecordingDetailPage() {
   }, [selectedLanguage])
 
   const handleDelete = async () => {
-    if (window.confirm(t('confirm_delete'))) {
-      try {
-        const response = await fetch(`/api/studio-recordings/${recordingId}`, {
-          method: 'DELETE',
-        })
-        if (response.ok) {
-          toast({ title: t('deleted') })
-          router.push('/home')
-        }
-      } catch (err) {
-        console.error('Failed to delete recording:', err)
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/studio-recordings/${recordingId}`, {
+        method: 'DELETE',
+      })
+      if (response.ok) {
+        toast({ title: t('deleted') })
+        router.push('/home')
+      } else {
         toast({ title: t('error'), variant: 'destructive' })
       }
+    } catch (err) {
+      console.error('Failed to delete recording:', err)
+      toast({ title: t('error'), variant: 'destructive' })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -649,10 +666,42 @@ export default function RecordingDetailPage() {
             </Button>
             <div className="flex gap-2">
               <ShareButton />
-              <Button variant="outline" size="sm" onClick={handleDelete} className="border-red-500/30 text-red-400">
-                <Trash2 className="w-4 h-4 mr-2" />
-                {t('delete')}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    disabled={isDeleting}
+                    size="sm" 
+                    className="border-red-500/30 hover:border-red-500/60 text-red-300 border hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    variant="outline"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? t('deleting') : t('delete')}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-[#1a0b2e] border-red-500/20">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-red-400 flex items-center gap-2">
+                      <Trash2 className="h-5 w-5" />
+                      Delete Recording
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-gray-300">
+                      Are you sure you want to delete this recording? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-red-300 font-medium">⚠️ This action is permanent and cannot be reversed.</p>
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="border-gray-700 hover:bg-gray-800">Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDelete}
+                      className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
 

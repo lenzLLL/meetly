@@ -541,6 +541,7 @@
     "quick_add_subaccounts": "Ajouter rapidement depuis les sous-comptes:",
     "duplicate_email": "Email déjà ajouté",
     "confirm_delete": "Voulez-vous vraiment supprimer cet enregistrement ? Cette action est irréversible.",
+    "deleting": "Suppression...",
     "deleted": "Enregistrement supprimé",
     "error": "Erreur",
     "invalid_email": "Email invalide",

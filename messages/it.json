@@ -526,6 +526,7 @@
   "quick_add_subaccounts": "Aggiunta rapida dai sottoconti:",
   "duplicate_email": "Email già aggiunta",
   "confirm_delete": "Sei sicuro di voler eliminare questa registrazione? Questa azione non può essere annullata.",
+  "deleting": "Eliminazione...",
   "deleted": "Registrazione eliminata",
   "error": "Errore",
   "invalid_email": "Email non valida",

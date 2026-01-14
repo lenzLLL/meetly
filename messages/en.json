@@ -522,6 +522,7 @@
     "quick_add_subaccounts": "Quick add from subaccounts:",
     "duplicate_email": "Email already added",
     "confirm_delete": "Are you sure you want to delete this recording? This action cannot be undone.",
+    "deleting": "Deleting...",
     "deleted": "Recording deleted",
     "error": "Error",
     "invalid_email": "Invalid email",
